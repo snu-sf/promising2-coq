@@ -37,7 +37,7 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
     + `Local.v`, `Thread.v`: thread and its execution
       (`PROMISE`, `RESERVE`, `CANCEL`, `READ`, `WRITE`, `UPDATE`, `FENCE`, `SYSTEM CALL`, `SILENT`, `FAILURE` rules in Figure 2 and 4,
        note that `PROMISE`, `RESERVE`, and `CANCEL` is covered by one operation, `promise_step`)
-    + `Configuration.v`: configuration (machine state) and its execution (`MACHINE STEP` rule in Figure 2 and 3)
+    + `Configuration.v`: configuration (machine state) and its execution (`MACHINE STEP` rule in Figure 2 and 4)
     + `Behavior.v`: the behaviors of a configuration
 
 - `promising2/src/pf`: Definition of promise-free machine
