@@ -59,7 +59,7 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
     + Merges: `Merge.v`
     + Unused plain read elimination: `elim_load_sim_stmts` (`ElimLoad.v`)
     + Read introduction: `intro_load_sim_stmts` (`IntroLoad.v`)
-    + Spliting acquire loads/updates and release writes/updates:
+    + Splitting acquire loads/updates and release writes/updates:
         `split_acquire_sim_stmts` (`SplitAcq.v`), `split_release_sim_stmts` (`SplitRel.v`), `split_acqrel_sim_stmts` (`SplitAcqRel.v`)
     + Proof technique:
         * Simulation (Configuration): `sim` (`Simulation.v`) for the configuration simulation
@@ -77,7 +77,7 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
 
 - `promising2/src/promotion`: Register promotion (Section 6.3)
     + Definition of register promotion: `promote_stmts` (`PromotionDef.v`), `promote_program` (`Promotion.v`)
-    + Soundness of register rromotion (Theorem 6.3): `promote_behavior` (`Promotion.v`)
+    + Soundness of register promotion (Theorem 6.3): `promote_behavior` (`Promotion.v`)
 
 - `promising2/src/attachable`
     + Equivalence between PF and promise-free fragment of PS (Theorem 6.4): `apf_pf_equiv`, `apf_pf_equiv2` (`APFPF.v`)
