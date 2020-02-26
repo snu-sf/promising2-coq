@@ -43,7 +43,7 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
 - `promising2/src/pf`: Definition of promise-free machine
 
 - `promising2/src/attachable`: Definition of a machine where attaching a new concrete message in front of another message is allowed, which in particular,
-  is (syntactically) equivalent to the promise-free fragment of PS (promising 1.0) when executed in promise-free maner.
+  is (syntactically) equivalent to the promise-free fragment of PS (promising 1.0) when executed in promise-free manner.
 
 - `promising2/src/while`: Toy "while" language that provides the basis for the optimization & compilation results.
 
