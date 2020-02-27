@@ -53,7 +53,7 @@ Lemma pred_steps_apred_steps P lang
   :
     rtc (tau (@PredStep.pred_step P lang)) <2= rtc (tau (@APredStep.pred_step P lang)).
 Proof.
-  eapply rtc_implies. i. inv PR. econs; eauto.
+  eapply rtc_implies. i. inv H. econs; eauto.
   eapply pred_step_apred_step; eauto.
 Qed.
 

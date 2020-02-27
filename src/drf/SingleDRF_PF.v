@@ -40,7 +40,7 @@ Proof.
   - eapply RACEFREE; eauto.
   - inv H. exploit PFSingle.step_sim; eauto. i. des.
     eapply IHSTEPS; auto. ii. eapply RACEFREE; cycle 1; eauto. etrans.
-    + eapply rtc_implies; try apply STEPS0. i. inv PR. econs; eauto.
+    + eapply rtc_implies; try apply STEPS0. i. inv H. econs; eauto.
     + econs; eauto. econs; eauto.
 Qed.
 

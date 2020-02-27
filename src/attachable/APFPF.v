@@ -74,7 +74,7 @@ Lemma thread_steps_athread_steps lang
   :
     rtc (tau (@Thread.step_allpf lang)) <2= rtc (tau (@AThread.step_allpf lang)).
 Proof.
-  eapply rtc_implies. i. inv PR. econs; eauto.
+  eapply rtc_implies. i. inv H. econs; eauto.
   eapply thread_step_athread_step; eauto.
 Qed.
 
@@ -82,7 +82,7 @@ Lemma program_steps_aprogram_steps lang
   :
     rtc (tau (@Thread.program_step lang)) <2= rtc (tau (@AThread.program_step lang)).
 Proof.
-  eapply rtc_implies. i. inv PR. econs; eauto.
+  eapply rtc_implies. i. inv H. econs; eauto.
   eapply program_step_aprogram_step; eauto.
 Qed.
 
