@@ -34,8 +34,8 @@ Set Implicit Arguments.
 
 Inductive sim_local (pview:SimPromises.t) (lc_src lc_tgt:Local.t): Prop :=
 | sim_local_intro
-    (TVIEW: TView.le lc_src.(Local.tview) lc_tgt.(Local.tview))
-    (PROMISES: SimPromises.sem pview SimPromises.bot lc_src.(Local.promises) lc_tgt.(Local.promises))
+    (TVIEW: TView.le (Local.tview lc_src) (Local.tview lc_tgt))
+    (PROMISES: SimPromises.sem pview SimPromises.bot (Local.promises lc_src) (Local.promises lc_tgt))
 .
 
 Program Instance sim_local_PreOrder: PreOrder (sim_local SimPromises.bot).
@@ -52,8 +52,8 @@ Qed.
 Lemma sim_local_nonsynch_loc
       pview loc lc_src lc_tgt
       (SIM: sim_local pview lc_src lc_tgt)
-      (NONSYNCH: Memory.nonsynch_loc loc lc_tgt.(Local.promises)):
-  Memory.nonsynch_loc loc lc_src.(Local.promises).
+      (NONSYNCH: Memory.nonsynch_loc loc (Local.promises lc_tgt)):
+  Memory.nonsynch_loc loc (Local.promises lc_src).
 Proof.
   inv SIM. inv PROMISES.
   ii. destruct msg; ss.
@@ -68,8 +68,8 @@ Qed.
 Lemma sim_local_nonsynch
       pview lc_src lc_tgt
       (SIM: sim_local pview lc_src lc_tgt)
-      (NONSYNCH: Memory.nonsynch lc_tgt.(Local.promises)):
-  Memory.nonsynch lc_src.(Local.promises).
+      (NONSYNCH: Memory.nonsynch (Local.promises lc_tgt)):
+  Memory.nonsynch (Local.promises lc_src).
 Proof.
   ii. eapply sim_local_nonsynch_loc; eauto.
 Qed.
@@ -77,8 +77,8 @@ Qed.
 Lemma sim_local_memory_bot
       pview lc_src lc_tgt
       (SIM: sim_local pview lc_src lc_tgt)
-      (BOT: lc_tgt.(Local.promises) = Memory.bot):
-  lc_src.(Local.promises) = Memory.bot.
+      (BOT: (Local.promises lc_tgt) = Memory.bot):
+  (Local.promises lc_src) = Memory.bot.
 Proof.
   inv SIM. inv PROMISES. rewrite BOT in *.
   apply Memory.ext. i. rewrite Memory.bot_get.
@@ -203,14 +203,14 @@ Proof.
   inv STEP_TGT.
   assert (RELT_LE:
    View.opt_le
-     (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord_src)
-     (TView.write_released lc1_tgt.(Local.tview) sc2_tgt loc to releasedm_tgt ord_tgt)).
+     (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord_src)
+     (TView.write_released (Local.tview lc1_tgt) sc2_tgt loc to releasedm_tgt ord_tgt)).
   { apply TViewFacts.write_released_mon; ss.
     - apply LOCAL1.
     - apply WF1_TGT.
   }
   assert (RELT_WF:
-   View.opt_wf (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord_src)).
+   View.opt_wf (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord_src)).
   { unfold TView.write_released. condtac; econs.
     repeat (try condtac; viewtac; try apply WF1_SRC).
   }
@@ -498,7 +498,7 @@ Lemma sim_local_promise_consistent
   <<CONS_SRC: Local.promise_consistent lc_src>>.
 Proof.
   inv LOCAL. inv PROMISES. ii.
-  destruct (Memory.get loc ts lc_tgt.(Local.promises)) as [[]|] eqn:GETP.
+  destruct (Memory.get loc ts (Local.promises lc_tgt)) as [[]|] eqn:GETP.
   - exploit LE; eauto. i. rewrite PROMISE in x. inv x.
     destruct t0; ss.
     exploit CONS_TGT; eauto. i.
@@ -524,23 +524,23 @@ Lemma sim_local_program_step
       th1_src
       th1_tgt th2_tgt e_tgt
       (STEP_TGT: @Thread.program_step lang e_tgt th1_tgt th2_tgt)
-      (WF1_SRC: Local.wf th1_src.(Thread.local) th1_src.(Thread.memory))
-      (WF1_TGT: Local.wf th1_tgt.(Thread.local) th1_tgt.(Thread.memory))
-      (SC1_SRC: Memory.closed_timemap th1_src.(Thread.sc) th1_src.(Thread.memory))
-      (SC1_TGT: Memory.closed_timemap th1_tgt.(Thread.sc) th1_tgt.(Thread.memory))
-      (MEM1_SRC: Memory.closed th1_src.(Thread.memory))
-      (MEM1_TGT: Memory.closed th1_tgt.(Thread.memory))
-      (STATE: th1_src.(Thread.state) = th1_tgt.(Thread.state))
-      (LOCAL: sim_local SimPromises.bot th1_src.(Thread.local) th1_tgt.(Thread.local))
-      (SC: TimeMap.le th1_src.(Thread.sc) th1_tgt.(Thread.sc))
-      (MEM: sim_memory th1_src.(Thread.memory) th1_tgt.(Thread.memory)):
+      (WF1_SRC: Local.wf (Thread.local th1_src) (Thread.memory th1_src))
+      (WF1_TGT: Local.wf (Thread.local th1_tgt) (Thread.memory th1_tgt))
+      (SC1_SRC: Memory.closed_timemap (Thread.sc th1_src) (Thread.memory th1_src))
+      (SC1_TGT: Memory.closed_timemap (Thread.sc th1_tgt) (Thread.memory th1_tgt))
+      (MEM1_SRC: Memory.closed (Thread.memory th1_src))
+      (MEM1_TGT: Memory.closed (Thread.memory th1_tgt))
+      (STATE: (Thread.state th1_src) = (Thread.state th1_tgt))
+      (LOCAL: sim_local SimPromises.bot (Thread.local th1_src) (Thread.local th1_tgt))
+      (SC: TimeMap.le (Thread.sc th1_src) (Thread.sc th1_tgt))
+      (MEM: sim_memory (Thread.memory th1_src) (Thread.memory th1_tgt)):
   exists e_src th2_src,
     <<STEP_SRC: @Thread.program_step lang e_src th1_src th2_src>> /\
     <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
-    <<STATE: th2_src.(Thread.state) = th2_tgt.(Thread.state)>> /\
-    <<LOCAL: sim_local SimPromises.bot th2_src.(Thread.local) th2_tgt.(Thread.local)>> /\
-    <<SC: TimeMap.le th2_src.(Thread.sc) th2_tgt.(Thread.sc)>> /\
-    <<MEM: sim_memory th2_src.(Thread.memory) th2_tgt.(Thread.memory)>>.
+    <<STATE: (Thread.state th2_src) = (Thread.state th2_tgt)>> /\
+    <<LOCAL: sim_local SimPromises.bot (Thread.local th2_src) (Thread.local th2_tgt)>> /\
+    <<SC: TimeMap.le (Thread.sc th2_src) (Thread.sc th2_tgt)>> /\
+    <<MEM: sim_memory (Thread.memory th2_src) (Thread.memory th2_tgt)>>.
 Proof.
   destruct th1_src. ss. subst. inv STEP_TGT; ss.
   inv LOCAL0; ss.
@@ -581,7 +581,7 @@ Lemma sim_local_lower_src
 Proof.
   splits.
   - inv STEP_SRC. inv PROMISE.
-    exists (match Memory.get loc to lc1_tgt.(Local.promises) with
+    exists (match Memory.get loc to (Local.promises lc1_tgt) with
        | Some _ => SimPromises.set loc to pview1
        | None => pview1
        end).
@@ -639,7 +639,7 @@ Lemma sim_local_nonsynch_src
     <<STEP_SRC: rtc (@Thread.tau_step lang)
                     (Thread.mk lang st lc1_src sc mem1_src)
                     (Thread.mk lang st lc2_src sc mem2_src)>> /\
-    <<NONSYNCH2: Memory.nonsynch lc2_src.(Local.promises)>> /\
+    <<NONSYNCH2: Memory.nonsynch (Local.promises lc2_src)>> /\
     <<LOCAL2: sim_local pview2 lc2_src lc1_tgt>> /\
     <<MEM2: sim_memory mem2_src mem1_tgt>>.
 Proof.
@@ -659,7 +659,7 @@ Proof.
     exfalso. eapply FINITE'; eauto. ss.
   }
   destruct a as [loc to]. i.
-  destruct (Memory.get loc to lc1_src.(Local.promises)) as [[? []]|] eqn:X; cycle 1.
+  destruct (Memory.get loc to (Local.promises lc1_src)) as [[? []]|] eqn:X; cycle 1.
   { eapply IHdom; eauto. i. exploit FINITE'; eauto. i. inv x; ss.
     inv H1. rewrite X in H. inv H. inv H0. }
   { eapply IHdom; eauto. i. exploit FINITE'; eauto. i. inv x; ss.

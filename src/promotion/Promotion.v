@@ -39,28 +39,28 @@ Set Implicit Arguments.
 Module Promotion.
   Inductive sim_conf (p: Ident.t) (l: Loc.t) (r: Reg.t) (c_src c_tgt: Configuration.t): Prop :=
   | sim_conf_intro
-      (TIDS: Threads.tids c_src.(Configuration.threads) = Threads.tids c_tgt.(Configuration.threads))
+      (TIDS: Threads.tids (Configuration.threads c_src) = Threads.tids (Configuration.threads c_tgt))
       (FIND_SRC: forall tid lang_src st_src lc_src
-                   (FIND: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang_src st_src, lc_src)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang_src st_src, lc_src)),
           lang_src = lang)
       (FIND_TGT: forall tid lang_tgt st_tgt lc_tgt
-                   (FIND: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang_tgt st_tgt, lc_tgt)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang_tgt st_tgt, lc_tgt)),
           lang_tgt = lang)
       (PROMOTION: exists st_src lc_src st_tgt lc_tgt,
-          <<FIND_SRC: IdentMap.find p c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src)>> /\
-          <<FIND_TGT: IdentMap.find p c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)>> /\
+          <<FIND_SRC: IdentMap.find p (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src)>> /\
+          <<FIND_TGT: IdentMap.find p (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)>> /\
           <<SIM_THREAD: SimThreadPromotion.sim_thread_reserve
                           l r
-                          (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                          (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory))>>)
+                          (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                          (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt))>>)
       (OTHER: forall tid st_src lc_src st_tgt lc_tgt
                 (TID: tid <> p)
-                (FIND_SRC: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src))
-                (FIND_TGT: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)),
+                (FIND_SRC: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src))
+                (FIND_TGT: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)),
           <<SIM_THREAD: SimThreadOther.sim_thread
                           l
-                          (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                          (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory))>>)
+                          (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                          (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt))>>)
   .
   Hint Constructors sim_conf.
 
@@ -68,9 +68,9 @@ Module Promotion.
         p l r c_src c_tgt tid
         (SIM: sim_conf p l r c_src c_tgt):
     (exists lang_src st_src lc_src,
-        IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang_src st_src, lc_src)) <->
+        IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang_src st_src, lc_src)) <->
     (exists lang_tgt st_tgt lc_tgt,
-        IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang_tgt st_tgt, lc_tgt)).
+        IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang_tgt st_tgt, lc_tgt)).
   Proof.
     inv SIM. destruct c_src, c_tgt. ss.
     eapply Threads.tids_find; eauto.
@@ -81,12 +81,12 @@ Module Promotion.
         tid st_src lc_src st_tgt lc_tgt
         (SIM: sim_conf p l r c_src c_tgt)
         (TID: tid <> p)
-        (FIND_SRC: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src))
-        (FIND_TGT: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)):
+        (FIND_SRC: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src))
+        (FIND_TGT: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)):
     SimThreadOther.sim_thread
       l
-      (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-      (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory)).
+      (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+      (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt)).
   Proof.
     inv SIM. exploit OTHER; eauto.
   Qed.
@@ -152,7 +152,7 @@ Module Promotion.
                        MachineEvent.failure p
                        (Configuration.mk ths1_src sc1_src mem1_src)
                        (Configuration.mk
-                          (IdentMap.add p (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                          (IdentMap.add p (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                           sc memory)).
       { econs 1; eauto. }
       esplits; [econs 2; eauto|].
@@ -197,7 +197,7 @@ Module Promotion.
                        (ThreadEvent.get_machine_event e_src) p
                        (Configuration.mk ths1_src sc1_src mem1_src)
                        (Configuration.mk
-                          (IdentMap.add p (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                          (IdentMap.add p (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                           sc memory)).
       { inv STEP_SRC.
         - destruct (rtc_tail STEPS_SRC).
@@ -263,7 +263,7 @@ Module Promotion.
                        MachineEvent.failure tid
                        (Configuration.mk ths1_src sc1_src mem1_src)
                        (Configuration.mk
-                          (IdentMap.add tid (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                          (IdentMap.add tid (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                           sc memory)).
       { econs 1; eauto. }
       esplits; [econs 2; eauto|].
@@ -316,7 +316,7 @@ Module Promotion.
                        (ThreadEvent.get_machine_event e_src) tid
                        (Configuration.mk ths1_src sc1_src mem1_src)
                        (Configuration.mk
-                          (IdentMap.add tid (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                          (IdentMap.add tid (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                           sc memory)).
       { inv STEP_SRC.
         - destruct (rtc_tail STEPS_SRC).
@@ -409,28 +409,28 @@ Module Promotion.
 
   Inductive sim_conf_init (p: Ident.t) (l: Loc.t) (r: Reg.t) (c_src c_tgt: Configuration.t): Prop :=
   | sim_conf_init_intro
-      (TIDS: Threads.tids c_src.(Configuration.threads) = Threads.tids c_tgt.(Configuration.threads))
+      (TIDS: Threads.tids (Configuration.threads c_src) = Threads.tids (Configuration.threads c_tgt))
       (FIND_SRC: forall tid lang_src st_src lc_src
-                   (FIND: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang_src st_src, lc_src)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang_src st_src, lc_src)),
           lang_src = lang)
       (FIND_TGT: forall tid lang_tgt st_tgt lc_tgt
-                   (FIND: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang_tgt st_tgt, lc_tgt)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang_tgt st_tgt, lc_tgt)),
           lang_tgt = lang)
       (PROMOTION: exists st_src lc_src st_tgt lc_tgt,
-          <<FIND_SRC: IdentMap.find p c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src)>> /\
-          <<FIND_TGT: IdentMap.find p c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)>> /\
+          <<FIND_SRC: IdentMap.find p (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src)>> /\
+          <<FIND_TGT: IdentMap.find p (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)>> /\
           <<SIM_THREAD: SimThreadPromotion.sim_thread
                           l r
-                          (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                          (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory))>>)
+                          (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                          (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt))>>)
       (OTHER: forall tid st_src lc_src st_tgt lc_tgt
                 (TID: tid <> p)
-                (FIND_SRC: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src))
-                (FIND_TGT: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)),
+                (FIND_SRC: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src))
+                (FIND_TGT: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)),
           <<SIM_THREAD: SimThreadOther.sim_thread
                           l
-                          (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                          (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory))>>)
+                          (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                          (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt))>>)
   .
   Hint Constructors sim_conf_init.
 

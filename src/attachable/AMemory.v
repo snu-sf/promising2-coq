@@ -309,7 +309,7 @@ Module AMemory.
         des. subst. exfalso. inv MEM. inv ADD. eapply DISJOINT0; eauto.
         * apply Interval.mem_ub. auto.
         * apply Interval.mem_ub.
-          destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+          destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. i. des; auto.
           inv x. inv TO.
       + ii. exploit RESERVE_CTX; eauto. i. des.
         exploit Memory.add_get1; try exact x; eauto.
@@ -338,7 +338,7 @@ Module AMemory.
           i. des. eapply x.
           { inv MEM. inv SPLIT. econs. eauto. left. auto. }
           { apply Interval.mem_ub.
-            destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+            destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. i. des; auto.
             inv x1. inv MEM. inv SPLIT. inv TS12.
           }
         * guardH o. des. subst. exfalso. inv DISJOINT. exploit DISJOINT0; eauto.
@@ -346,7 +346,7 @@ Module AMemory.
           i. des. eapply x.
           { apply Interval.mem_ub. inv MEM. inv SPLIT. etrans; eauto. }
           { apply Interval.mem_ub.
-            destruct (ctx loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+            destruct (Cell.WF (ctx loc)). exploit VOLUME; eauto. i. des; auto.
             inv x1. inv MEM. inv SPLIT. inv TS23.
           }
       + ii. exploit RESERVE_CTX; eauto. i. des.

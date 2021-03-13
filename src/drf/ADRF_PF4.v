@@ -627,22 +627,22 @@ Qed.
 (* Definition memory_last_reserves (prom mem: Memory.t) := (fun loc => Memory.latest_reserve loc prom mem). *)
 
 Definition pf_consistent_drf' lang (e0:Thread.t lang): Prop :=
-  let L := (fun loc => Memory.latest_reserve loc e0.(Thread.local).(Local.promises) e0.(Thread.memory)) in
+  let L := (fun loc => Memory.latest_reserve loc (Local.promises (Thread.local e0)) (Thread.memory e0)) in
   forall mem1 mem2 max
-         (CAP: Memory.cap e0.(Thread.local).(Local.promises) e0.(Thread.memory) mem1)
-         (FORGET: forget_memory (collapsing_latest_reserves_times L e0.(Thread.memory) \2/ collapsing_caps_times L e0.(Thread.memory) mem1) mem2 mem1)
-         (MAX: Memory.max_full_timemap e0.(Thread.memory) max),
+         (CAP: Memory.cap (Local.promises (Thread.local e0)) (Thread.memory e0) mem1)
+         (FORGET: forget_memory (collapsing_latest_reserves_times L (Thread.memory e0) \2/ collapsing_caps_times L (Thread.memory e0) mem1) mem2 mem1)
+         (MAX: Memory.max_full_timemap (Thread.memory e0) max),
   exists e1,
-    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ e0.(Thread.state) e0.(Thread.local) TimeMap.bot mem2) e1>>) /\
-    (<<NORESERVE: no_reserves e1.(Thread.local).(Local.promises)>>) /\
-    (<<NOATTATCH: not_attatched (Memory.max_full_ts e0.(Thread.memory)) e1.(Thread.memory)>>) /\
-    (<<MAXMAP: TimeMap.le (Memory.max_timemap e1.(Thread.memory)) max>>) /\
+    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ (Thread.state e0) (Thread.local e0) TimeMap.bot mem2) e1>>) /\
+    (<<NORESERVE: no_reserves (Local.promises (Thread.local e1))>>) /\
+    (<<NOATTATCH: not_attatched (Memory.max_full_ts (Thread.memory e0)) (Thread.memory e1)>>) /\
+    (<<MAXMAP: TimeMap.le (Memory.max_timemap (Thread.memory e1)) max>>) /\
     exists e2,
-      (<<STEPS1: rtc (tau (@pred_step ((promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts e0.(Thread.memory))) /1\ no_sc) lang)) e1 e2>>) /\
+      (<<STEPS1: rtc (tau (@pred_step ((promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory e0))) /1\ no_sc) lang)) e1 e2>>) /\
       (__guard__((exists st',
-                     (<<LOCAL: Local.failure_step e2.(Thread.local)>>) /\
+                     (<<LOCAL: Local.failure_step (Thread.local e2)>>) /\
                      (<<FAILURE: Language.step lang ProgramEvent.failure (@Thread.state lang e2) st'>>)) \/
-                 (<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>))).
+                 (<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>))).
 
 Lemma caps_collapsing_collapsable_unwritable L prom mem0 mem1
       (MLE: Memory.le prom mem0)
@@ -1113,14 +1113,14 @@ Proof.
 Qed.
 
 Lemma pf_consistent_pf_consistent_drf' lang (th: Thread.t lang)
-      (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-      (MEM: Memory.closed th.(Thread.memory))
+      (WF: Local.wf (Thread.local th) (Thread.memory th))
+      (MEM: Memory.closed (Thread.memory th))
       (CONSISTENT: pf_consistent_strong th)
       (RESERVEWF: memory_reserve_wf (Thread.memory th))
   :
     pf_consistent_drf' th.
 Proof.
-  assert (INHABITED: Memory.inhabited th.(Thread.memory)).
+  assert (INHABITED: Memory.inhabited (Thread.memory th)).
   { inv MEM. auto. }
   ii.
   set (L:=fun loc : Loc.t =>
@@ -1128,13 +1128,13 @@ Proof.
   assert (COLLAPSABLE: collapsable_cap L (Local.promises (Thread.local th)) (Thread.memory th)).
   { ii. clarify. unfold L, Memory.latest_reserve in SAT.
     rewrite GET in SAT. clarify. }
-  assert (MAPLE: mapping_map_le (caps_collapsing L th.(Thread.memory))).
+  assert (MAPLE: mapping_map_le (caps_collapsing L (Thread.memory th))).
   { eapply caps_collapsing_mapping_map_le; eauto. }
-  assert (MAPBOT: mapping_map_bot (caps_collapsing L th.(Thread.memory))).
+  assert (MAPBOT: mapping_map_bot (caps_collapsing L (Thread.memory th))).
   { eapply caps_collapsing_mapping_map_bot; eauto. }
-  assert (MAPEQ: mapping_map_eq (caps_collapsing L th.(Thread.memory))).
+  assert (MAPEQ: mapping_map_eq (caps_collapsing L (Thread.memory th))).
   { eapply caps_collapsing_mapping_map_eq; eauto. }
-  assert (CONCRETELE: memory_concrete_le th.(Thread.memory) mem2).
+  assert (CONCRETELE: memory_concrete_le (Thread.memory th) mem2).
   { eapply collapsing_caps_forget_le; eauto. }
 
   exploit CONSISTENT; eauto. i. des.
@@ -1145,7 +1145,7 @@ Proof.
   { eapply Memory.cap_closed; eauto. }
   assert (CLOSEDSRC: Memory.closed mem2).
   { eapply collapsing_caps_forget_closed; cycle 1; eauto. }
-  assert (LCWFSRC: Local.wf th.(Thread.local) mem2).
+  assert (LCWFSRC: Local.wf (Thread.local th) mem2).
   { eapply memory_concrete_le_local_wf; eauto. inv WF.
     eapply collapsing_caps_forget_prom_le; eauto. }
 
@@ -1186,7 +1186,7 @@ Proof.
   hexploit (@steps_map (caps_collapsing L (Thread.memory th))); try apply STEPS1; auto; eauto.
   { i. eapply caps_collapsing_mappable_event_always; eauto. }
   { eapply collapsable_unwritable_steps in STEPS0; eauto. }
-  { instantiate (1:=(promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts th.(Thread.memory))) /1\ no_sc).
+  { instantiate (1:=(promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory th))) /1\ no_sc).
     ss. ii. des. inv REL; splits; ss; eauto.
     - inv KIND; ss. inv MSG0; ss. inv MSG; ss. inv MAP0; ss.
     - inv KIND; ss.
@@ -1379,22 +1379,22 @@ Qed.
 Lemma shorter_thread_shorter_memory lang (th_src th_tgt: Thread.t lang)
       (THREAD: shorter_thread th_src th_tgt)
   :
-    shorter_memory th_src.(Thread.memory) th_tgt.(Thread.memory).
+    shorter_memory (Thread.memory th_src) (Thread.memory th_tgt).
 Proof. inv THREAD; eauto. Qed.
 
 Lemma no_update_on_step2
       L lang e_tgt (th_src th_tgt th_tgt': Thread.t lang)
-      (LCWF: Memory.le th_src.(Thread.local).(Local.promises) th_src.(Thread.memory))
+      (LCWF: Memory.le (Local.promises (Thread.local th_src)) (Thread.memory th_src))
       (PRED: (no_update_on L /1\ promise_free) e_tgt)
       (STEPS: AThread.step_allpf e_tgt th_tgt th_tgt')
       (SHORTER: shorter_thread th_src th_tgt)
-      (NOATTATCH: not_attatched L th_src.(Thread.memory))
+      (NOATTATCH: not_attatched L (Thread.memory th_src))
   :
     exists e_src th_src',
       (<<STEPS: AThread.step_allpf e_src th_src th_src'>>) /\
       (<<SHORTER: shorter_thread th_src' th_tgt'>>) /\
       (<<EVENT: shorter_event e_src e_tgt>>) /\
-      (<<NOATTATCH: not_attatched L th_src'.(Thread.memory)>>).
+      (<<NOATTATCH: not_attatched L (Thread.memory th_src')>>).
 Proof.
   assert (TSTEP0: pred_step (no_update_on L /1\ promise_free) e_tgt th_tgt th_tgt').
   { econs; eauto. }
@@ -1449,15 +1449,15 @@ Qed.
 Lemma updates_list_exists L
       lang (th0 th1: Thread.t lang) tr
       (PRED: List.Forall (fun em => promise_free (fst em)) tr)
-      (LCWF: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+      (LCWF: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
       (STEPS: traced_step tr th0 th1)
-      (ATTATCHED: not_attatched L th0.(Thread.memory))
+      (ATTATCHED: not_attatched L (Thread.memory th0))
   :
     exists (updates: list (Loc.t * Time.t)) th1' tr',
       (<<UPDATESWF: List.Forall (fun locto => L (fst locto) (snd locto)) updates>>) /\
       (<<STEPS: traced_step tr' th0 th1'>>) /\
       (<<SHORTER: shorter_thread th1' th1>>) /\
-      (<<ATTATCHED: not_attatched (fun loc to => L loc to /\ ~ List.In (loc, to) updates) th1'.(Thread.memory)>>) /\
+      (<<ATTATCHED: not_attatched (fun loc to => L loc to /\ ~ List.In (loc, to) updates) (Thread.memory th1')>>) /\
       (<<TRACE: List.Forall2 (fun em em' => <<EVENT: shorter_event (fst em') (fst em)>> /\ <<MEM: shorter_memory (snd em') (snd em)>>) tr tr'>>) /\
       (<<MEMORY: List.Forall (fun em => not_attatched (fun loc to => L loc to /\ ~ List.In (loc, to) updates) (snd em)) tr'>>) /\
       (<<COMPLETE:
@@ -1478,7 +1478,7 @@ Proof.
     + exploit no_update_on_step2; try apply SHORTER; eauto.
       { eapply traced_step_promises_le; eauto.
         apply traced_step_equivalent; eauto. }
-      i. des. exists updates, th_src', (tr'++[(e_src, th1'.(Thread.memory))]).
+      i. des. exists updates, th_src', (tr'++[(e_src, (Thread.memory th1'))]).
       esplits; eauto.
       * econs; eauto.
       * eapply list_Forall2_app; eauto. econs; eauto. ss. split; auto.
@@ -1493,7 +1493,7 @@ Proof.
         apply traced_step_equivalent; eauto. }
       { ss. split; auto. ii. des; auto. }
       { eapply not_attatched_mon; [eauto|]. i. ss. des; auto. }
-      i. des. exists ((loc, tsr) :: updates), th_src', (tr'++[(e_src, th1'.(Thread.memory))]).
+      i. des. exists ((loc, tsr) :: updates), th_src', (tr'++[(e_src, (Thread.memory th1'))]).
       esplits; eauto.
       * econs; eauto.
       * eapply list_Forall2_app; eauto. econs; eauto. ss. split; auto.
@@ -1571,8 +1571,8 @@ Lemma not_cancel_step_covered
       (STEP: AThread.step_allpf e th0 th1)
       (CANCEL: ~ is_cancel e)
   :
-    forall loc to (COVERED: covered loc to th0.(Thread.memory)),
-      covered loc to th1.(Thread.memory).
+    forall loc to (COVERED: covered loc to (Thread.memory th0)),
+      covered loc to (Thread.memory th1).
 Proof.
   inv STEP. inv STEP0.
   - inv STEP. inv LOCAL. ss.
@@ -1587,8 +1587,8 @@ Lemma not_cancel_steps_covered
       (STEP: traced_step tr th0 th1)
       (CANCEL: List.Forall (fun em => ~ is_cancel (fst em)) tr)
   :
-    forall loc to (COVERED: covered loc to th0.(Thread.memory)),
-      covered loc to th1.(Thread.memory).
+    forall loc to (COVERED: covered loc to (Thread.memory th0)),
+      covered loc to (Thread.memory th1).
 Proof.
   ginduction STEP; auto. i. inv CANCEL.
   eapply IHSTEP; eauto. eapply not_cancel_step_covered; eauto.
@@ -1609,7 +1609,7 @@ Qed.
 Lemma blank_step_write_not_in (L: Loc.t -> Time.t -> Prop)
       lang (th0 th1: Thread.t lang) e
       (STEP: AThread.step_allpf e th0 th1)
-      (COVERED: forall loc' ts' (SAT: L loc' ts'), ~ covered loc' ts' th1.(Thread.memory))
+      (COVERED: forall loc' ts' (SAT: L loc' ts'), ~ covered loc' ts' (Thread.memory th1))
   :
     write_not_in L e.
 Proof.
@@ -1625,7 +1625,7 @@ Lemma blank_steps_write_not_in (L: Loc.t -> Time.t -> Prop)
       lang (th0 th1: Thread.t lang) tr
       (STEP: traced_step tr th0 th1)
       (CANCEL: List.Forall (fun em => ~ is_cancel (fst em)) tr)
-      (COVERED: forall loc' ts' (SAT: L loc' ts'), ~ covered loc' ts' th1.(Thread.memory))
+      (COVERED: forall loc' ts' (SAT: L loc' ts'), ~ covered loc' ts' (Thread.memory th1))
   :
     List.Forall (fun em => write_not_in L (fst em)) tr.
 Proof.
@@ -1672,9 +1672,9 @@ Lemma promise_should_be_written_write_step
       (WRITE: ALocal.write_step lc0 sc0 mem0 loc from to val releasedm released ord lc1 sc1 mem kind)
       loc0 to0
       (NEQ: ~ ((loc0, to0) = (loc, to) /\ Ordering.le ord Ordering.relaxed))
-      (PROMISED: concrete_promised lc0.(Local.promises) loc0 to0)
+      (PROMISED: concrete_promised (Local.promises lc0) loc0 to0)
   :
-    concrete_promised lc1.(Local.promises) loc0 to0.
+    concrete_promised (Local.promises lc1) loc0 to0.
 Proof.
   inv WRITE. ss. apply not_and_or in NEQ. apply or_strengthen in NEQ. des.
   - eapply promise_should_be_written_write in PROMISED; eauto.
@@ -1699,9 +1699,9 @@ Lemma promise_should_be_written_step
               ~ ((loc0, to0) = (loc, to) /\ Ordering.le ordw Ordering.relaxed)
             | _ => True
             end)
-      (PROMISED: concrete_promised th0.(Thread.local).(Local.promises) loc0 to0)
+      (PROMISED: concrete_promised (Local.promises (Thread.local th0)) loc0 to0)
   :
-    concrete_promised th1.(Thread.local).(Local.promises) loc0 to0.
+    concrete_promised (Local.promises (Thread.local th1)) loc0 to0.
 Proof.
   inv STEP. inv STEP0.
   - inv STEP. inv LOCAL. eapply promise_should_be_written_promise; eauto.
@@ -1722,8 +1722,8 @@ Lemma promise_should_be_written_steps
       lang (th0 th1: Thread.t lang) tr
       (STEP: traced_step tr th0 th1)
       loc to
-      (PROMISED: concrete_promised th0.(Thread.local).(Local.promises) loc to)
-      (NPROMISED: ~ concrete_promised th1.(Thread.local).(Local.promises) loc to)
+      (PROMISED: concrete_promised (Local.promises (Thread.local th0)) loc to)
+      (NPROMISED: ~ concrete_promised (Local.promises (Thread.local th1)) loc to)
   :
     exists e m,
       (<<IN: List.In (e, m) tr>>) /\
@@ -1745,8 +1745,8 @@ Lemma cancel_concrete_promises_same P lang e th0 th1
       (STEP: (@pred_step P lang) e th0 th1)
       (PRED: P <1= is_cancel)
   :
-    concrete_promised th0.(Thread.local).(Local.promises) <2=
-    concrete_promised th1.(Thread.local).(Local.promises).
+    concrete_promised (Local.promises (Thread.local th0)) <2=
+    concrete_promised (Local.promises (Thread.local th1)).
 Proof.
   inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
   inv STEP0. inv STEP; inv STEP0; ss.
@@ -1762,8 +1762,8 @@ Lemma cancels_concrete_promises_same P lang th0 th1
       (STEP: rtc (tau (@pred_step P lang)) th0 th1)
       (PRED: P <1= is_cancel)
   :
-    concrete_promised th0.(Thread.local).(Local.promises) <2=
-    concrete_promised th1.(Thread.local).(Local.promises).
+    concrete_promised (Local.promises (Thread.local th0)) <2=
+    concrete_promised (Local.promises (Thread.local th1)).
 Proof.
   ginduction STEP; ss. i. eapply IHSTEP; eauto.
   inv H. eapply cancel_concrete_promises_same; eauto.
@@ -1772,7 +1772,7 @@ Qed.
 Lemma not_attatched_write_not_in_gap L lang (th0 th1: Thread.t lang) tr
       (STEP: traced_step tr th0 th1)
       (CANCEL: List.Forall (fun em => ~ is_cancel (fst em)) tr)
-      (ATTATCH: not_attatched L th1.(Thread.memory))
+      (ATTATCH: not_attatched L (Thread.memory th1))
   :
     forall loc to (SAT: L loc to),
     exists to',
@@ -1915,19 +1915,19 @@ Qed.
 
 
 Definition pf_consistent_drf'' lang (e0:Thread.t lang): Prop :=
-  let L := (fun loc => Memory.latest_reserve loc e0.(Thread.local).(Local.promises) e0.(Thread.memory)) in
+  let L := (fun loc => Memory.latest_reserve loc (Local.promises (Thread.local e0)) (Thread.memory e0)) in
   forall mem1 mem2 max
-         (CAP: Memory.cap e0.(Thread.local).(Local.promises) e0.(Thread.memory) mem1)
-         (FORGET: forget_memory (collapsing_latest_reserves_times L e0.(Thread.memory) \2/ collapsing_caps_times L e0.(Thread.memory) mem1) mem2 mem1)
-         (MAX: Memory.max_full_timemap e0.(Thread.memory) max),
+         (CAP: Memory.cap (Local.promises (Thread.local e0)) (Thread.memory e0) mem1)
+         (FORGET: forget_memory (collapsing_latest_reserves_times L (Thread.memory e0) \2/ collapsing_caps_times L (Thread.memory e0) mem1) mem2 mem1)
+         (MAX: Memory.max_full_timemap (Thread.memory e0) max),
   exists e1 (U: list Loc.t) (AU: list Loc.t),
     (<<DISJOINT: forall loc (INU: List.In loc U) (INAU: List.In loc AU), False>>) /\
     (<<AUPDATES: forall loc (INAU: List.In loc AU), ~ L loc>>) /\
 
-    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ e0.(Thread.state) e0.(Thread.local) TimeMap.bot mem2) e1>>) /\
-    (<<NORESERVE: no_reserves e1.(Thread.local).(Local.promises)>>) /\
-    (<<NOATTATCH: not_attatched (Memory.max_full_ts e0.(Thread.memory)) e1.(Thread.memory)>>) /\
-    (<<MAXMAP: TimeMap.le (Memory.max_timemap e1.(Thread.memory)) max>>) /\
+    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ (Thread.state e0) (Thread.local e0) TimeMap.bot mem2) e1>>) /\
+    (<<NORESERVE: no_reserves (Local.promises (Thread.local e1))>>) /\
+    (<<NOATTATCH: not_attatched (Memory.max_full_ts (Thread.memory e0)) (Thread.memory e1)>>) /\
+    (<<MAXMAP: TimeMap.le (Memory.max_timemap (Thread.memory e1)) max>>) /\
     exists e2 tr max',
       (<<STEPS1: traced_step tr e1 e2>>) /\
 
@@ -1935,17 +1935,17 @@ Definition pf_consistent_drf'' lang (e0:Thread.t lang): Prop :=
       (<<GAP: forall loc (NUPDATES: ~ List.In loc (U ++ AU)),
           Time.lt (max loc) (max' loc)>>) /\
 
-      (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts e0.(Thread.memory) loc to>>) /\
+      (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts (Thread.memory e0) loc to>>) /\
                                                  (<<NUPDATES: ~ List.In loc (U ++ AU)>>))
-                                  e2.(Thread.memory)>>) /\
+                                  (Thread.memory e2)>>) /\
       (<<TRACE: List.Forall (fun em => <<EVENT: (promise_free /1\ (fun e => ~ is_cancel e) /1\ no_sc
-                                                              /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts e0.(Thread.memory))
+                                                              /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory e0))
                                                               /1\
-                                                              (write_in (later_times max' \2/ (concrete_covered e0.(Thread.local).(Local.promises) e0.(Thread.memory) /2\ earlier_times max)))
+                                                              (write_in (later_times max' \2/ (concrete_covered (Local.promises (Thread.local e0)) (Thread.memory e0) /2\ earlier_times max)))
                                                               /1\
                                                               (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent)
 
-                                                ) (fst em)>> /\ <<MEMORY: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts e0.(Thread.memory) loc to>>) /\
+                                                ) (fst em)>> /\ <<MEMORY: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts (Thread.memory e0) loc to>>) /\
                                                                                                        (<<NUPDATES: ~ List.In loc (U ++ AU)>>)) (snd em)>>) tr>>) /\
       (<<COMPLETEU:
          forall loc (SAT: List.In loc U),
@@ -1956,11 +1956,11 @@ Definition pf_consistent_drf'' lang (e0:Thread.t lang): Prop :=
          exists to valr valw releasedr releasedw ordr ordw mem,
            <<IN: List.In (ThreadEvent.update loc (max loc) to valr valw releasedr releasedw ordr ordw, mem) tr>> >>) /\
       (__guard__((exists st',
-                     (<<LOCAL: Local.failure_step e2.(Thread.local)>>) /\
+                     (<<LOCAL: Local.failure_step (Thread.local e2)>>) /\
                      (<<FAILURE: Language.step lang ProgramEvent.failure (@Thread.state lang e2) st'>>)) \/
-                 ((<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>) /\
+                 ((<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>) /\
                   (<<COMPLETEW:
-                     forall loc to (PROMISED: concrete_promised e0.(Thread.local).(Local.promises) loc to),
+                     forall loc to (PROMISED: concrete_promised (Local.promises (Thread.local e0)) loc to),
                      exists e m,
                        (<<IN: List.In (e, m) tr>>) /\
                        (<<WRITETO: rlx_write_to loc to e>>)>>))))
@@ -1969,18 +1969,18 @@ Definition pf_consistent_drf'' lang (e0:Thread.t lang): Prop :=
 Lemma traced_steps_unwritable_increase lang (th0 th1: Thread.t lang) tr
       (STEP: traced_step tr th0 th1)
   :
-    unwritable th0.(Thread.memory) th0.(Thread.local).(Local.promises) <2=
-    unwritable th1.(Thread.memory) th1.(Thread.local).(Local.promises).
+    unwritable (Thread.memory th0) (Local.promises (Thread.local th0)) <2=
+    unwritable (Thread.memory th1) (Local.promises (Thread.local th1)).
 Proof.
   ginduction STEP; eauto.
   i. eapply IHSTEP. inv HD. eapply unwritable_increase; eauto.
 Qed.
 
 Lemma traced_step_write_not_in lang (th_tgt th_tgt': Thread.t lang) tr
-      (MLE: Memory.le th_tgt.(Thread.local).(Local.promises) th_tgt.(Thread.memory))
+      (MLE: Memory.le (Local.promises (Thread.local th_tgt)) (Thread.memory th_tgt))
       (STEP: traced_step tr th_tgt th_tgt')
   :
-    List.Forall (fun em => write_not_in (unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises)) (fst em)) tr.
+    List.Forall (fun em => write_not_in (unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt))) (fst em)) tr.
 Proof.
   ginduction STEP; i; ss. econs.
   - ss. inv HD. eapply step_write_not_in; eauto.
@@ -1991,7 +1991,7 @@ Proof.
 Qed.
 
 Lemma traced_step_wf_event lang (th0 th1: Thread.t lang) tr
-      (INHABITED: Memory.inhabited th0.(Thread.memory))
+      (INHABITED: Memory.inhabited (Thread.memory th0))
       (STEP: traced_step tr th0 th1)
   :
     List.Forall (fun em => wf_event (fst em)) tr.
@@ -2029,17 +2029,17 @@ Proof.
 Qed.
 
 Lemma pf_consistent_pf_consistent_drf'' lang (th: Thread.t lang)
-      (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-      (MEM: Memory.closed th.(Thread.memory))
+      (WF: Local.wf (Thread.local th) (Thread.memory th))
+      (MEM: Memory.closed (Thread.memory th))
       (CONSISTENT: pf_consistent_drf' th)
       (RESERVEWF: memory_reserve_wf (Thread.memory th))
   :
     pf_consistent_drf'' th.
 Proof.
-  set (L := (fun loc => Memory.latest_reserve loc th.(Thread.local).(Local.promises) th.(Thread.memory))).
+  set (L := (fun loc => Memory.latest_reserve loc (Local.promises (Thread.local th)) (Thread.memory th))).
   ii. exploit CONSISTENT; eauto. i. des.
 
-  assert (LCWFSRC: Local.wf th.(Thread.local) mem2).
+  assert (LCWFSRC: Local.wf (Thread.local th) mem2).
   { dup WF. inv WF.
     eapply memory_concrete_le_local_wf; eauto.
     - eapply collapsing_caps_forget_le; eauto.
@@ -2128,7 +2128,7 @@ Proof.
   - eapply not_attatched_mon; eauto.
   - eapply list_Forall_sum.
     + eapply MEMORY.
-    + instantiate (1:=fun em => (write_in (later_times max' \2/ (concrete_covered (Local.promises (Thread.local th)) (Thread.memory th) /2\ earlier_times max)) /1\ (promise_free /1\ (fun e => ~ is_cancel e) /1\ no_sc /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts th.(Thread.memory)) /1\ (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent))) (fst em)).
+    + instantiate (1:=fun em => (write_in (later_times max' \2/ (concrete_covered (Local.promises (Thread.local th)) (Thread.memory th) /2\ earlier_times max)) /1\ (promise_free /1\ (fun e => ~ is_cancel e) /1\ no_sc /1\ no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory th)) /1\ (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent))) (fst em)).
       eapply List.Forall_forall. i. ss. dup H.
       eapply list_Forall2_in in H; eauto. des.
       eapply List.Forall_forall in IN; eauto. destruct a, x. ss. des.
@@ -2661,7 +2661,7 @@ Qed.
 
 Lemma write_not_cross_concrete_step (tm: TimeMap.t)
       lang (th0 th1: Thread.t lang) e
-      (CONCRETE: forall loc, concrete_promised th0.(Thread.memory) loc (tm loc))
+      (CONCRETE: forall loc, concrete_promised (Thread.memory th0) loc (tm loc))
       (STEP: AThread.step_allpf e th0 th1)
   :
     (write_in (earlier_times tm) \1/ write_in (later_times tm)) e.
@@ -2680,33 +2680,33 @@ Proof.
 Qed.
 
 Definition pf_consistent_drf_complete lang (e0:Thread.t lang): Prop :=
-  let L := (fun loc => Memory.latest_reserve loc e0.(Thread.local).(Local.promises) e0.(Thread.memory)) in
+  let L := (fun loc => Memory.latest_reserve loc (Local.promises (Thread.local e0)) (Thread.memory e0)) in
   forall mem2 max
-         (FORGET: forget_memory (latest_other_reserves e0.(Thread.local).(Local.promises) e0.(Thread.memory)) mem2 e0.(Thread.memory))
-         (MAX: Memory.max_full_timemap e0.(Thread.memory) max),
+         (FORGET: forget_memory (latest_other_reserves (Local.promises (Thread.local e0)) (Thread.memory e0)) mem2 (Thread.memory e0))
+         (MAX: Memory.max_full_timemap (Thread.memory e0) max),
   exists e1 (U: list Loc.t) (AU: list Loc.t),
     (<<DISJOINT: forall loc (INU: List.In loc U) (INAU: List.In loc AU), False>>) /\
     (<<AUPDATES: forall loc (INAU: List.In loc AU), ~ L loc>>) /\
-    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ e0.(Thread.state) e0.(Thread.local) TimeMap.bot mem2) e1>>) /\
-    (<<NORESERVE: no_reserves e1.(Thread.local).(Local.promises)>>) /\
-    (* (<<NOATTATCH: not_attatched (Memory.max_full_ts e0.(Thread.memory)) e1.(Thread.memory)>>) /\ *)
-    (<<MAXMAP: TimeMap.le (Memory.max_timemap e1.(Thread.memory)) max>>) /\
+    (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ (Thread.state e0) (Thread.local e0) TimeMap.bot mem2) e1>>) /\
+    (<<NORESERVE: no_reserves (Local.promises (Thread.local e1))>>) /\
+    (* (<<NOATTATCH: not_attatched (Memory.max_full_ts (Thread.memory e0)) (Thread.memory e1)>>) /\ *)
+    (<<MAXMAP: TimeMap.le (Memory.max_timemap (Thread.memory e1)) max>>) /\
     exists e2 tr max',
       (<<STEPS1: traced_step tr e1 e2>>) /\
       (<<TIMEMAP: TimeMap.le max max'>>) /\
       (<<GAP: forall loc (NUPDATES: ~ List.In loc (U ++ AU)),
           Time.lt (max loc) (max' loc)>>) /\
-      (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts e0.(Thread.memory) loc to>>) /\
+      (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts (Thread.memory e0) loc to>>) /\
                                                  (<<NUPDATES: ~ List.In loc (U ++ AU)>>))
-                                  e2.(Thread.memory)>>) /\
+                                  (Thread.memory e2)>>) /\
       (<<TRACE: List.Forall (fun em => <<EVENT: (promise_free /1\ (fun e => ~ is_cancel e) /1\ no_sc
                                                               /1\
-                                                              (no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts e0.(Thread.memory)))
+                                                              (no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory e0)))
                                                               /1\
-                                                              (write_in (later_times max' \2/ (concrete_covered e0.(Thread.local).(Local.promises) e0.(Thread.memory) /2\ earlier_times max)))
+                                                              (write_in (later_times max' \2/ (concrete_covered (Local.promises (Thread.local e0)) (Thread.memory e0) /2\ earlier_times max)))
                                                               /1\
                                                               (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent)
-                                                ) (fst em)>> /\ <<MEMORY: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts e0.(Thread.memory) loc to>>) /\
+                                                ) (fst em)>> /\ <<MEMORY: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts (Thread.memory e0) loc to>>) /\
                                                                                                        (<<NUPDATES: ~ List.In loc (U ++ AU)>>)) (snd em)>>) tr>>) /\
       (<<COMPLETEU:
          forall loc (SAT: List.In loc U),
@@ -2717,19 +2717,19 @@ Definition pf_consistent_drf_complete lang (e0:Thread.t lang): Prop :=
          exists to valr valw releasedr releasedw ordr ordw mem,
            <<IN: List.In (ThreadEvent.update loc (max loc) to valr valw releasedr releasedw ordr ordw, mem) tr>> >>) /\
       (__guard__((exists st',
-                     (<<LOCAL: Local.failure_step e2.(Thread.local)>>) /\
+                     (<<LOCAL: Local.failure_step (Thread.local e2)>>) /\
                      (<<FAILURE: Language.step lang ProgramEvent.failure (@Thread.state lang e2) st'>>)) \/
-                 ((<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>) /\
+                 ((<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>) /\
                   (<<COMPLETEW:
-                     forall loc to (PROMISED: concrete_promised e0.(Thread.local).(Local.promises) loc to),
+                     forall loc to (PROMISED: concrete_promised (Local.promises (Thread.local e0)) loc to),
                      exists e m,
                        (<<IN: List.In (e, m) tr>>) /\
                        (<<WRITETO: rlx_write_to loc to e>>)>>))))
 .
 
 Lemma pf_consistent_pf_consistent_drf_complete lang (th: Thread.t lang)
-      (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-      (MEM: Memory.closed th.(Thread.memory))
+      (WF: Local.wf (Thread.local th) (Thread.memory th))
+      (MEM: Memory.closed (Thread.memory th))
       (CONSISTENT: pf_consistent th)
       (RESERVEWF: memory_reserve_wf (Thread.memory th))
   :
@@ -2757,12 +2757,12 @@ Proof.
   { eapply ident_map_collapsing_latest_memory; cycle 3; eauto. }
   assert (MLE1: memory_concrete_le mem_src mem0).
   { eapply collapsing_latest_memory_concrete_le; cycle 3; eauto. }
-  assert (CONCRETELE: memory_concrete_le th.(Thread.memory) mem_src).
+  assert (CONCRETELE: memory_concrete_le (Thread.memory th) mem_src).
   { eapply collapsing_caps_forget_le; eauto. }
-  assert (LCWFTGT: Local.wf th.(Thread.local) mem_src).
+  assert (LCWFTGT: Local.wf (Thread.local th) mem_src).
   { eapply memory_concrete_le_local_wf; eauto. inv WF.
     eapply collapsing_caps_forget_prom_le; eauto. }
-  assert (LCWFSRC: Local.wf th.(Thread.local) mem0).
+  assert (LCWFSRC: Local.wf (Thread.local th) mem0).
   { eapply memory_concrete_le_local_wf; eauto. inv WF.
     eapply forget_latest_other_reserves_promises_le; eauto. }
   assert (CLOSEDSRC: Memory.closed mem0).
@@ -2907,7 +2907,7 @@ Lemma concrete_promised_increase_steps
       lang (th0 th1: Thread.t lang) tr
       (STEPS: traced_step tr th0 th1)
   :
-    concrete_promised th0.(Thread.memory) <2= concrete_promised th1.(Thread.memory).
+    concrete_promised (Thread.memory th0) <2= concrete_promised (Thread.memory th1).
 Proof.
   ginduction STEPS; i; auto.
   eapply IHSTEPS. inv HD.  eapply concrete_promised_increase; eauto.
@@ -2916,7 +2916,7 @@ Qed.
 
 Lemma write_not_cross_concrete_steps (tm: TimeMap.t)
       lang (th0 th1: Thread.t lang) tr
-      (CONCRETE: forall loc, concrete_promised th0.(Thread.memory) loc (tm loc))
+      (CONCRETE: forall loc, concrete_promised (Thread.memory th0) loc (tm loc))
       (STEPS: traced_step tr th0 th1)
   :
     List.Forall (fun em => (write_in (earlier_times tm) \1/ write_in (later_times tm)) (fst em)) tr.
@@ -2930,26 +2930,26 @@ Proof.
 Qed.
 
 Definition pf_consistent_drf lang (e0:Thread.t lang): Prop :=
-  let L := (fun loc => Memory.latest_reserve loc e0.(Thread.local).(Local.promises) e0.(Thread.memory)) in
+  let L := (fun loc => Memory.latest_reserve loc (Local.promises (Thread.local e0)) (Thread.memory e0)) in
   forall mem2 max sc
-         (FORGET: forget_memory (latest_other_reserves e0.(Thread.local).(Local.promises) e0.(Thread.memory)) mem2 e0.(Thread.memory))
-         (MAX: Memory.max_full_timemap e0.(Thread.memory) max),
+         (FORGET: forget_memory (latest_other_reserves (Local.promises (Thread.local e0)) (Thread.memory e0)) mem2 (Thread.memory e0))
+         (MAX: Memory.max_full_timemap (Thread.memory e0) max),
   exists e2 (U: list Loc.t) (AU: list Loc.t) tr max',
     (<<DISJOINT: forall loc (INU: List.In loc U) (INAU: List.In loc AU), False>>) /\
     (<<AUPDATES: forall loc (INAU: List.In loc AU), ~ L loc>>) /\
-    (<<STEPS: traced_step tr (Thread.mk _ e0.(Thread.state) e0.(Thread.local) sc mem2) e2>>) /\
+    (<<STEPS: traced_step tr (Thread.mk _ (Thread.state e0) (Thread.local e0) sc mem2) e2>>) /\
     (<<TIMEMAP: TimeMap.le max max'>>) /\
     (<<GAP: forall loc (NUPDATES: ~ List.In loc (U ++ AU)),
         Time.lt (max loc) (max' loc)>>) /\
-    (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts e0.(Thread.memory) loc to>>) /\
+    (<<ATTATCHED: not_attatched (fun loc to => (<<MAX: Memory.max_full_ts (Thread.memory e0) loc to>>) /\
                                                (<<NUPDATES: ~ List.In loc (U ++ AU)>>))
-                                e2.(Thread.memory)>>) /\
+                                (Thread.memory e2)>>) /\
     (<<TRACE: List.Forall (fun em => (no_sc /1\
                                             (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent) /1\
-                                            (no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts e0.(Thread.memory)))
+                                            (no_acq_update_on ((fun loc to => L loc) /2\ Memory.max_full_ts (Thread.memory e0)))
                                             /1\
-                                            __guard__((write_in (later_times max')) \1/ (write_in (concrete_covered e0.(Thread.local).(Local.promises) e0.(Thread.memory) /2\ earlier_times max)))
-                                            (* (write_in (later_times max' \2/ (concrete_covered e0.(Thread.local).(Local.promises) e0.(Thread.memory) /2\ earlier_times max))) *)
+                                            __guard__((write_in (later_times max')) \1/ (write_in (concrete_covered (Local.promises (Thread.local e0)) (Thread.memory e0) /2\ earlier_times max)))
+                                            (* (write_in (later_times max' \2/ (concrete_covered (Local.promises (Thread.local e0)) (Thread.memory e0) /2\ earlier_times max))) *)
                                             /1\
                                             (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent)
                                      ) (fst em)) tr>>) /\
@@ -2962,11 +2962,11 @@ Definition pf_consistent_drf lang (e0:Thread.t lang): Prop :=
        exists to valr valw releasedr releasedw ordr ordw mem,
          <<IN: List.In (ThreadEvent.update loc (max loc) to valr valw releasedr releasedw ordr ordw, mem) tr>> >>) /\
     (__guard__((exists st',
-                     (<<LOCAL: Local.failure_step e2.(Thread.local)>>) /\
+                     (<<LOCAL: Local.failure_step (Thread.local e2)>>) /\
                      (<<FAILURE: Language.step lang ProgramEvent.failure (@Thread.state lang e2) st'>>)) \/
-               ((<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>) /\
+               ((<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>) /\
                 (<<COMPLETEW:
-                   forall loc to (PROMISED: concrete_promised e0.(Thread.local).(Local.promises) loc to),
+                   forall loc to (PROMISED: concrete_promised (Local.promises (Thread.local e0)) loc to),
                    exists e m,
                      (<<IN: List.In (e, m) tr>>) /\
                      (<<WRITETO: rlx_write_to loc to e>>)>>))))
@@ -2999,8 +2999,8 @@ Proof.
 Qed.
 
 Lemma pf_consistent_pf_consistent_drf lang (th: Thread.t lang)
-      (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-      (MEM: Memory.closed th.(Thread.memory))
+      (WF: Local.wf (Thread.local th) (Thread.memory th))
+      (MEM: Memory.closed (Thread.memory th))
       (CONSISTENT: pf_consistent th)
       (RESERVEWF: memory_reserve_wf (Thread.memory th))
   :

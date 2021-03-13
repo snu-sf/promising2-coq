@@ -49,11 +49,11 @@ Module PFStep.
 
   Inductive sim_thread (lang: language) (e_src e_tgt: @Thread.t lang): Prop :=
   | sim_thread_intro
-      (STATE: e_src.(Thread.state) = e_tgt.(Thread.state))
-      (LOCAL: sim_local e_src.(Thread.local) e_tgt.(Thread.local))
-      (SC: e_src.(Thread.sc) = e_tgt.(Thread.sc))
-      (MEMORY: sim_memory e_tgt.(Thread.local).(Local.promises)
-                          e_src.(Thread.memory) e_tgt.(Thread.memory))
+      (STATE: (Thread.state e_src) = (Thread.state e_tgt))
+      (LOCAL: sim_local (Thread.local e_src) (Thread.local e_tgt))
+      (SC: (Thread.sc e_src) = (Thread.sc e_tgt))
+      (MEMORY: sim_memory (Local.promises (Thread.local e_tgt))
+                          (Thread.memory e_src) (Thread.memory e_tgt))
   .
 
 
@@ -153,7 +153,7 @@ Module PFStep.
         lc1_src mem1_src
         lc1_tgt mem1_tgt loc to val released ord lc2_tgt
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (STEP_TGT: Local.read_step lc1_tgt mem1_tgt loc to val released ord lc2_tgt)
         (CONS_TGT: Local.promise_consistent lc2_tgt):
@@ -292,7 +292,7 @@ Module PFStep.
         lc1_src mem1_src
         lc1_tgt sc1 mem1_tgt loc from to val releasedm released ord lc2_tgt sc2 mem2_tgt kind
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (RELEASEDM: View.opt_wf releasedm)
         (STEP_TGT: Local.write_step lc1_tgt sc1 mem1_tgt loc from to val
@@ -301,7 +301,7 @@ Module PFStep.
       <<STEP_SRC: ALocal.write_step lc1_src sc1 mem1_src loc from to val
                                    releasedm released ord lc2_src sc2 mem2_src Memory.op_kind_add>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory lc2_tgt.(Local.promises) mem2_src mem2_tgt>>.
+      <<MEM2: sim_memory (Local.promises lc2_tgt) mem2_src mem2_tgt>>.
   Proof.
     destruct lc1_src, lc1_tgt. ss.
     inv STEP_TGT. inv WRITE. inv LOCAL1. ss. subst.
@@ -326,7 +326,7 @@ Module PFStep.
         lc1_src mem1_src
         e lc1_tgt sc1 mem1_tgt lc2_tgt sc2 mem2_tgt
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_TGT: Memory.closed mem1_tgt)
         (STEP_TGT: Local.program_step e lc1_tgt sc1 mem1_tgt lc2_tgt sc2 mem2_tgt)
@@ -334,7 +334,7 @@ Module PFStep.
     exists lc2_src mem2_src,
       <<STEP_SRC: ALocal.program_step e lc1_src sc1 mem1_src lc2_src sc2 mem2_src>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory lc2_tgt.(Local.promises) mem2_src mem2_tgt>>.
+      <<MEM2: sim_memory (Local.promises lc2_tgt) mem2_src mem2_tgt>>.
   Proof.
     inv STEP_TGT.
     - esplits; eauto.
@@ -365,8 +365,8 @@ Module PFStep.
         lang e1_src
         pf e_tgt e1_tgt e2_tgt
         (SIM1: @sim_thread lang e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.promise_step pf e_tgt e1_tgt e2_tgt):
     sim_thread e1_src e2_tgt.
   Proof.
@@ -382,10 +382,10 @@ Module PFStep.
         lang e1_src
         e e1_tgt e2_tgt
         (SIM1: @sim_thread lang e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.program_step e e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEP_SRC: AThread.program_step e e1_src e2_src>> /\
       <<SIM2: sim_thread e2_src e2_tgt>>.
@@ -402,11 +402,11 @@ Module PFStep.
         lang e1_src
         e1_tgt e2_tgt
         (SIM1: @sim_thread lang e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.all_step lang) e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEPS_SRC: rtc (union (@AThread.program_step lang)) e1_src e2_src>> /\
       <<SIM2: sim_thread e2_src e2_tgt>>.
@@ -429,11 +429,11 @@ Module PFStep.
         lang e1_src
         e1_tgt e2_tgt
         (SIM1: @sim_thread lang e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEPS_SRC: rtc (tau (@AThread.program_step lang)) e1_src e2_src>> /\
       <<SIM2: sim_thread e2_src e2_tgt>>.
@@ -510,9 +510,9 @@ Module PFStep.
 
   Lemma sim_thread_exists
         lang e
-        (WF: Local.wf e.(Thread.local) e.(Thread.memory))
-        (SC: Memory.closed_timemap e.(Thread.sc) e.(Thread.memory))
-        (MEM: Memory.closed e.(Thread.memory)):
+        (WF: Local.wf (Thread.local e) (Thread.memory e))
+        (SC: Memory.closed_timemap (Thread.sc e) (Thread.memory e))
+        (MEM: Memory.closed (Thread.memory e)):
     exists e_src, <<SIM: @sim_thread lang e_src e>>.
   Proof.
     destruct e. destruct local. inv WF. ss.

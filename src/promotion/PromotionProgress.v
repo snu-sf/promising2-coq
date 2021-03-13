@@ -72,7 +72,7 @@ Module PromotionProgress.
         (WF1: Local.wf lc1 mem1)
         (MEM1: Memory.closed mem1)
         (LATEST: Memory.get l (Memory.max_ts l mem1) mem1 = Some (from, Message.full val released))
-        (SAFE: View.le released.(View.unwrap) lc1.(Local.tview).(TView.cur)):
+        (SAFE: View.le (View.unwrap released) (TView.cur (Local.tview lc1))):
     exists lc2,
       <<STEP: Local.read_step lc1 mem1 l (Memory.max_ts l mem1) val released ord lc2>> /\
       <<LC: sim_local l lc1 lc2>>.
@@ -111,16 +111,16 @@ Module PromotionProgress.
         (MEM1: Memory.closed mem1)
         (WF_REL: View.opt_wf releasedm)
         (CLOSED_REL: Memory.closed_opt_view releasedm mem1)
-        (PROMISES1: forall to, Memory.get l to lc1.(Local.promises) = None)
-        (SAFE1: View.le releasedm.(View.unwrap) lc1.(Local.tview).(TView.cur)):
+        (PROMISES1: forall to, Memory.get l to (Local.promises lc1) = None)
+        (SAFE1: View.le (View.unwrap releasedm) (TView.cur (Local.tview lc1))):
     exists released lc2 sc2 mem2,
       <<STEP: Local.write_step lc1 sc1 mem1 l (Memory.max_ts l mem1) (Time.incr (Memory.max_ts l mem1))
                                val releasedm released ord lc2 sc2 mem2 Memory.op_kind_add>> /\
       <<LC: sim_local l lc1 lc2>> /\
       <<SC: sc1 = sc2>> /\
       <<MEM: sim_memory l mem1 mem2>> /\
-      <<PROMISES2: forall to, Memory.get l to lc2.(Local.promises) = None>> /\
-      <<SAFE2: View.le released.(View.unwrap) lc2.(Local.tview).(TView.cur)>>.
+      <<PROMISES2: forall to, Memory.get l to (Local.promises lc2) = None>> /\
+      <<SAFE2: View.le (View.unwrap released) (TView.cur (Local.tview lc2))>>.
   Proof.
     exploit (@progress_write_step lc1 sc1 mem1 l (Time.incr (Memory.max_ts l mem1)) val releasedm ord); eauto.
     { apply Time.incr_spec. }

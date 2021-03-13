@@ -27,8 +27,8 @@ Set Implicit Arguments.
 Module PFCommon.
   Inductive sim_local (lc_src lc_tgt: Local.t): Prop :=
   | sim_local_intro
-      (TVIEW: lc_src.(Local.tview) = lc_tgt.(Local.tview))
-      (PROMISES: lc_src.(Local.promises) = Memory.bot)
+      (TVIEW: (Local.tview lc_src) = (Local.tview lc_tgt))
+      (PROMISES: (Local.promises lc_src) = Memory.bot)
   .
   Hint Constructors sim_local.
 

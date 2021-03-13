@@ -71,8 +71,8 @@ Lemma merge_write_read
       (MEM0: Memory.closed mem0)
       (WF_RELEASED: View.opt_wf releasedm)
       (WF_CLOSED: Memory.closed_opt_view releasedm mem0)
-      (RLX: Ordering.le Ordering.relaxed ord2 -> View.le releasedm.(View.unwrap) lc0.(Local.tview).(TView.acq))
-      (ACQ: Ordering.le Ordering.acqrel ord2 -> View.le releasedm.(View.unwrap) lc0.(Local.tview).(TView.cur))
+      (RLX: Ordering.le Ordering.relaxed ord2 -> View.le (View.unwrap releasedm) (TView.acq (Local.tview lc0)))
+      (ACQ: Ordering.le Ordering.acqrel ord2 -> View.le (View.unwrap releasedm) (TView.cur (Local.tview lc0)))
       (STEP: Local.write_step lc0 sc0 mem0 loc from to val releasedm released ord1 lc1 sc1 mem1 kind):
   Local.read_step lc1 mem1 loc to val released ord2 lc1.
 Proof.
@@ -115,7 +115,7 @@ Lemma to_lt_from_le
   Time.le to1 from2.
 Proof.
   destruct (TimeFacts.le_lt_dec to1 from2); auto.
-  destruct (mem loc).(Cell.WF). exfalso. eapply DISJOINT.
+  destruct (Cell.WF (mem loc)). exfalso. eapply DISJOINT.
   - apply GET1.
   - apply GET2.
   - ii. subst. eapply Time.lt_strorder. eauto.
@@ -133,7 +133,7 @@ Lemma fulfill_step_lc_from
       (WF: Local.wf lc0 mem0)
       (MEM: Memory.closed mem0)
       (STEP: fulfill_step lc0 sc0 loc from to val releasedm released ord lc1 sc1):
-  Time.le (lc0.(Local.tview).(TView.cur).(View.rlx) loc) from.
+  Time.le ((TView.cur (Local.tview lc0)).(View.rlx) loc) from.
 Proof.
   inv WF. inv STEP.
   exploit Memory.remove_get0; eauto. i. des.
@@ -150,8 +150,8 @@ Lemma merge_split
       (WF0: Local.wf lc0 mem0)
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
-      (LC0_TS: Time.le (lc0.(Local.tview).(TView.cur).(View.rlx) loc) ts1)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (LC0_TS: Time.le ((TView.cur (Local.tview lc0)).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_WF: View.opt_wf released0)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
@@ -219,7 +219,7 @@ Lemma merge_write_write_relaxed
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (ORD: Ordering.le ord Ordering.relaxed)
       (TS12: Time.lt ts1 ts2)
@@ -415,8 +415,8 @@ Qed.
 Lemma write_step_nonsynch_loc
       lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind l
       (STEP: Local.write_step lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind)
-      (PROMISES: Memory.nonsynch_loc l lc1.(Local.promises)):
-  Memory.nonsynch_loc l lc2.(Local.promises).
+      (PROMISES: Memory.nonsynch_loc l (Local.promises lc1)):
+  Memory.nonsynch_loc l (Local.promises lc2).
 Proof.
   inv STEP. inv WRITE. s. ii. revert GET.
   erewrite Memory.remove_o; eauto. condtac; ss. inv PROMISE; ss.
@@ -437,7 +437,7 @@ Lemma merge_write_write_add
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
       (TS23: Time.lt ts2 ts3)
@@ -495,7 +495,7 @@ Lemma merge_write_write_split
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
       (TS23: Time.lt ts2 ts3)
@@ -554,7 +554,7 @@ Lemma merge_write_write_lower
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
       (TS23: Time.lt ts2 ts3)
@@ -613,7 +613,7 @@ Lemma merge_write_write
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
       (TS23: Time.lt ts2 ts3)
@@ -648,7 +648,7 @@ Lemma merge_write_write_None
       (SC0: Memory.closed_timemap sc0 mem0)
       (MEM0: Memory.closed mem0)
       (REL0_WF: View.opt_wf released0)
-      (REL0_TS: Time.le (released0.(View.unwrap).(View.rlx) loc) ts1)
+      (REL0_TS: Time.le ((View.rlx (View.unwrap released0)) loc) ts1)
       (REL0_CLOSED: Memory.closed_opt_view released0 mem0)
       (TS12: Time.lt ts1 ts2)
       (TS23: Time.lt ts2 ts3)

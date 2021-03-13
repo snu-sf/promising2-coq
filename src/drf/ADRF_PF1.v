@@ -56,7 +56,7 @@ Section NOREADSELFPROMS.
         (CONSISTENT: Local.promise_consistent (Local.mk v' prom'))
         (STEP: AThread.step pf e_tgt th_tgt th_tgt')
     :
-      no_read_msgs prom.(promised) e_tgt.
+      no_read_msgs (promised prom) e_tgt.
   Proof.
     inv STEP; ss.
     - inv STEP0. ss.
@@ -349,7 +349,7 @@ Section SELFPROMISEREMOVE.
   Lemma self_promise_remove
         P lang th_src th_tgt th_tgt' st st' v v' prom prom' sc sc'
         mem_src mem_tgt mem_tgt' e_tgt
-        (NOREAD: P <1= no_read_msgs prom.(promised))
+        (NOREAD: P <1= no_read_msgs (promised prom))
         (STEP: (@pred_step P lang) e_tgt th_tgt th_tgt')
         (TH_SRC: th_src = Thread.mk lang st (Local.mk v Memory.bot) sc mem_src)
         (TH_TGT0: th_tgt = Thread.mk lang st (Local.mk v prom) sc mem_tgt)
@@ -804,11 +804,11 @@ Section NOTATTATCHED.
   Lemma attatched_preserve P updates lang (th0 th1: Thread.t lang) e
         (PRED: P <1= no_promise)
         (STEP: (@pred_step P lang) e th0 th1)
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
-        (NOATTATCHED: not_attatched updates th1.(Thread.memory))
-        (PROMISED: updates <2= concrete_promised th0.(Thread.memory))
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
+        (NOATTATCHED: not_attatched updates (Thread.memory th1))
+        (PROMISED: updates <2= concrete_promised (Thread.memory th0))
     :
-      not_attatched updates th0.(Thread.memory).
+      not_attatched updates (Thread.memory th0).
   Proof.
     inv STEP. inv STEP0. eapply PRED in SAT. inv STEP.
     - inv STEP0; des; clarify.
@@ -826,9 +826,9 @@ Section NOTATTATCHED.
   Lemma update_not_attatched P lang (th0 th1: Thread.t lang)
         loc from to valr valw releasedr releasedw ordr ordw
         (STEP: (@pred_step P lang) (ThreadEvent.update loc from to valr valw releasedr releasedw ordr ordw) th0 th1)
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
     :
-      not_attatched (fun l t => l = loc /\ t = from) th0.(Thread.memory).
+      not_attatched (fun l t => l = loc /\ t = from) (Thread.memory th0).
   Proof.
     inv STEP. inv STEP0. inv STEP; ss.
     - inv STEP0; des; clarify.
@@ -844,11 +844,11 @@ Section NOTATTATCHED.
   Lemma attatched_preserve_rtc P updates lang (th0 th1: Thread.t lang)
         (PRED: P <1= no_promise)
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
-        (NOATTATCHED: not_attatched updates th1.(Thread.memory))
-        (PROMISED: updates <2= concrete_promised th0.(Thread.memory))
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
+        (NOATTATCHED: not_attatched updates (Thread.memory th1))
+        (PROMISED: updates <2= concrete_promised (Thread.memory th0))
     :
-      not_attatched updates th0.(Thread.memory).
+      not_attatched updates (Thread.memory th0).
   Proof.
     revert BOT PROMISED. induction STEP; auto.
     i. hexploit IHSTEP; eauto.
@@ -1122,7 +1122,7 @@ Section NOTATTATCHED.
         L lang th_src th_tgt th_tgt' st st' lc lc' sc sc'
         mem_tgt mem_tgt' mem_src tr_tgt
         (PRED: List.Forall (fun em => (no_update_on L /1\ promise_free) (fst em)) tr_tgt)
-        (LCWF: Memory.le lc.(Local.promises) mem_src)
+        (LCWF: Memory.le (Local.promises lc) mem_src)
         (STEPS: traced_step tr_tgt th_tgt th_tgt')
         (TH_SRC: th_src = Thread.mk lang st lc sc mem_src)
         (TH_TGT0: th_tgt = Thread.mk lang st lc sc mem_tgt)
@@ -1161,8 +1161,8 @@ Section FORGET.
     sigT (@Language.state ProgramEvent.t) * Local.t -> sigT (@Language.state ProgramEvent.t) * Local.t -> Prop :=
   | forget_statelocal_intro
       st lc1 lc2
-      (TVIEW : lc1.(Local.tview) = lc2.(Local.tview))
-      (PROMS : lc1.(Local.promises) = Memory.bot)
+      (TVIEW : (Local.tview lc1) = (Local.tview lc2))
+      (PROMS : (Local.promises lc1) = Memory.bot)
     :
       forget_statelocal (st, lc1) (st, lc2)
   .
@@ -1190,7 +1190,7 @@ Section FORGET.
   | all_promises_intro
       tid st lc
       (TID1: IdentMap.find tid ths = Some (st, lc))
-      (PROMISED: promised lc.(Local.promises) l t)
+      (PROMISED: promised (Local.promises lc) l t)
       (SAT: P tid)
   .
 
@@ -1198,10 +1198,10 @@ Section FORGET.
   | forget_configuration_intro
       (THS : forall tid, option_rel
                            forget_statelocal
-                           (IdentMap.find tid csrc.(Configuration.threads))
-                           (IdentMap.find tid ctgt.(Configuration.threads)))
-      (SC : csrc.(Configuration.sc) = ctgt.(Configuration.sc))
-      (MEM : pf_sim_memory (all_promises ctgt.(Configuration.threads) (fun _ => True))
+                           (IdentMap.find tid (Configuration.threads csrc))
+                           (IdentMap.find tid (Configuration.threads ctgt)))
+      (SC : (Configuration.sc csrc) = (Configuration.sc ctgt))
+      (MEM : pf_sim_memory (all_promises (Configuration.threads ctgt) (fun _ => True))
                            (Configuration.memory csrc)
                            (Configuration.memory ctgt))
   .
@@ -1243,10 +1243,10 @@ Proof.
 Qed.
 
 Lemma memory_reserve_wf_tstep lang (th0 th1: Thread.t lang) tf e
-      (RESERVE: memory_reserve_wf th0.(Thread.memory))
+      (RESERVE: memory_reserve_wf (Thread.memory th0))
       (STEP: Thread.step tf e th0 th1)
   :
-    memory_reserve_wf th1.(Thread.memory).
+    memory_reserve_wf (Thread.memory th1).
 Proof.
   inv STEP; inv STEP0; ss.
   - inv LOCAL. eapply memory_reserve_wf_promise; eauto.
@@ -1258,10 +1258,10 @@ Proof.
 Qed.
 
 Lemma memory_reserve_wf_tsteps lang (th0 th1: Thread.t lang)
-      (RESERVE: memory_reserve_wf th0.(Thread.memory))
+      (RESERVE: memory_reserve_wf (Thread.memory th0))
       (STEP: rtc (tau (@Thread.step_allpf lang)) th0 th1)
   :
-    memory_reserve_wf th1.(Thread.memory).
+    memory_reserve_wf (Thread.memory th1).
 Proof.
   ginduction STEP; eauto.
   i. eapply IHSTEP; eauto. inv H. inv TSTEP.
@@ -1277,10 +1277,10 @@ Proof.
 Qed.
 
 Lemma memory_reserve_wf_configuration_step c0 c1 e tid
-      (RESERVE: memory_reserve_wf c0.(Configuration.memory))
+      (RESERVE: memory_reserve_wf (Configuration.memory c0))
       (STEP: Configuration.step e tid c0 c1)
   :
-    memory_reserve_wf c1.(Configuration.memory).
+    memory_reserve_wf (Configuration.memory c1).
 Proof.
   eapply configuration_step_equivalent in STEP. inv STEP. ss.
   eapply memory_reserve_wf_tstep in STEP0; eauto.
@@ -1375,11 +1375,11 @@ Qed.
 
 Definition reserver_exists (c: Configuration.t) :=
   forall loc to from
-         (RESERVE: Memory.get loc to c.(Configuration.memory) = Some (from, Message.reserve)),
+         (RESERVE: Memory.get loc to (Configuration.memory c) = Some (from, Message.reserve)),
   exists tid st lc,
-    (<<TIDSRC: IdentMap.find tid c.(Configuration.threads) =
+    (<<TIDSRC: IdentMap.find tid (Configuration.threads c) =
                Some (st, lc)>>) /\
-    (<<PROM: Memory.get loc to lc.(Local.promises) = Some (from, Message.reserve)>>).
+    (<<PROM: Memory.get loc to (Local.promises lc) = Some (from, Message.reserve)>>).
 
 Require Import APFPF.
 
@@ -1428,11 +1428,11 @@ Qed.
 Lemma step_new_reserve lang (th0 th1: Thread.t lang) e
       (STEP: AThread.step_allpf e th0 th1)
       loc0 to0 from0
-      (GET: Memory.get loc0 to0 th1.(Thread.memory) = Some (from0, Message.reserve))
-      (NONE: Memory.get loc0 to0 th1.(Thread.local).(Local.promises) <> Some (from0, Message.reserve))
+      (GET: Memory.get loc0 to0 (Thread.memory th1) = Some (from0, Message.reserve))
+      (NONE: Memory.get loc0 to0 (Local.promises (Thread.local th1)) <> Some (from0, Message.reserve))
   :
-    (<<GET: Memory.get loc0 to0 th0.(Thread.memory) = Some (from0, Message.reserve)>>) /\
-    (<<NONE: Memory.get loc0 to0 th0.(Thread.local).(Local.promises) <> Some (from0, Message.reserve)>>)
+    (<<GET: Memory.get loc0 to0 (Thread.memory th0) = Some (from0, Message.reserve)>>) /\
+    (<<NONE: Memory.get loc0 to0 (Local.promises (Thread.local th0)) <> Some (from0, Message.reserve)>>)
 .
 Proof.
   inv STEP. inv STEP0; inv STEP.
@@ -1446,11 +1446,11 @@ Qed.
 Lemma steps_new_reserve lang (th0 th1: Thread.t lang)
       (STEPS: rtc (tau (@AThread.step_allpf _)) th0 th1)
       loc0 to0 from0
-      (GET: Memory.get loc0 to0 th1.(Thread.memory) = Some (from0, Message.reserve))
-      (NONE: Memory.get loc0 to0 th1.(Thread.local).(Local.promises) <> Some (from0, Message.reserve))
+      (GET: Memory.get loc0 to0 (Thread.memory th1) = Some (from0, Message.reserve))
+      (NONE: Memory.get loc0 to0 (Local.promises (Thread.local th1)) <> Some (from0, Message.reserve))
   :
-    (<<GET: Memory.get loc0 to0 th0.(Thread.memory) = Some (from0, Message.reserve)>>) /\
-    (<<NONE: Memory.get loc0 to0 th0.(Thread.local).(Local.promises) <> Some (from0, Message.reserve)>>)
+    (<<GET: Memory.get loc0 to0 (Thread.memory th0) = Some (from0, Message.reserve)>>) /\
+    (<<NONE: Memory.get loc0 to0 (Local.promises (Thread.local th0)) <> Some (from0, Message.reserve)>>)
 .
 Proof.
   ginduction STEPS.
@@ -1466,7 +1466,7 @@ Lemma step_reserver_exists_tgt c0 c1 tid e
     reserver_exists c1.
 Proof.
   apply configuration_step_equivalent in STEP. inv STEP. ii. ss.
-  destruct (classic (Memory.get loc to lc3.(Local.promises) = Some (from, Message.reserve))).
+  destruct (classic (Memory.get loc to (Local.promises lc3) = Some (from, Message.reserve))).
   - exists tid. erewrite IdentMap.gss. esplits; eauto.
   - exploit step_new_reserve.
     { eapply thread_step_athread_step. econs; eauto. } all: eauto.
@@ -1488,7 +1488,7 @@ Lemma step_reserver_exists_src c0 c1 tid e
     reserver_exists c1.
 Proof.
   inv STEP. ii. ss.
-  destruct (classic (Memory.get loc to lc3.(Local.promises) = Some (from, Message.reserve))).
+  destruct (classic (Memory.get loc to (Local.promises lc3) = Some (from, Message.reserve))).
   - exists tid. erewrite IdentMap.gss. esplits; eauto.
   - exploit step_new_reserve.
     { econs. econs 2; eauto. } all: eauto.
@@ -1555,9 +1555,9 @@ Section SIMPF.
 
   Inductive thread_wf lang (th: Thread.t lang): Prop :=
   | thread_wf_intro
-      (SC: Memory.closed_timemap th.(Thread.sc) th.(Thread.memory))
-      (CLOSED: Memory.closed th.(Thread.memory))
-      (LCWF: Local.wf th.(Thread.local) th.(Thread.memory))
+      (SC: Memory.closed_timemap (Thread.sc th) (Thread.memory th))
+      (CLOSED: Memory.closed (Thread.memory th))
+      (LCWF: Local.wf (Thread.local th) (Thread.memory th))
   .
 
   Inductive sim_pf_one
@@ -1568,19 +1568,19 @@ Section SIMPF.
             (aupdates: (Loc.t -> Time.t -> Prop))
             (c_src c_tgt: Configuration.t) : Prop :=
   | sim_pf_one_intro
-      (FUTURE: unchanged_on spaces mlast c_src.(Configuration.memory))
-      (NOATTATCH: not_attatched (updates \2/ aupdates) c_src.(Configuration.memory))
+      (FUTURE: unchanged_on spaces mlast (Configuration.memory c_src))
+      (NOATTATCH: not_attatched (updates \2/ aupdates) (Configuration.memory c_src))
       (INV:
          forall
            lang_src st_src lc_src lang_tgt st_tgt lc_tgt
-           (TIDSRC: IdentMap.find tid c_src.(Configuration.threads) =
+           (TIDSRC: IdentMap.find tid (Configuration.threads c_src) =
                     Some (existT _ lang_src st_src, lc_src))
-           (TIDTGT: IdentMap.find tid c_tgt.(Configuration.threads) =
+           (TIDTGT: IdentMap.find tid (Configuration.threads c_tgt) =
                     Some (existT _ lang_tgt st_tgt, lc_tgt)),
-           Inv.t c_tgt.(Configuration.memory) _ st_src lc_src lc_tgt.(Local.promises) spaces updates aupdates mlast)
+           Inv.t (Configuration.memory c_tgt) _ st_src lc_src (Local.promises lc_tgt) spaces updates aupdates mlast)
       (INVBOT:
          forall
-           (TIDSRC: IdentMap.find tid c_src.(Configuration.threads) = None),
+           (TIDSRC: IdentMap.find tid (Configuration.threads c_src) = None),
            (<<SPACESBOT: spaces <2= bot2>>) /\
            (<<UPDATESBOT: updates <2= bot2>>) /\
            (<<AUPDATESBOT: aupdates <2= bot2>>))
@@ -1600,7 +1600,7 @@ Section SIMPF.
       (RACEFREE: pf_racefree APFConfiguration.step c_src)
       (WFSRC: Configuration.wf c_src)
       (WFTGT: Configuration.wf c_tgt)
-      (RESERVEWF: memory_reserve_wf c_tgt.(Configuration.memory))
+      (RESERVEWF: memory_reserve_wf (Configuration.memory c_tgt))
       (RESERVERTGT: reserver_exists c_tgt)
       (RESERVERSRC: reserver_exists c_src)
   .
@@ -1671,10 +1671,10 @@ Section SIMPF.
   Lemma sim_pf_src_no_promise idents mlast spaces updates aupdates c_src c_tgt
         (SIM: sim_pf idents mlast spaces updates aupdates c_src c_tgt)
         tid st lc
-        (TIDSRC: IdentMap.find tid c_src.(Configuration.threads) =
+        (TIDSRC: IdentMap.find tid (Configuration.threads c_src) =
                  Some (st, lc))
     :
-      lc.(Local.promises) = Memory.bot.
+      (Local.promises lc) = Memory.bot.
   Proof.
     inv SIM. inv FORGET. specialize (THS tid).
     unfold option_rel in THS. des_ifs. inv THS. auto.
@@ -1683,7 +1683,7 @@ Section SIMPF.
   Lemma sim_pf_src_no_reserve idents mlast spaces updates aupdates c_src c_tgt
         (SIM: sim_pf idents mlast spaces updates aupdates c_src c_tgt)
         loc to from
-        (RESERVE: Memory.get loc to c_src.(Configuration.memory) = Some (from, Message.reserve))
+        (RESERVE: Memory.get loc to (Configuration.memory c_src) = Some (from, Message.reserve))
     :
       False.
   Proof.
@@ -1711,9 +1711,9 @@ Section SIMPF.
 
   Lemma sim_pf_max_timemap idents mlast spaces updates aupdates c_src c_tgt max
         (SIM: sim_pf idents mlast spaces updates aupdates c_src c_tgt)
-        (MAX: Memory.max_full_timemap c_tgt.(Configuration.memory) max)
+        (MAX: Memory.max_full_timemap (Configuration.memory c_tgt) max)
     :
-      TimeMap.le (Memory.max_timemap c_src.(Configuration.memory)) max.
+      TimeMap.le (Memory.max_timemap (Configuration.memory c_src)) max.
   Proof.
     inv SIM. inv WFTGT. inv MEM. inv WFSRC. inv MEM. inv FORGET. ii.
     inv MEM. inv SHORTER. eapply less_covered_max_ts in COVER; eauto. etrans; eauto.

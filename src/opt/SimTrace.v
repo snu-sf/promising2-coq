@@ -31,34 +31,34 @@ Set Implicit Arguments.
 
 Definition lang_steps_failure (st1: State.t): Prop :=
   exists st2 st3,
-    <<STEPS: rtc (lang.(Language.step) ProgramEvent.silent) st1 st2>> /\
-    <<FAILURE: lang.(Language.step) ProgramEvent.failure st2 st3>>.
+    <<STEPS: rtc ((Language.step lang) ProgramEvent.silent) st1 st2>> /\
+    <<FAILURE: (Language.step lang) ProgramEvent.failure st2 st3>>.
 
 
 Definition SIM_TRACE :=
   forall (sim_regs:SIM_REGS)
-    (st1_src:lang.(Language.state))
-    (st1_tgt:lang.(Language.state)), Prop.
+    (st1_src:(Language.state lang))
+    (st1_tgt:(Language.state lang)), Prop.
 
 Definition _sim_trace
            (sim_trace:SIM_TRACE)
            (sim_regs:SIM_REGS)
-           (st1_src:lang.(Language.state))
-           (st1_tgt:lang.(Language.state)): Prop :=
+           (st1_src:(Language.state lang))
+           (st1_tgt:(Language.state lang)): Prop :=
   <<TERMINAL:
-    forall (TERMINAL_TGT: lang.(Language.is_terminal) st1_tgt),
+    forall (TERMINAL_TGT: (Language.is_terminal lang) st1_tgt),
       <<FAILURE: lang_steps_failure st1_src>> \/
       exists st2_src,
-        <<STEPS: rtc (lang.(Language.step) ProgramEvent.silent) st1_src st2_src>> /\
-        <<TERMINAL_SRC: lang.(Language.is_terminal) st2_src>> /\
-        <<TERMINAL: sim_regs st2_src.(State.regs) st1_tgt.(State.regs)>>>> /\
+        <<STEPS: rtc ((Language.step lang) ProgramEvent.silent) st1_src st2_src>> /\
+        <<TERMINAL_SRC: (Language.is_terminal lang) st2_src>> /\
+        <<TERMINAL: sim_regs (State.regs st2_src) (State.regs st1_tgt)>>>> /\
   <<STEP:
     forall e_tgt st3_tgt
-      (STEP_TGT: lang.(Language.step) e_tgt st1_tgt st3_tgt),
+      (STEP_TGT: (Language.step lang) e_tgt st1_tgt st3_tgt),
       <<FAILURE: lang_steps_failure st1_src>> \/
       exists e_src st2_src st3_src,
         <<EVT: ProgramEvent.ord e_src e_tgt>> /\
-        <<STEPS: rtc (lang.(Language.step) ProgramEvent.silent) st1_src st2_src>> /\
+        <<STEPS: rtc ((Language.step lang) ProgramEvent.silent) st1_src st2_src>> /\
         <<STEP_SRC: State.opt_step e_src st2_src st3_src>> /\
         <<SIM: sim_trace sim_regs st3_src st3_tgt>>>>.
 
@@ -74,7 +74,7 @@ Definition sim_trace: SIM_TRACE := paco3 _sim_trace bot3.
 
 Lemma rtc_lang_tau_step_rtc_thread_tau_step
       st1 st2 lc sc mem
-      (STEP: rtc (lang.(Language.step) ProgramEvent.silent) st1 st2):
+      (STEP: rtc ((Language.step lang) ProgramEvent.silent) st1 st2):
   rtc (@Thread.tau_step lang) (Thread.mk lang st1 lc sc mem) (Thread.mk lang st2 lc sc mem).
 Proof.
   induction STEP.

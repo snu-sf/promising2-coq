@@ -58,8 +58,8 @@ Inductive pf_race (c:Configuration.t): Prop :=
 | race_intro
     tid1 e1 lang1 st1 lc1
     tid2 e2 lang2 st2 lc2
-    (TID1: IdentMap.find tid1 c.(Configuration.threads) = Some (existT _ lang1 st1, lc1))
-    (TID2: IdentMap.find tid2 c.(Configuration.threads) = Some (existT _ lang2 st2, lc2))
+    (TID1: IdentMap.find tid1 (Configuration.threads c) = Some (existT _ lang1 st1, lc1))
+    (TID2: IdentMap.find tid2 (Configuration.threads c) = Some (existT _ lang2 st2, lc2))
     (TIDDIFF: tid1 <> tid2)
     (PROEVT1: can_step _ st1 e1)
     (PROEVT2: can_step _ st2 e2)

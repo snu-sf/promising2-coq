@@ -9,12 +9,13 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
 
 ## Build
 
-- Requirement: [Coq 8.9.1](https://coq.inria.fr/download), opam, Make, Rsync.
+- Requirement: [Coq 8.13.1](https://coq.inria.fr/download), opam.
 
 - Installing dependencies with opam
 
         opam repo add coq-released https://coq.inria.fr/opam/released
-        opam remote add coq-promising -k git https://github.com/snu-sf/promising-opam-coq-archive
+        opam repo add coq-sflib -k git https://github.com/snu-sf/sf-opam-coq-archive.git
+        opam repo add coq-promising -k git https://github.com/snu-sf/promising-opam-coq-archive.git#8.13
         opam install coq-paco.4.0.4 coq-sflib coq-promising-lib
 
 - Building the project

@@ -167,12 +167,12 @@ Module LowerPromises.
 
   Lemma steps_promises_rel
         lang e1
-        (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-        (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-        (CLOSED1: Memory.closed e1.(Thread.memory)):
+        (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+        (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+        (CLOSED1: Memory.closed (Thread.memory e1)):
     exists e2,
       <<STEPS: rtc (union (@Thread.opt_promise_step lang)) e1 e2>> /\
-      <<REL: promises_rel e1.(Thread.local).(Local.promises) e2.(Thread.local).(Local.promises)>>.
+      <<REL: promises_rel (Local.promises (Thread.local e1)) (Local.promises (Thread.local e2))>>.
   Proof.
     exploit promises_rel_aux_exists; try eapply WF1. i. des.
     revert e1 WF1 SC1 CLOSED1 x0.
@@ -183,8 +183,8 @@ Module LowerPromises.
     exploit Memory.lower_exists_le; try eapply WF1; eauto. i. des.
     cut (exists pf e e2,
             <<STEP: Thread.promise_step pf e e1 e2>> /\
-            <<REL: promises_rel_aux dom e1.(Thread.local).(Local.promises) e2.(Thread.local).(Local.promises)>> /\
-            <<REL: promises_rel_aux dom e2.(Thread.local).(Local.promises) e2.(Thread.local).(Local.promises)>>).
+            <<REL: promises_rel_aux dom (Local.promises (Thread.local e1)) (Local.promises (Thread.local e2))>> /\
+            <<REL: promises_rel_aux dom (Local.promises (Thread.local e2)) (Local.promises (Thread.local e2))>>).
     { i. des.
       exploit Thread.step_future; eauto.
       { econs; eauto. }
@@ -209,8 +209,8 @@ Module LowerPromises.
         lang e1 e2
         (STEPS: rtc (union (@Thread.opt_promise_step lang)) e1 e2):
     <<STEPS: rtc (@Thread.tau_step lang) e1 e2>> /\
-    <<STATE: e1.(Thread.state) = e2.(Thread.state)>> /\
-    <<TVIEW: e1.(Thread.local).(Local.tview) = e2.(Thread.local).(Local.tview)>>.
+    <<STATE: (Thread.state e1) = (Thread.state e2)>> /\
+    <<TVIEW: (Local.tview (Thread.local e1)) = (Local.tview (Thread.local e2))>>.
   Proof.
     induction STEPS; try by (splits; eauto). des.
     inv H. inv USTEP; eauto. splits.
@@ -223,8 +223,8 @@ Module LowerPromises.
 
   Lemma promises_rel_promise_consistent
         lc1 lc2
-        (TVIEW: lc1.(Local.tview) = lc2.(Local.tview))
-        (REL: promises_rel lc1.(Local.promises) lc2.(Local.promises))
+        (TVIEW: (Local.tview lc1) = (Local.tview lc2))
+        (REL: promises_rel (Local.promises lc1) (Local.promises lc2))
         (CONS: Local.promise_consistent lc1):
     Local.promise_consistent lc2.
   Proof.

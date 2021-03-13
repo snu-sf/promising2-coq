@@ -57,7 +57,7 @@ Lemma elim_read
     Local.read_step lc0 mem0 loc ts val released ord lc0.
 Proof.
   destruct lc0.
-  assert (exists from val released, Memory.get loc ((TView.cur tview).(View.pln) loc) mem0 = Some (from, Message.full val released)).
+  assert (exists from val released, Memory.get loc ((View.pln (TView.cur tview)) loc) mem0 = Some (from, Message.full val released)).
   { inv WF. ss. inv TVIEW_CLOSED. inv CUR.
     exploit PLN; eauto.
   }

@@ -60,8 +60,8 @@ Inductive reorder_load r1 l1 o1: forall (i2:Instr.t), Prop :=
     reorder_load r1 l1 o1 (Instr.fence or2 ow2)
 .
 
-Inductive sim_load: forall (st_src:lang.(Language.state)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
-                      (st_tgt:lang.(Language.state)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
+Inductive sim_load: forall (st_src:(Language.state lang)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
+                      (st_tgt:(Language.state lang)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
 | sim_load_intro
     r1 l1 ts1 v1 released1 o1 i2 rs
     lc1_src sc1_src mem1_src
@@ -116,10 +116,10 @@ Lemma sim_load_cap
       (MEM1: sim_memory mem1_src mem1_tgt)
       (SIM1: sim_load st_src lc_src sc1_src mem1_src
                       st_tgt lc_tgt sc1_tgt mem1_tgt)
-      (CAP_SRC: Memory.cap lc_src.(Local.promises) mem1_src mem2_src):
+      (CAP_SRC: Memory.cap (Local.promises lc_src) mem1_src mem2_src):
   exists lc'_src mem2_tgt,
     <<MEM2: sim_memory mem2_src mem2_tgt>> /\
-    <<CAP_TGT: Memory.cap lc_tgt.(Local.promises) mem1_tgt mem2_tgt>> /\
+    <<CAP_TGT: Memory.cap (Local.promises lc_tgt) mem1_tgt mem2_tgt>> /\
     <<SIM2: sim_load st_src lc'_src sc1_src mem2_src
                      st_tgt lc_tgt sc1_tgt mem2_tgt>>.
 Proof.

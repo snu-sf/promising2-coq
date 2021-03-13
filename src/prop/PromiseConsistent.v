@@ -116,11 +116,11 @@ Proof. destruct ord; auto. Qed.
 Lemma step_promise_consistent
       lang pf e th1 th2
       (STEP: @Thread.step lang pf e th1 th2)
-      (CONS: Local.promise_consistent th2.(Thread.local))
-      (WF1: Local.wf th1.(Thread.local) th1.(Thread.memory))
-      (SC1: Memory.closed_timemap th1.(Thread.sc) th1.(Thread.memory))
-      (MEM1: Memory.closed th1.(Thread.memory)):
-  Local.promise_consistent th1.(Thread.local).
+      (CONS: Local.promise_consistent (Thread.local th2))
+      (WF1: Local.wf (Thread.local th1) (Thread.memory th1))
+      (SC1: Memory.closed_timemap (Thread.sc th1) (Thread.memory th1))
+      (MEM1: Memory.closed (Thread.memory th1)):
+  Local.promise_consistent (Thread.local th1).
 Proof.
   inv STEP; [inv STEP0|inv STEP0; inv LOCAL]; ss.
   - eapply promise_step_promise_consistent; eauto.
@@ -135,11 +135,11 @@ Qed.
 Lemma rtc_all_step_promise_consistent
       lang th1 th2
       (STEP: rtc (@Thread.all_step lang) th1 th2)
-      (CONS: Local.promise_consistent th2.(Thread.local))
-      (WF1: Local.wf th1.(Thread.local) th1.(Thread.memory))
-      (SC1: Memory.closed_timemap th1.(Thread.sc) th1.(Thread.memory))
-      (MEM1: Memory.closed th1.(Thread.memory)):
-  Local.promise_consistent th1.(Thread.local).
+      (CONS: Local.promise_consistent (Thread.local th2))
+      (WF1: Local.wf (Thread.local th1) (Thread.memory th1))
+      (SC1: Memory.closed_timemap (Thread.sc th1) (Thread.memory th1))
+      (MEM1: Memory.closed (Thread.memory th1)):
+  Local.promise_consistent (Thread.local th1).
 Proof.
   revert_until STEP. induction STEP; auto. i.
   inv H. inv USTEP. exploit Thread.step_future; eauto. i. des.
@@ -149,11 +149,11 @@ Qed.
 Lemma rtc_tau_step_promise_consistent
       lang th1 th2
       (STEP: rtc (@Thread.tau_step lang) th1 th2)
-      (CONS: Local.promise_consistent th2.(Thread.local))
-      (WF1: Local.wf th1.(Thread.local) th1.(Thread.memory))
-      (SC1: Memory.closed_timemap th1.(Thread.sc) th1.(Thread.memory))
-      (MEM1: Memory.closed th1.(Thread.memory)):
-  Local.promise_consistent th1.(Thread.local).
+      (CONS: Local.promise_consistent (Thread.local th2))
+      (WF1: Local.wf (Thread.local th1) (Thread.memory th1))
+      (SC1: Memory.closed_timemap (Thread.sc th1) (Thread.memory th1))
+      (MEM1: Memory.closed (Thread.memory th1)):
+  Local.promise_consistent (Thread.local th1).
 Proof.
   eapply rtc_all_step_promise_consistent; cycle 1; eauto.
   eapply rtc_implies; [|eauto].
@@ -163,10 +163,10 @@ Qed.
 Lemma consistent_promise_consistent
       lang th
       (CONS: @Thread.consistent lang th)
-      (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-      (SC: Memory.closed_timemap th.(Thread.sc) th.(Thread.memory))
-      (MEM: Memory.closed th.(Thread.memory)):
-  Local.promise_consistent th.(Thread.local).
+      (WF: Local.wf (Thread.local th) (Thread.memory th))
+      (SC: Memory.closed_timemap (Thread.sc th) (Thread.memory th))
+      (MEM: Memory.closed (Thread.memory th)):
+  Local.promise_consistent (Thread.local th).
 Proof.
   destruct th. ss.
   exploit Memory.cap_exists; eauto. i. des.
@@ -185,7 +185,7 @@ Lemma promise_consistent_promise_read
       lc1 mem1 loc to val ord released lc2
       f t v r
       (STEP: Local.read_step lc1 mem1 loc to val released ord lc2)
-      (PROMISE: Memory.get loc t lc1.(Local.promises) = Some (f, Message.full v r))
+      (PROMISE: Memory.get loc t (Local.promises lc1) = Some (f, Message.full v r))
       (CONS: Local.promise_consistent lc2):
   Time.lt to t.
 Proof.
@@ -201,7 +201,7 @@ Lemma promise_consistent_promise_write
       lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind
       f t v r
       (STEP: Local.write_step lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind)
-      (PROMISE: Memory.get loc t lc1.(Local.promises) = Some (f, Message.full v r))
+      (PROMISE: Memory.get loc t (Local.promises lc1) = Some (f, Message.full v r))
       (CONS: Local.promise_consistent lc2):
   Time.le to t.
 Proof.

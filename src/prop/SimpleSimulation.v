@@ -25,10 +25,10 @@ Section Simulation.
     forall (WF_SRC: Configuration.wf c1_src)
       (WF_TGT: Configuration.wf c1_tgt),
       <<TERMINAL:
-        forall (TERMINAL_TGT: Threads.is_terminal c1_tgt.(Configuration.threads)),
+        forall (TERMINAL_TGT: Threads.is_terminal (Configuration.threads c1_tgt)),
         exists c2_src,
           <<STEPS_SRC: rtc Configuration.tau_step c1_src c2_src>> /\
-          <<TERMINAL_SRC: Threads.is_terminal c2_src.(Configuration.threads)>>>> /\
+          <<TERMINAL_SRC: Threads.is_terminal (Configuration.threads c2_src)>>>> /\
       <<STEP:
         forall e tid c2_tgt
           (STEP_TGT: Configuration.step e tid c1_tgt c2_tgt),

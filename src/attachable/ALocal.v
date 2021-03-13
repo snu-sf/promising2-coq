@@ -31,9 +31,9 @@ Module ALocal.
   Inductive promise_step (lc1:Local.t) (mem1:Memory.t) (loc:Loc.t) (from to:Time.t) (msg:Message.t) (lc2:Local.t) (mem2:Memory.t) (kind:Memory.op_kind): Prop :=
   | promise_step_intro
       promises2
-      (PROMISE: AMemory.promise lc1.(Local.promises) mem1 loc from to msg promises2 mem2 kind)
+      (PROMISE: AMemory.promise (Local.promises lc1) mem1 loc from to msg promises2 mem2 kind)
       (CLOSED: Memory.closed_message msg mem2)
-      (LC2: lc2 = Local.mk lc1.(Local.tview) promises2):
+      (LC2: lc2 = Local.mk (Local.tview lc1) promises2):
       promise_step lc1 mem1 loc from to msg lc2 mem2 kind
   .
   Hint Constructors promise_step.
@@ -41,17 +41,18 @@ Module ALocal.
   Inductive write_step (lc1:Local.t) (sc1:TimeMap.t) (mem1:Memory.t) (loc:Loc.t) (from to:Time.t) (val:Const.t) (releasedm released:option View.t) (ord:Ordering.t) (lc2:Local.t) (sc2:TimeMap.t) (mem2:Memory.t) (kind:Memory.op_kind): Prop :=
   | write_step_intro
       promises2
-      (RELEASED: released = TView.write_released lc1.(Local.tview) sc1 loc to releasedm ord)
-      (WRITABLE: TView.writable lc1.(Local.tview).(TView.cur) sc1 loc to ord)
-      (WRITE: AMemory.write lc1.(Local.promises) mem1 loc from to val released promises2 mem2 kind)
-      (RELEASE: Ordering.le Ordering.strong_relaxed ord -> Memory.nonsynch_loc loc lc1.(Local.promises))
-      (LC2: lc2 = Local.mk (TView.write_tview lc1.(Local.tview) sc1 loc to ord) promises2)
+      (RELEASED: released = TView.write_released (Local.tview lc1) sc1 loc to releasedm ord)
+      (WRITABLE: TView.writable (TView.cur (Local.tview lc1)) sc1 loc to ord)
+      (WRITE: AMemory.write (Local.promises lc1) mem1 loc from to val released promises2 mem2 kind)
+      (RELEASE: Ordering.le Ordering.strong_relaxed ord -> Memory.nonsynch_loc loc (Local.promises lc1))
+      (LC2: lc2 = Local.mk (TView.write_tview (Local.tview lc1) sc1 loc to ord) promises2)
       (SC2: sc2 = sc1):
       write_step lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind
   .
   Hint Constructors write_step.
 
-  Inductive program_step: forall (e:ThreadEvent.t) lc1 sc1 mem1 lc2 sc2 mem2, Prop :=
+  Inductive program_step:
+    forall (e:ThreadEvent.t) (lc1:Local.t) (sc1:TimeMap.t) (mem1:Memory.t) (lc2:Local.t) (sc2:TimeMap.t) (mem2:Memory.t), Prop :=
   | step_silent
       lc1 sc1 mem1:
       program_step ThreadEvent.silent lc1 sc1 mem1 lc1 sc1 mem1
@@ -103,7 +104,7 @@ Module ALocal.
     <<SC2: Memory.closed_timemap sc1 mem2>> /\
     <<CLOSED2: Memory.closed mem2>> /\
     <<FUTURE: Memory.future mem1 mem2>> /\
-    <<TVIEW_FUTURE: TView.le lc1.(Local.tview) lc2.(Local.tview)>> /\
+    <<TVIEW_FUTURE: TView.le (Local.tview lc1) (Local.tview lc2)>> /\
     <<MSG_WF: Message.wf msg>> /\
     <<MSG_TS: Memory.message_to msg loc to>> /\
     <<MSG_CLOSED: Memory.closed_message msg mem2>>.
@@ -133,11 +134,11 @@ Module ALocal.
     <<WF2: Local.wf lc2 mem2>> /\
     <<SC2: Memory.closed_timemap sc2 mem2>> /\
     <<CLOSED2: Memory.closed mem2>> /\
-    <<TVIEW_FUTURE: TView.le lc1.(Local.tview) lc2.(Local.tview)>> /\
+    <<TVIEW_FUTURE: TView.le (Local.tview lc1) (Local.tview lc2)>> /\
     <<SC_FUTURE: TimeMap.le sc1 sc2>> /\
     <<MEM_FUTURE: Memory.future mem1 mem2>> /\
     <<REL_WF: View.opt_wf released>> /\
-    <<REL_TS: Time.le (released.(View.unwrap).(View.rlx) loc) to>> /\
+    <<REL_TS: Time.le ((View.rlx (View.unwrap released)) loc) to>> /\
     <<REL_CLOSED: Memory.closed_opt_view released mem2>>.
   Proof.
     inv WF1. inv STEP.
@@ -176,7 +177,7 @@ Module ALocal.
     <<WF2: Local.wf lc2 mem2>> /\
     <<SC2: Memory.closed_timemap sc2 mem2>> /\
     <<CLOSED2: Memory.closed mem2>> /\
-    <<TVIEW_FUTURE: TView.le lc1.(Local.tview) lc2.(Local.tview)>> /\
+    <<TVIEW_FUTURE: TView.le (Local.tview lc1) (Local.tview lc2)>> /\
     <<SC_FUTURE: TimeMap.le sc1 sc2>> /\
     <<MEM_FUTURE: Memory.future mem1 mem2>>.
   Proof.
@@ -284,9 +285,9 @@ Module ALocal.
   Lemma promise_step_no_reserve_except
         lc1 mem1 loc from to msg lc2 mem2 kind
         (STEP: promise_step lc1 mem1 loc from to msg lc2 mem2 kind)
-        (RESERVE1: Memory.reserve_wf lc1.(Local.promises) mem1)
-        (NORESERVE1: Memory.no_reserve_except lc1.(Local.promises) mem1):
-    Memory.no_reserve_except lc2.(Local.promises) mem2.
+        (RESERVE1: Memory.reserve_wf (Local.promises lc1) mem1)
+        (NORESERVE1: Memory.no_reserve_except (Local.promises lc1) mem1):
+    Memory.no_reserve_except (Local.promises lc2) mem2.
   Proof.
     ii. inv STEP. s.
     eapply AMemory.promise_no_reserve_except; eauto.
@@ -295,9 +296,9 @@ Module ALocal.
   Lemma program_step_no_reserve_except
         e lc1 sc1 mem1 lc2 sc2 mem2
         (STEP: program_step e lc1 sc1 mem1 lc2 sc2 mem2)
-        (RESERVE1: Memory.reserve_wf lc1.(Local.promises) mem1)
-        (NORESERVE1: Memory.no_reserve_except lc1.(Local.promises) mem1):
-    Memory.no_reserve_except lc2.(Local.promises) mem2.
+        (RESERVE1: Memory.reserve_wf (Local.promises lc1) mem1)
+        (NORESERVE1: Memory.no_reserve_except (Local.promises lc1) mem1):
+    Memory.no_reserve_except (Local.promises lc2) mem2.
   Proof.
     ii. inv STEP; try inv LOCAL; eauto; ss.
     - inv WRITE.
@@ -320,8 +321,8 @@ Module ALocal.
   Lemma bot_program_step_bot
         e lc1 sc1 mem1 lc2 sc2 mem2
         (STEP: program_step e lc1 sc1 mem1 lc2 sc2 mem2)
-        (PROMISES: lc1.(Local.promises) = Memory.bot):
-    lc2.(Local.promises) = Memory.bot.
+        (PROMISES: (Local.promises lc1) = Memory.bot):
+    (Local.promises lc2) = Memory.bot.
   Proof.
     inv STEP; try inv LOCAL; ss.
     - eapply AMemory.bot_write_bot; eauto.

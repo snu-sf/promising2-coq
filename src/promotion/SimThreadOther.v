@@ -39,14 +39,14 @@ Module SimThreadOther.
 
   Inductive sim_thread (l: Loc.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_intro
-      (LOCFREE: loc_free_stmts l e_src.(Thread.state).(State.stmts))
-      (STATE: e_src.(Thread.state) = e_tgt.(Thread.state))
-      (LOCAL: sim_local l e_src.(Thread.local) e_tgt.(Thread.local))
-      (SC: sim_timemap l e_src.(Thread.sc) e_tgt.(Thread.sc))
-      (MEMORY: sim_memory l e_src.(Thread.memory) e_tgt.(Thread.memory))
-      (PROMISES: forall to, Memory.get l to e_src.(Thread.local).(Local.promises) = None)
-      (FULFILLABLE: fulfillable l e_src.(Thread.local).(Local.tview) e_src.(Thread.memory)
-                                  e_src.(Thread.local).(Local.promises))
+      (LOCFREE: loc_free_stmts l (State.stmts (Thread.state e_src)))
+      (STATE: (Thread.state e_src) = (Thread.state e_tgt))
+      (LOCAL: sim_local l (Thread.local e_src) (Thread.local e_tgt))
+      (SC: sim_timemap l (Thread.sc e_src) (Thread.sc e_tgt))
+      (MEMORY: sim_memory l (Thread.memory e_src) (Thread.memory e_tgt))
+      (PROMISES: forall to, Memory.get l to (Local.promises (Thread.local e_src)) = None)
+      (FULFILLABLE: fulfillable l (Local.tview (Thread.local e_src)) (Thread.memory e_src)
+                                  (Local.promises (Thread.local e_src)))
   .
   Hint Constructors sim_thread.
 
@@ -54,14 +54,14 @@ Module SimThreadOther.
         l e1_src
         pf e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
         (STEP_TGT: Thread.promise_step pf e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_promise_step e_src e1_src e2_src>> /\
       <<SIM2: sim_thread l e2_src e2_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e2_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e2_src)>>.
   Proof.
     inversion STEP_TGT. subst.
     destruct (Loc.eq_dec loc l).
@@ -89,18 +89,18 @@ Module SimThreadOther.
         l e1_src
         e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.program_step e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_program_step e_src e1_src e2_src>> /\
       <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
       <<SIM2: sim_thread l e2_src e2_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e2_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e2_src)>>.
   Proof.
     inv STEP_TGT; ss.
     hexploit loc_free_step_is_accessing_loc; eauto; i.
@@ -127,18 +127,18 @@ Module SimThreadOther.
         l e1_src
         pf e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.step pf e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_step e_src e1_src e2_src>> /\
       <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
       <<SIM2: sim_thread l e2_src e2_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e2_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e2_src)>>.
   Proof.
     inv STEP_TGT.
     - exploit sim_thread_promise_step; eauto. i. des.
@@ -163,18 +163,18 @@ Module SimThreadOther.
         l e1_src
         e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.opt_step e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_step e_src e1_src e2_src>> /\
       <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
       <<SIM2: sim_thread l e2_src e2_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e2_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e2_src)>>.
   Proof.
     inv STEP_TGT.
     - esplits; eauto. econs 1.
@@ -185,17 +185,17 @@ Module SimThreadOther.
         l e1_src
         e1_tgt e2_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt):
     exists e2_src,
       <<STEPS_SRC: rtc (@Thread.tau_step lang) e1_src e2_src>> /\
       <<SIM2: sim_thread l e2_src e2_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e2_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e2_src)>>.
   Proof.
     revert e1_src SIM1 WF1_SRC SC1_SRC CLOSED1_SRC.
     induction STEPS_TGT; i.
@@ -217,12 +217,12 @@ Module SimThreadOther.
         l e1_src
         pf e_tgt e1_tgt e2_tgt e3_tgt
         (SIM1: sim_thread l e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt)
         (STEP_TGT: Thread.step pf e_tgt e2_tgt e3_tgt):
     exists e_src e2_src e3_src,
@@ -230,7 +230,7 @@ Module SimThreadOther.
       <<STEP_SRC: Thread.opt_step e_src e2_src e3_src>> /\
       <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
       <<SIM3: sim_thread l e3_src e3_tgt>> /\
-      <<MEMLOC: forall to, Memory.get l to e1_src.(Thread.memory) = Memory.get l to e3_src.(Thread.memory)>>.
+      <<MEMLOC: forall to, Memory.get l to (Thread.memory e1_src) = Memory.get l to (Thread.memory e3_src)>>.
   Proof.
     exploit sim_thread_rtc_tau_step; eauto. i. des.
     exploit Thread.rtc_tau_step_future; try exact STEPS_SRC; eauto. i. des.
@@ -280,8 +280,8 @@ Module SimThreadOther.
   Lemma sim_thread_promises_bot
         l e_src e_tgt
         (SIM: sim_thread l e_src e_tgt)
-        (PROMISES_TGT: e_tgt.(Thread.local).(Local.promises) = Memory.bot):
-    <<PROMISES_SRC: e_src.(Thread.local).(Local.promises) = Memory.bot>>.
+        (PROMISES_TGT: (Local.promises (Thread.local e_tgt)) = Memory.bot):
+    <<PROMISES_SRC: (Local.promises (Thread.local e_src)) = Memory.bot>>.
   Proof.
     inv SIM. inv LOCAL. apply Memory.ext. i.
     rewrite Memory.bot_get.
@@ -294,8 +294,8 @@ Module SimThreadOther.
   Lemma sim_thread_terminal
         l e_src e_tgt
         (SIM: sim_thread l e_src e_tgt)
-        (TERMINAL_TGT: lang.(Language.is_terminal) e_tgt.(Thread.state)):
-    <<TERMINAL_SRC: lang.(Language.is_terminal) e_src.(Thread.state)>>.
+        (TERMINAL_TGT: (Language.is_terminal lang) (Thread.state e_tgt)):
+    <<TERMINAL_SRC: (Language.is_terminal lang) (Thread.state e_src)>>.
   Proof.
     inv SIM. rewrite STATE. ss.
   Qed.
@@ -308,17 +308,17 @@ Module SimThreadOther.
         sc_src sc_tgt
         cap_src cap_tgt
         (SIM: sim_thread l e_src e_tgt)
-        (WF_SRC: Local.wf e_src.(Thread.local) e_src.(Thread.memory))
-        (WF_TGT: Local.wf e_tgt.(Thread.local) e_tgt.(Thread.memory))
-        (CLOSED_SRC: Memory.closed e_src.(Thread.memory))
-        (CLOSED_TGT: Memory.closed e_tgt.(Thread.memory))
+        (WF_SRC: Local.wf (Thread.local e_src) (Thread.memory e_src))
+        (WF_TGT: Local.wf (Thread.local e_tgt) (Thread.memory e_tgt))
+        (CLOSED_SRC: Memory.closed (Thread.memory e_src))
+        (CLOSED_TGT: Memory.closed (Thread.memory e_tgt))
         (SC_SRC: Memory.max_full_timemap cap_src sc_src)
         (SC_TGT: Memory.max_full_timemap cap_tgt sc_tgt)
-        (CAP_SRC: Memory.cap e_src.(Thread.local).(Local.promises) e_src.(Thread.memory) cap_src)
-        (CAP_TGT: Memory.cap e_tgt.(Thread.local).(Local.promises) e_tgt.(Thread.memory) cap_tgt):
+        (CAP_SRC: Memory.cap (Local.promises (Thread.local e_src)) (Thread.memory e_src) cap_src)
+        (CAP_TGT: Memory.cap (Local.promises (Thread.local e_tgt)) (Thread.memory e_tgt) cap_tgt):
     sim_thread l
-               (Thread.mk lang e_src.(Thread.state) e_src.(Thread.local) sc_src cap_src)
-               (Thread.mk lang e_tgt.(Thread.state) e_tgt.(Thread.local) sc_tgt cap_tgt).
+               (Thread.mk lang (Thread.state e_src) (Thread.local e_src) sc_src cap_src)
+               (Thread.mk lang (Thread.state e_tgt) (Thread.local e_tgt) sc_tgt cap_tgt).
   Proof.
     inv SIM. inv LOCAL.
     exploit sim_memory_cap; [apply PROMISES1|exact MEMORY|..]; eauto. i. des.
@@ -330,12 +330,12 @@ Module SimThreadOther.
   Lemma sim_thread_consistent
         l e_src e_tgt
         (SIM: sim_thread l e_src e_tgt)
-        (WF_SRC: Local.wf e_src.(Thread.local) e_src.(Thread.memory))
-        (WF_TGT: Local.wf e_tgt.(Thread.local) e_tgt.(Thread.memory))
-        (SC_SRC: Memory.closed_timemap e_src.(Thread.sc) e_src.(Thread.memory))
-        (SC_TGT: Memory.closed_timemap e_tgt.(Thread.sc) e_tgt.(Thread.memory))
-        (CLOSED_SRC: Memory.closed e_src.(Thread.memory))
-        (CLOSED_TGT: Memory.closed e_tgt.(Thread.memory))
+        (WF_SRC: Local.wf (Thread.local e_src) (Thread.memory e_src))
+        (WF_TGT: Local.wf (Thread.local e_tgt) (Thread.memory e_tgt))
+        (SC_SRC: Memory.closed_timemap (Thread.sc e_src) (Thread.memory e_src))
+        (SC_TGT: Memory.closed_timemap (Thread.sc e_tgt) (Thread.memory e_tgt))
+        (CLOSED_SRC: Memory.closed (Thread.memory e_src))
+        (CLOSED_TGT: Memory.closed (Thread.memory e_tgt))
         (CONSISTENT_TGT: Thread.consistent e_tgt):
     <<CONSISTENT_SRC: Thread.consistent e_src>>.
   Proof.

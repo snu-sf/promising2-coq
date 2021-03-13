@@ -223,10 +223,10 @@ Section CANCEL.
         (STEPS: (@pred_step P lang) e th0 th1)
         (PRED: P <1= (promise_free /1\ (fun e => ~ is_cancel e)))
         loc to from
-        (GET: Memory.get loc to th0.(Thread.local).(Local.promises) = Some (from, Message.reserve))
+        (GET: Memory.get loc to (Local.promises (Thread.local th0)) = Some (from, Message.reserve))
     :
       exists from',
-        Memory.get loc to th1.(Thread.local).(Local.promises) = Some (from', Message.reserve).
+        Memory.get loc to (Local.promises (Thread.local th1)) = Some (from', Message.reserve).
   Proof.
     inv STEPS. eapply PRED in SAT. inv STEP. inv STEP0.
     - inv STEP. des. ss. inv LOCAL.
@@ -252,10 +252,10 @@ Section CANCEL.
         (STEPS: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= (promise_free /1\ (fun e => ~ is_cancel e)))
         loc to from
-        (GET: Memory.get loc to th0.(Thread.local).(Local.promises) = Some (from, Message.reserve))
+        (GET: Memory.get loc to (Local.promises (Thread.local th0)) = Some (from, Message.reserve))
     :
       exists from',
-        Memory.get loc to th1.(Thread.local).(Local.promises) = Some (from', Message.reserve).
+        Memory.get loc to (Local.promises (Thread.local th1)) = Some (from', Message.reserve).
   Proof.
     ginduction STEPS; i.
     - esplits; eauto.
@@ -267,7 +267,7 @@ Section CANCEL.
         (STEP: (@pred_step P lang) e th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.memory) th0.(Thread.memory).
+      Memory.le (Thread.memory th1) (Thread.memory th0).
   Proof.
     inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
     inv STEP0. inv STEP; inv STEP0; ss.
@@ -280,7 +280,7 @@ Section CANCEL.
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.memory) th0.(Thread.memory).
+      Memory.le (Thread.memory th1) (Thread.memory th0).
   Proof.
     ginduction STEP.
     - refl.
@@ -292,7 +292,7 @@ Section CANCEL.
         (STEP: (@pred_step P lang) e th0 th1)
         (PRED: P <1= is_cancel)
     :
-      memory_concrete_le th0.(Thread.memory) th1.(Thread.memory).
+      memory_concrete_le (Thread.memory th0) (Thread.memory th1).
   Proof.
     inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
     inv STEP0. inv STEP; inv STEP0; ss.
@@ -307,7 +307,7 @@ Section CANCEL.
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= is_cancel)
     :
-      memory_concrete_le th0.(Thread.memory) th1.(Thread.memory).
+      memory_concrete_le (Thread.memory th0) (Thread.memory th1).
   Proof.
     ginduction STEP.
     - refl.
@@ -319,7 +319,7 @@ Section CANCEL.
         (STEP: (@pred_step P lang) e th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.local).(Local.promises) th0.(Thread.local).(Local.promises).
+      Memory.le (Local.promises (Thread.local th1)) (Local.promises (Thread.local th0)).
   Proof.
     inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
     inv STEP0. inv STEP; inv STEP0; ss.
@@ -332,7 +332,7 @@ Section CANCEL.
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.local).(Local.promises) th0.(Thread.local).(Local.promises).
+      Memory.le (Local.promises (Thread.local th1)) (Local.promises (Thread.local th0)).
   Proof.
     ginduction STEP.
     - refl.
@@ -344,7 +344,7 @@ Section CANCEL.
         (STEP: (@PredStep.pred_step P lang) e th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.local).(Local.promises) th0.(Thread.local).(Local.promises).
+      Memory.le (Local.promises (Thread.local th1)) (Local.promises (Thread.local th0)).
   Proof.
     inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
     inv STEP0. inv STEP; inv STEP0; ss.
@@ -357,7 +357,7 @@ Section CANCEL.
         (STEP: rtc (tau (@PredStep.pred_step P lang)) th0 th1)
         (PRED: P <1= is_cancel)
     :
-      Memory.le th1.(Thread.local).(Local.promises) th0.(Thread.local).(Local.promises).
+      Memory.le (Local.promises (Thread.local th1)) (Local.promises (Thread.local th0)).
   Proof.
     ginduction STEP.
     - refl.
@@ -369,11 +369,11 @@ Section CANCEL.
         (STEP: (@pred_step P lang) e th0 th1)
         (PRED: P <1= is_cancel)
         loc from to msg
-        (GET: Memory.get loc to th0.(Thread.local).(Local.promises) = Some (from, msg))
-        (NONE: Memory.get loc to th1.(Thread.local).(Local.promises) = None)
+        (GET: Memory.get loc to (Local.promises (Thread.local th0)) = Some (from, msg))
+        (NONE: Memory.get loc to (Local.promises (Thread.local th1)) = None)
     :
-      (<<GET: Memory.get loc to th0.(Thread.memory) = Some (from, msg)>>) /\
-      (<<NONE: Memory.get loc to th1.(Thread.memory) = None>>) /\
+      (<<GET: Memory.get loc to (Thread.memory th0) = Some (from, msg)>>) /\
+      (<<NONE: Memory.get loc to (Thread.memory th1) = None>>) /\
       (<<RESERVE: msg = Message.reserve>>).
   Proof.
     inv STEP. eapply PRED in SAT. unfold is_cancel in SAT. des_ifs.
@@ -389,11 +389,11 @@ Section CANCEL.
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= is_cancel)
         loc from to msg
-        (GET: Memory.get loc to th0.(Thread.local).(Local.promises) = Some (from, msg))
-        (NONE: Memory.get loc to th1.(Thread.local).(Local.promises) = None)
+        (GET: Memory.get loc to (Local.promises (Thread.local th0)) = Some (from, msg))
+        (NONE: Memory.get loc to (Local.promises (Thread.local th1)) = None)
     :
-      (<<GET: Memory.get loc to th0.(Thread.memory) = Some (from, msg)>>) /\
-      (<<NONE: Memory.get loc to th1.(Thread.memory) = None>>) /\
+      (<<GET: Memory.get loc to (Thread.memory th0) = Some (from, msg)>>) /\
+      (<<NONE: Memory.get loc to (Thread.memory th1) = None>>) /\
       (<<RESERVE: msg = Message.reserve>>).
   Proof.
     ginduction STEP.
@@ -519,12 +519,12 @@ End CAP.
 Section PROMISEFREE.
 
   Lemma promise_free_no_promise P lang (th0 th1: Thread.t lang) e
-        (NOPROMISE: th0.(Thread.local).(Local.promises) = Memory.bot)
+        (NOPROMISE: (Local.promises (Thread.local th0)) = Memory.bot)
         (STEP: pred_step P e th0 th1)
         (PRED: P <1= promise_free)
   :
     (<<STEP: pred_step P e th0 th1>>) /\
-    (<<NOPROMISE: th1.(Thread.local).(Local.promises) = Memory.bot>>).
+    (<<NOPROMISE: (Local.promises (Thread.local th1)) = Memory.bot>>).
   Proof.
     inv STEP. dup SAT. eapply PRED in SAT. inv STEP0. inv STEP.
     - inv STEP0. inv LOCAL. inv PROMISE; ss; des; clarify.
@@ -591,8 +591,8 @@ Section PROMISEFREE.
         (STEP: (@pred_step P lang) e th0 th1)
         (PRED: P <1= promise_free)
     :
-      concrete_promised (th1.(Thread.local).(Local.promises)) <2=
-      concrete_promised (th0.(Thread.local).(Local.promises)).
+      concrete_promised ((Local.promises (Thread.local th1))) <2=
+      concrete_promised ((Local.promises (Thread.local th0))).
   Proof.
     i. inv STEP. eapply PRED in SAT. inv STEP0. des. inv STEP.
     - inv STEP0. ss. inv LOCAL. ss. inv PROMISE; clarify.
@@ -614,8 +614,8 @@ Section PROMISEFREE.
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (PRED: P <1= promise_free)
     :
-      concrete_promised (th1.(Thread.local).(Local.promises)) <2=
-      concrete_promised (th0.(Thread.local).(Local.promises)).
+      concrete_promised ((Local.promises (Thread.local th1))) <2=
+      concrete_promised ((Local.promises (Thread.local th0))).
   Proof.
     ginduction STEP; ss.
     i. eapply IHSTEP in PR; eauto. inv H.
@@ -629,25 +629,25 @@ Section PFCONSISTENT.
 
   Definition pf_consistent_strong lang (e0:Thread.t lang): Prop :=
     forall mem1 sc1
-           (CAP: Memory.cap e0.(Thread.local).(Local.promises) e0.(Thread.memory) mem1),
+           (CAP: Memory.cap (Local.promises (Thread.local e0)) (Thread.memory e0) mem1),
     exists e1,
-      (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ e0.(Thread.state) e0.(Thread.local) sc1 mem1) e1>>) /\
-      (<<NORESERVE: no_reserves e1.(Thread.local).(Local.promises)>>) /\
+      (<<STEPS0: rtc (tau (@pred_step is_cancel lang)) (Thread.mk _ (Thread.state e0) (Thread.local e0) sc1 mem1) e1>>) /\
+      (<<NORESERVE: no_reserves (Local.promises (Thread.local e1))>>) /\
       exists e2,
-        (<<STEPS1: rtc (tau (@pred_step ((promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_read_msgs (caps_loc e0.(Thread.memory) mem1)) /1\ no_sc) lang)) e1 e2>>) /\
+        (<<STEPS1: rtc (tau (@pred_step ((promise_free /1\ (fun e => ~ is_cancel e) /1\ no_acq_read_msgs (caps_loc (Thread.memory e0) mem1)) /1\ no_sc) lang)) e1 e2>>) /\
         (__guard__((exists st',
-                       (<<LOCAL: Local.failure_step e2.(Thread.local)>>) /\
+                       (<<LOCAL: Local.failure_step (Thread.local e2)>>) /\
                        (<<FAILURE: Language.step lang ProgramEvent.failure (@Thread.state lang e2) st'>>)) \/
-                   (<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>))).
+                   (<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>))).
 
   Lemma step_promise_consistent
         lang pf e th1 th2
         (STEP: @AThread.step lang pf e th1 th2)
-        (CONS: Local.promise_consistent th2.(Thread.local))
-        (WF1: Local.wf th1.(Thread.local) th1.(Thread.memory))
-        (SC1: Memory.closed_timemap th1.(Thread.sc) th1.(Thread.memory))
-        (MEM1: Memory.closed th1.(Thread.memory)):
-    Local.promise_consistent th1.(Thread.local).
+        (CONS: Local.promise_consistent (Thread.local th2))
+        (WF1: Local.wf (Thread.local th1) (Thread.memory th1))
+        (SC1: Memory.closed_timemap (Thread.sc th1) (Thread.memory th1))
+        (MEM1: Memory.closed (Thread.memory th1)):
+    Local.promise_consistent (Thread.local th1).
   Proof.
     inv STEP; [inv STEP0|inv STEP0; inv LOCAL]; ss.
     - eapply promise_step_promise_consistent; eauto.
@@ -660,13 +660,13 @@ Section PFCONSISTENT.
   Qed.
 
   Lemma pf_consistent_pf_consistent_strong lang (th: Thread.t lang)
-        (WF: Local.wf th.(Thread.local) th.(Thread.memory))
-        (MEM: Memory.closed th.(Thread.memory))
+        (WF: Local.wf (Thread.local th) (Thread.memory th))
+        (MEM: Memory.closed (Thread.memory th))
         (CONSISTENT: pf_consistent th)
     :
       pf_consistent_strong th.
   Proof.
-    assert (INHABITED: Memory.inhabited th.(Thread.memory)).
+    assert (INHABITED: Memory.inhabited (Thread.memory th)).
     { inv MEM. auto. }
     ii. exploit Memory.max_full_timemap_exists; eauto. intros MAX. des.
     ii. exploit Memory.max_full_timemap_exists.
@@ -677,7 +677,7 @@ Section PFCONSISTENT.
                (<<STEPS: rtc (tau (Thread.step true))
                              (Thread.mk _ (Thread.state th) (Thread.local th)
                                         tm0 mem1) e2 >>) /\
-               (<<NORESERVES: no_reserves e2.(Thread.local).(Local.promises)>>) /\
+               (<<NORESERVES: no_reserves (Local.promises (Thread.local e2))>>) /\
                (__guard__ ((exists e3, (<< FAILURE: Thread.step true ThreadEvent.failure e2 e3 >>)) \/
                            (<<PROMISES: Local.promises (Thread.local e2) = Memory.bot >>)))).
     { des.
@@ -757,7 +757,7 @@ Section PFCONSISTENT.
       inv STEP0.
       exploit AThread.step_future; eauto. i. des.
 
-      assert (PROMS: Local.promise_consistent e3.(Thread.local)).
+      assert (PROMS: Local.promise_consistent (Thread.local e3)).
       { eapply rtc_tau_step_promise_consistent.
         - eapply thread_steps_pred_steps. eapply STEPS1.
         - unguard. des.
@@ -768,7 +768,7 @@ Section PFCONSISTENT.
         - eauto.
         - eauto. }
 
-      assert (NOPROMISE: e2'.(Thread.local).(Local.promises) = Memory.bot).
+      assert (NOPROMISE: (Local.promises (Thread.local e2')) = Memory.bot).
       { apply Memory.ext. i. rewrite Memory.bot_get.
         destruct (Memory.get loc ts (Local.promises (Thread.local e2')))
           as [[from [val released|]]|] eqn:GET; auto; cycle 1.

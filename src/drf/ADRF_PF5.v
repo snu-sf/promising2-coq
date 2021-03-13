@@ -310,7 +310,7 @@ Definition pf_consistent_drf_shift lang (e0:Thread.t lang)
            (promises: Loc.t -> Time.t -> Prop)
            (max: TimeMap.t)
            (U AU: Loc.t -> Prop): Prop :=
-  (<<UPDATESMAX: forall loc (UPDATES: (U \1/ AU) loc), max loc = Memory.max_ts loc e0.(Thread.memory)>>) /\
+  (<<UPDATESMAX: forall loc (UPDATES: (U \1/ AU) loc), max loc = Memory.max_ts loc (Thread.memory e0)>>) /\
   (<<CONSISTENT:
      forall (gap newmax: TimeMap.t)
             (GAP: forall loc (UPDATES: U loc \/ AU loc),
@@ -423,7 +423,7 @@ Proof.
 Qed.
 
 Lemma step_wf_event lang (th0 th1: Thread.t lang) e
-      (INHABITED: Memory.inhabited th0.(Thread.memory))
+      (INHABITED: Memory.inhabited (Thread.memory th0))
       (STEP: AThread.step_allpf e th0 th1)
   :
     wf_event e.
@@ -437,7 +437,7 @@ Proof.
 Qed.
 
 Lemma traced_step_wf_event lang (th0 th1: Thread.t lang) tr
-      (INHABITED: Memory.inhabited th0.(Thread.memory))
+      (INHABITED: Memory.inhabited (Thread.memory th0))
       (STEPS: traced_step tr th0 th1)
   :
     List.Forall (fun em => wf_event (fst em)) tr.
@@ -465,7 +465,7 @@ Proof.
              (fun loc to =>
                 forall (SAT: MU loc),
                   (<<NOTUPDATES: ~ U loc /\ ~ AU loc>>) /\
-                  (<<TS0: Time.le (Memory.max_ts loc e0.(Thread.memory)) to>>) /\
+                  (<<TS0: Time.le (Memory.max_ts loc (Thread.memory e0)) to>>) /\
                   (<<TS1: Time.lt to (max loc)>>) /\
                   (<<BLANK: Interval.mem (to, (max loc)) <1= spaces loc>>))).
   { intros loc. destruct (classic (MU loc)).
@@ -809,10 +809,10 @@ Definition pf_consistent_drf_future lang (e0:Thread.t lang)
            (promises: Loc.t -> Time.t -> Prop)
            (U AU: Loc.t -> Prop): Prop :=
   forall mem_future sc_future
-         (UNCH: unchanged_on spaces e0.(Thread.memory) mem_future)
-         (ATTATCH: not_attatched (fun loc to => (<<UPDATES: (U \1/ AU) loc>>) /\ (<<MAX: Memory.max_ts loc e0.(Thread.memory) = to>>)) mem_future),
+         (UNCH: unchanged_on spaces (Thread.memory e0) mem_future)
+         (ATTATCH: not_attatched (fun loc to => (<<UPDATES: (U \1/ AU) loc>>) /\ (<<MAX: Memory.max_ts loc (Thread.memory e0) = to>>)) mem_future),
   exists e2 tr,
-    (<<STEPS: traced_step tr (Thread.mk _ e0.(Thread.state) e0.(Thread.local) sc_future mem_future) e2>>) /\
+    (<<STEPS: traced_step tr (Thread.mk _ (Thread.state e0) (Thread.local e0) sc_future mem_future) e2>>) /\
 
     (<<TRACE: List.Forall (fun em => no_promise (fst em) /\ ThreadEvent.get_machine_event (fst em) = MachineEvent.silent) tr>>) /\
 
@@ -880,7 +880,7 @@ Qed.
 Lemma pf_consistent_shift_future lang (e0: Thread.t lang)
       spaces promises max U AU
       (CONSISTENT: pf_consistent_drf_shift e0 spaces promises max U AU)
-      (BOT: e0.(Thread.local).(Local.promises) = Memory.bot)
+      (BOT: (Local.promises (Thread.local e0)) = Memory.bot)
   :
     pf_consistent_drf_future e0 spaces promises U AU.
 Proof.

@@ -23,8 +23,8 @@ Proof.
 Qed.
 
 Definition loc_ts_eq_dec (lhs rhs:Loc.t * Time.t):
-  {lhs.(fst) = rhs.(fst) /\ lhs.(snd) = rhs.(snd)} +
-  {lhs.(fst) <> rhs.(fst) \/ lhs.(snd) <> rhs.(snd)}.
+  {(fst lhs) = (fst rhs) /\ (snd lhs) = (snd rhs)} +
+  {(fst lhs) <> (fst rhs) \/ (snd lhs) <> (snd rhs)}.
 Proof.
   destruct lhs, rhs.
   destruct (Loc.eq_dec t t1), (Time.eq_dec t0 t2); subst; auto.
@@ -167,7 +167,7 @@ Module View <: JoinableType.
 
   Inductive wf (view:t): Prop :=
   | wf_intro
-      (PLN_RLX: TimeMap.le view.(pln) view.(rlx))
+      (PLN_RLX: TimeMap.le (pln view) (rlx view))
   .
   Hint Constructors wf.
 
@@ -185,8 +185,8 @@ Module View <: JoinableType.
 
   Inductive le_ (lhs rhs:t): Prop :=
   | le_intro
-      (PLN: TimeMap.le lhs.(pln) rhs.(pln))
-      (RLX: TimeMap.le lhs.(rlx) rhs.(rlx))
+      (PLN: TimeMap.le (pln lhs) (pln rhs))
+      (RLX: TimeMap.le (rlx lhs) (rlx rhs))
   .
   Definition le := le_.
 
@@ -220,8 +220,8 @@ Module View <: JoinableType.
   Hint Resolve opt_le_PreOrder_obligation_2.
 
   Lemma ext l r
-        (PLN: l.(pln) = r.(pln))
-        (RLX: l.(rlx) = r.(rlx))
+        (PLN: (pln l) = (pln r))
+        (RLX: (rlx l) = (rlx r))
     : l = r.
   Proof.
     destruct l, r. f_equal; auto.
@@ -236,8 +236,8 @@ Module View <: JoinableType.
   Proof. econs; apply TimeMap.bot_spec. Qed.
 
   Definition join (lhs rhs:t): t :=
-    mk (TimeMap.join lhs.(pln) rhs.(pln))
-       (TimeMap.join lhs.(rlx) rhs.(rlx)).
+    mk (TimeMap.join (pln lhs) (pln rhs))
+       (TimeMap.join (rlx lhs) (rlx rhs)).
 
   Lemma join_comm lhs rhs: join lhs rhs = join rhs lhs.
   Proof. unfold join. f_equal; apply TimeMap.join_comm. Qed.
@@ -300,7 +300,7 @@ Module View <: JoinableType.
 
   Lemma singleton_ur_spec loc ts c
         (WF: wf c)
-        (TS: Time.le ts (c.(pln) loc)):
+        (TS: Time.le ts ((pln c) loc)):
     le (singleton_ur loc ts) c.
   Proof.
     econs; s;
@@ -311,7 +311,7 @@ Module View <: JoinableType.
 
   Lemma singleton_ur_inv loc ts c
         (LE: le (singleton_ur loc ts) c):
-    Time.le ts (c.(pln) loc).
+    Time.le ts ((pln c) loc).
   Proof.
     apply TimeMap.singleton_inv. apply LE.
   Qed.
@@ -329,7 +329,7 @@ Module View <: JoinableType.
 
   Lemma singleton_rw_spec loc ts c
         (WF: wf c)
-        (TS: Time.le ts (c.(rlx) loc)):
+        (TS: Time.le ts ((rlx c) loc)):
     le (singleton_rw loc ts) c.
   Proof.
     econs; s;
@@ -339,7 +339,7 @@ Module View <: JoinableType.
 
   Lemma singleton_rw_inv loc ts c
         (LE: le (singleton_rw loc ts) c):
-    Time.le ts (c.(rlx) loc).
+    Time.le ts ((rlx c) loc).
   Proof.
     apply TimeMap.singleton_inv. apply LE.
   Qed.
@@ -358,7 +358,7 @@ Module View <: JoinableType.
 
   Lemma singleton_ur_if_spec (cond:bool) loc ts c
         (WF: wf c)
-        (TS: Time.le ts ((if cond then c.(pln) else c.(rlx)) loc)):
+        (TS: Time.le ts ((if cond then (pln c) else (rlx c)) loc)):
     le (singleton_ur_if cond loc ts) c.
   Proof.
     destruct cond; ss.
@@ -368,7 +368,7 @@ Module View <: JoinableType.
 
   Lemma singleton_ur_if_inv cond loc ts c
         (LE: le (singleton_ur_if cond loc ts) c):
-    Time.le ts ((if cond then c.(pln) else c.(rlx)) loc).
+    Time.le ts ((if cond then (pln c) else (rlx c)) loc).
   Proof.
     destruct cond; ss.
     - apply singleton_ur_inv. ss.
@@ -424,7 +424,7 @@ Module View <: JoinableType.
   Lemma unwrap_opt_wf
         view
         (WF: opt_wf view):
-    wf view.(unwrap).
+    wf (unwrap view).
   Proof.
     inv WF; ss. apply bot_wf.
   Qed.
@@ -432,7 +432,7 @@ Module View <: JoinableType.
   Lemma unwrap_opt_le
         view1 view2
         (WF: opt_le view1 view2):
-    le view1.(unwrap) view2.(unwrap).
+    le (unwrap view1) (unwrap view2).
   Proof.
     inv WF; ss. apply bot_spec.
   Qed.
@@ -461,7 +461,7 @@ Module View <: JoinableType.
   Lemma opt_le_ts
         v1 v2 loc
         (LE: opt_le v1 v2):
-    Time.le (v1.(unwrap).(rlx) loc) (v2.(unwrap).(rlx) loc).
+    Time.le ((rlx (unwrap v1)) loc) ((rlx (unwrap v2)) loc).
   Proof.
     inv LE; ss.
     - unfold TimeMap.bot. apply Time.bot_spec.

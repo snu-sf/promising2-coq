@@ -67,12 +67,12 @@ Module PFCertify.
 
   Inductive sim_thread (lang: language) (latests: TimeMap.t) (caps: Loc.t -> option Time.t) (e_src e_tgt: @Thread.t lang): Prop :=
   | sim_thread_intro
-      (STATE: e_src.(Thread.state) = e_tgt.(Thread.state))
-      (LOCAL: sim_local e_src.(Thread.local) e_tgt.(Thread.local))
-      (SC: e_src.(Thread.sc) = e_tgt.(Thread.sc))
+      (STATE: (Thread.state e_src) = (Thread.state e_tgt))
+      (LOCAL: sim_local (Thread.local e_src) (Thread.local e_tgt))
+      (SC: (Thread.sc e_src) = (Thread.sc e_tgt))
       (MEMORY: sim_memory latests caps
-                          e_tgt.(Thread.local).(Local.promises)
-                          e_src.(Thread.memory) e_tgt.(Thread.memory))
+                          (Local.promises (Thread.local e_tgt))
+                          (Thread.memory e_src) (Thread.memory e_tgt))
   .
 
 
@@ -275,12 +275,12 @@ Module PFCertify.
   Lemma read_cap
         latests caps mem1_src
         lc1 mem1_tgt loc to val released ord lc2
-        (MEM1: sim_memory latests caps lc1.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1) mem1_src mem1_tgt)
         (WF1: Local.wf lc1 mem1_tgt)
         (TO: Some to = caps loc)
         (STEP: Local.read_step lc1 mem1_tgt loc to val released ord lc2)
         (CONS: Local.promise_consistent lc2):
-    Memory.get loc (latests loc) lc1.(Local.promises) = None.
+    Memory.get loc (latests loc) (Local.promises lc1) = None.
   Proof.
     destruct (Memory.get loc (latests loc) (Local.promises lc1)) as [[]|] eqn:PROMISE; ss.
     exfalso. destruct t0; cycle 1.
@@ -307,7 +307,7 @@ Module PFCertify.
         lc1_src mem1_src
         lc1_tgt mem1_tgt loc to val released ord lc2_tgt
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (STEP_TGT: Local.read_step lc1_tgt mem1_tgt loc to val released ord lc2_tgt)
         (CONS_TGT: Local.promise_consistent lc2_tgt):
@@ -769,7 +769,7 @@ Module PFCertify.
         latests caps
         mem1_src
         lc1_tgt sc1 mem1_tgt loc from to val releasedm released ord lc2_tgt sc2 mem2_tgt kind
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (RELEASEDM: View.opt_wf releasedm)
         (STEP_TGT: Local.write_step lc1_tgt sc1 mem1_tgt loc from to val
@@ -834,7 +834,7 @@ Module PFCertify.
         lc1_src mem1_src
         lc1_tgt sc1 mem1_tgt loc from to val releasedm released ord lc2_tgt sc2 mem2_tgt kind
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (RELEASEDM: View.opt_wf releasedm)
         (STEP_TGT: Local.write_step lc1_tgt sc1 mem1_tgt loc from to val
@@ -844,7 +844,7 @@ Module PFCertify.
       <<STEP_SRC: ALocal.write_step lc1_src sc1 mem1_src loc from to val
                                     releasedm released ord lc2_src sc2 mem2_src Memory.op_kind_add>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory latests caps lc2_tgt.(Local.promises) mem2_src mem2_tgt>>.
+      <<MEM2: sim_memory latests caps (Local.promises lc2_tgt) mem2_src mem2_tgt>>.
   Proof.
     exploit write_aux; eauto. i. des.
     exploit Memory.add_exists_le; try eapply Memory.bot_le; eauto. i. des.
@@ -867,7 +867,7 @@ Module PFCertify.
         lc1_tgt sc1 mem1_tgt loc from val releasedm released ord lc2_tgt sc2 mem2_tgt kind
         to
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_TGT: Memory.closed mem1_tgt)
         (RELEASEDM: View.opt_wf releasedm)
@@ -879,7 +879,7 @@ Module PFCertify.
                                     releasedm released ord lc2_src sc2 mem2_src Memory.op_kind_add>> /\
       <<ADD: Memory.add mem2_src loc from_cap to (Message.full val released_cap) mem3_src>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory latests caps lc2_tgt.(Local.promises) mem3_src mem2_tgt>>.
+      <<MEM2: sim_memory latests caps (Local.promises lc2_tgt) mem3_src mem2_tgt>>.
   Proof.
     exploit write_aux; eauto. i. des.
     exploit Memory.add_exists_le; try eapply Memory.bot_le; eauto. i. des.
@@ -904,7 +904,7 @@ Module PFCertify.
         lc1_src mem1_src
         lc1_tgt sc1 mem1_tgt loc from val releasedm released ord lc2_tgt sc2 mem2_tgt kind
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (RELEASEDM: View.opt_wf releasedm)
         (STEP_TGT: Local.write_step lc1_tgt sc1 mem1_tgt loc from (latests loc) val
@@ -914,7 +914,7 @@ Module PFCertify.
       <<STEP_SRC: ALocal.write_step lc1_src sc1 mem1_src loc from (latests loc) val
                                     releasedm released ord lc2_src sc2 mem2_src Memory.op_kind_add>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory latests caps lc2_tgt.(Local.promises) mem2_src mem2_tgt>>.
+      <<MEM2: sim_memory latests caps (Local.promises lc2_tgt) mem2_src mem2_tgt>>.
   Proof.
     exploit write_aux; eauto. i. des.
     exploit Memory.add_exists_le; try eapply Memory.bot_le; eauto. i. des.
@@ -970,8 +970,8 @@ Module PFCertify.
   Lemma pf_step_inhabited
         lang caps e e1 e2
         (STEP: @pf_step lang caps e e1 e2)
-        (INHABITED1: Memory.inhabited e1.(Thread.memory)):
-    <<INHABITED2: Memory.inhabited e2.(Thread.memory)>>.
+        (INHABITED1: Memory.inhabited (Thread.memory e1)):
+    <<INHABITED2: Memory.inhabited (Thread.memory e2)>>.
   Proof.
     inv STEP.
     hexploit AThread.program_step_inhabited; eauto. i.
@@ -984,7 +984,7 @@ Module PFCertify.
         lc1_src mem1_src
         e lc1_tgt sc1 mem1_tgt lc2_tgt sc2 mem2_tgt
         (LOCAL1: sim_local lc1_src lc1_tgt)
-        (MEM1: sim_memory latests caps lc1_tgt.(Local.promises) mem1_src mem1_tgt)
+        (MEM1: sim_memory latests caps (Local.promises lc1_tgt) mem1_src mem1_tgt)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (SC1_TGT: Memory.closed_timemap sc1 mem1_tgt)
         (CLOSED1_TGT: Memory.closed mem1_tgt)
@@ -994,7 +994,7 @@ Module PFCertify.
       <<STEP_SRC: ALocal.program_step e lc1_src sc1 mem1_src lc2_src sc2 mem2_src>> /\
       <<ADD: add_cap caps mem2_src mem3_src>> /\
       <<LOCAL2: sim_local lc2_src lc2_tgt>> /\
-      <<MEM2: sim_memory latests caps lc2_tgt.(Local.promises) mem3_src mem2_tgt>>.
+      <<MEM2: sim_memory latests caps (Local.promises lc2_tgt) mem3_src mem2_tgt>>.
   Proof.
     inv STEP_TGT.
     - esplits; eauto.
@@ -1045,8 +1045,8 @@ Module PFCertify.
         lang latests caps e1_src
         pf e e1_tgt e2_tgt
         (SIM1: @sim_thread lang latests caps e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.promise_step pf e e1_tgt e2_tgt):
     sim_thread latests caps e1_src e2_tgt.
   Proof.
@@ -1062,11 +1062,11 @@ Module PFCertify.
         lang latests caps e1_src
         e e1_tgt e2_tgt
         (SIM1: @sim_thread lang latests caps e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.program_step e e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEP_SRC: pf_step caps e e1_src e2_src>> /\
       <<SIM2: sim_thread latests caps e2_src e2_tgt>>.
@@ -1083,11 +1083,11 @@ Module PFCertify.
         lang latests caps e1_src
         e1_tgt e2_tgt
         (SIM1: @sim_thread lang latests caps e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.all_step lang) e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEPS_SRC: rtc (union (@pf_step lang caps)) e1_src e2_src>> /\
       <<SIM2: sim_thread latests caps e2_src e2_tgt>>.
@@ -1110,11 +1110,11 @@ Module PFCertify.
         lang latests caps e1_src
         e1_tgt e2_tgt
         (SIM1: @sim_thread lang latests caps e1_src e1_tgt)
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt)
-        (CONS: Local.promise_consistent e2_tgt.(Thread.local)):
+        (CONS: Local.promise_consistent (Thread.local e2_tgt)):
     exists e2_src,
       <<STEPS_SRC: rtc (union (@pf_step lang caps)) e1_src e2_src>> /\
       <<SIM2: sim_thread latests caps e2_src e2_tgt>>.
@@ -1308,7 +1308,6 @@ Module PFCertify.
       exploit Memory.max_full_ts_inj; [exact MAX|apply LATEST|..]. i. subst.
       econs; ii; eauto.
       - inv MAX. des. exploit SOUND0; eauto.
-      - eapply COMPLETE1; eauto.
       - exploit COMPLETE; eauto. i. des; eauto; ss.
         subst. destruct cap; ss.
         des. inv H1. ss.
@@ -1486,12 +1485,12 @@ Module PFCertify.
     cut (exists (caps_mem: Loc.t -> ((option Time.t) * Cell.t)),
             forall loc,
               (fun loc cap_cell =>
-                 sim_cell (tm loc) cap_cell.(fst) (promises loc) cap_cell.(snd) (mem2_tgt loc) /\
-                 vals_incl_cell cap_cell.(snd) (mem1_src loc))
+                 sim_cell (tm loc) (fst cap_cell) (promises loc) (snd cap_cell) (mem2_tgt loc) /\
+                 vals_incl_cell (snd cap_cell) (mem1_src loc))
                 loc (caps_mem loc)).
     { i. des.
-      exists (fun loc => (caps_mem loc).(fst)).
-      exists (fun loc => (caps_mem loc).(snd)).
+      exists (fun loc => (fst (caps_mem loc))).
+      exists (fun loc => (snd (caps_mem loc))).
       split.
       - econs; ii; eauto.
         + destruct (H loc). inv H0. eauto.
@@ -1512,16 +1511,16 @@ Module PFCertify.
         lang e_src e_tgt
         sc1 mem1_tgt
         (SIM: @PFStep.sim_thread lang e_src e_tgt)
-        (WF1_TGT: Local.wf e_tgt.(Thread.local) e_tgt.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e_tgt.(Thread.sc) e_tgt.(Thread.memory))
-        (MEM1_TGT: Memory.closed e_tgt.(Thread.memory))
+        (WF1_TGT: Local.wf (Thread.local e_tgt) (Thread.memory e_tgt))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e_tgt) (Thread.memory e_tgt))
+        (MEM1_TGT: Memory.closed (Thread.memory e_tgt))
         (SC_TGT: Memory.max_full_timemap mem1_tgt sc1)
-        (CAP_TGT: Memory.cap e_tgt.(Thread.local).(Local.promises) e_tgt.(Thread.memory) mem1_tgt):
+        (CAP_TGT: Memory.cap (Local.promises (Thread.local e_tgt)) (Thread.memory e_tgt) mem1_tgt):
     exists latests caps mem1_src,
       <<SIM: sim_thread latests caps
-                        (Thread.mk lang e_src.(Thread.state) e_src.(Thread.local) sc1 mem1_src)
-                        (Thread.mk lang e_tgt.(Thread.state) e_tgt.(Thread.local) sc1 mem1_tgt)>> /\
-      <<VALS: vals_incl mem1_src e_src.(Thread.memory)>>.
+                        (Thread.mk lang (Thread.state e_src) (Thread.local e_src) sc1 mem1_src)
+                        (Thread.mk lang (Thread.state e_tgt) (Thread.local e_tgt) sc1 mem1_tgt)>> /\
+      <<VALS: vals_incl mem1_src (Thread.memory e_src)>>.
   Proof.
     exploit Memory.cap_closed; eauto. i.
     exploit sim_memory_exists; try apply SIM; try apply WF1_TGT; eauto. i. des.
