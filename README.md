@@ -15,7 +15,7 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
 
         opam repo add coq-released https://coq.inria.fr/opam/released
         opam remote add coq-promising -k git https://github.com/snu-sf/promising-opam-coq-archive
-        opam install coq-paco.4.0.0 coq-sflib coq-promising-lib
+        opam install coq-paco.4.0.4 coq-sflib coq-promising-lib
 
 - Building the project
 
