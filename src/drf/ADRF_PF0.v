@@ -1,4 +1,3 @@
-Require Import Omega.
 Require Import RelationClasses.
 
 From Paco Require Import paco.

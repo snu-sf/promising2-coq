@@ -1,4 +1,3 @@
-Require Import Omega.
 Require Import Bool.
 Require Import RelationClasses.
 

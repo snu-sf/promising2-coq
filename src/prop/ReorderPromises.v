@@ -1,5 +1,5 @@
-Require Import Omega.
 Require Import RelationClasses.
+Require Import Lia.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -49,7 +49,7 @@ Proof.
     esplits; cycle 1.
     + econs 2; eauto.
     + auto.
-    + omega.
+    + lia.
   }
   exploit IH; try exact A23; try refl; eauto. i. des.
   assert (CONS2: Local.promise_consistent (Thread.local e2)).
@@ -65,7 +65,7 @@ Proof.
   { esplits; cycle 1.
     - eauto.
     - econs; eauto.
-    - omega.
+    - lia.
   }
   inversion A12. exploit Thread.step_future; eauto. i. des.
   exploit reorder_nonpf_pf; eauto.
@@ -76,17 +76,17 @@ Proof.
     - eapply rtc_implies; [|exact STEPS2]. apply union_mon. apply Thread.allpf.
   }
   i. des.
-  - subst. esplits; cycle 1; eauto. omega.
+  - subst. esplits; cycle 1; eauto. lia.
   - assert (STEPS: rtcn (@Thread.all_step lang) (S n) e1 e2).
     { econs 2.
       - econs. econs. eauto.
       - eapply rtcn_imply; [|exact A0]. apply union_mon. apply Thread.allpf.
     }
     exploit IH; try exact STEPS; eauto.
-    { omega. }
+    { lia. }
     i. des. esplits; cycle 1; eauto.
     + etrans; eauto.
-    + omega.
+    + lia.
   - assert (STEPS: rtcn (@Thread.all_step lang) (S n) th1' e2).
     { econs 2.
       - econs. econs 1. eauto.
@@ -94,11 +94,11 @@ Proof.
     }
     exploit Thread.step_future; eauto. i. des.
     exploit IH; try exact STEPS; eauto.
-    { omega. }
+    { lia. }
     i. des. esplits; cycle 1.
     + econs 2; eauto.
     + etrans; eauto.
-    + omega.
+    + lia.
 Qed.
 
 Lemma steps_pf_steps
@@ -141,7 +141,7 @@ Proof.
     esplits; cycle 1.
     + econs 2; eauto.
     + auto.
-    + omega.
+    + lia.
   }
   exploit IH; try exact A23; try refl; eauto. i. des.
   assert (CONS2: Local.promise_consistent (Thread.local e2)).
@@ -157,7 +157,7 @@ Proof.
   { esplits; cycle 1.
     - eauto.
     - econs; eauto.
-    - omega.
+    - lia.
   }
   inversion A12. exploit Thread.step_future; eauto. i. des.
   exploit reorder_nonpf_pf; eauto.
@@ -168,17 +168,17 @@ Proof.
     - eapply rtc_implies; [|exact STEPS2]. i. apply tau_union. eapply tau_mon; [|eauto]. apply Thread.allpf.
   }
   i. des.
-  - subst. esplits; cycle 1; eauto. omega.
+  - subst. esplits; cycle 1; eauto. lia.
   - assert (STEPS: rtcn (@Thread.tau_step lang) (S n) e1 e2).
     { econs 2.
       - econs. econs; eauto. unguardH EVENT1. by destruct e2', e0; des.
       - eapply rtcn_imply; [|exact A0]. apply tau_mon. apply Thread.allpf.
     }
     exploit IH; try exact STEPS; eauto.
-    { omega. }
+    { lia. }
     i. des. esplits; cycle 1; eauto.
     + etrans; eauto.
-    + omega.
+    + lia.
   - assert (STEPS: rtcn (@Thread.tau_step lang) (S n) th1' e2).
     { econs 2.
       - econs.
@@ -188,11 +188,11 @@ Proof.
     }
     exploit Thread.step_future; eauto. i. des.
     exploit IH; try exact STEPS; eauto.
-    { omega. }
+    { lia. }
     i. des. esplits; cycle 1.
     + econs 2; eauto. econs; eauto. unguardH EVENT1. by destruct e2', e0; des.
     + etrans; eauto.
-    + omega.
+    + lia.
 Qed.
 
 Lemma tau_steps_pf_tau_steps

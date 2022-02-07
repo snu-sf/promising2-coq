@@ -1,4 +1,3 @@
-Require Import Omega.
 Require Import RelationClasses.
 Require Import Decidable.
 Require Import Coq.Lists.ListDec.
