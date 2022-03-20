@@ -202,7 +202,8 @@ Module Configuration.
       (STEP: step e tid c1 c2):
       opt_step e tid c1 c2
   .
-  Hint Constructors opt_step.
+  #[global]
+  Hint Constructors opt_step: core.
 
   Definition tau_step := union (step MachineEvent.silent).
 
@@ -210,7 +211,8 @@ Module Configuration.
     exists tid c2 c3,
       <<STEPS: rtc tau_step c1 c2>> /\
       <<FAILURE: step MachineEvent.failure tid c2 c3>>.
-  Hint Unfold steps_failure.
+  #[global]
+  Hint Unfold steps_failure: core.
 
   Inductive has_promise (c:t): Prop :=
   | has_promise_intro

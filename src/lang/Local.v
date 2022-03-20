@@ -34,23 +34,29 @@ Module ThreadEvent.
   | syscall (e:Event.t)
   | failure
   .
-  Hint Constructors t.
+  #[global]
+  Hint Constructors t: core.
 
   Inductive kind :=
   | kind_promise
   | kind_syscall
   | kind_others
   .
-  Hint Constructors kind.
+  #[global]
+  Hint Constructors kind: core.
 
   Definition kinds_all := fun k: kind => True.
-  Hint Unfold kinds_all.
+  #[global]
+  Hint Unfold kinds_all: core.
   Definition kinds_promise := fun k: kind => k = kind_promise.
-  Hint Unfold kinds_promise.
+  #[global]
+  Hint Unfold kinds_promise: core.
   Definition kinds_program := fun k: kind => k <> kind_promise.
-  Hint Unfold kinds_program.
+  #[global]
+  Hint Unfold kinds_program: core.
   Definition kinds_tau := fun k: kind => k <> kind_syscall.
-  Hint Unfold kinds_tau.
+  #[global]
+  Hint Unfold kinds_tau: core.
 
   Definition get_kind (e:t): kind :=
     match e with
@@ -154,7 +160,8 @@ Module ThreadEvent.
   | le_failure:
       le failure failure
   .
-  Hint Constructors le.
+  #[global]
+  Hint Constructors le: core.
 
   Definition lift (ord0:Ordering.t) (e:t): t :=
     match e with
@@ -193,7 +200,8 @@ Module Local.
   | is_terminal_intro
       (PROMISES: (promises lc) = Memory.bot)
   .
-  Hint Constructors is_terminal.
+  #[global]
+  Hint Constructors is_terminal: core.
 
   Inductive wf (lc:t) (mem:Memory.t): Prop :=
   | wf_intro
@@ -204,7 +212,8 @@ Module Local.
       (BOT: Memory.bot_none (promises lc))
       (RESERVE: Memory.reserve_wf (promises lc) mem)
   .
-  Hint Constructors wf.
+  #[global]
+  Hint Constructors wf: core.
 
   Lemma cap_wf
         lc promises mem1 mem2
@@ -222,7 +231,8 @@ Module Local.
   | disjoint_intro
       (DISJOINT: Memory.disjoint (promises lc1) (promises lc2))
   .
-  Hint Constructors disjoint.
+  #[global]
+  Hint Constructors disjoint: core.
 
   Global Program Instance disjoint_Symmetric: Symmetric disjoint.
   Next Obligation.
@@ -259,7 +269,8 @@ Module Local.
       (LC2: lc2 = mk (tview lc1) promises2):
       promise_step lc1 mem1 loc from to msg lc2 mem2 kind
   .
-  Hint Constructors promise_step.
+  #[global]
+  Hint Constructors promise_step: core.
 
   Inductive read_step (lc1:t) (mem1:Memory.t) (loc:Loc.t) (to:Time.t) (val:Const.t) (released:option View.t) (ord:Ordering.t) (lc2:t): Prop :=
   | read_step_intro
@@ -271,7 +282,8 @@ Module Local.
       (LC2: lc2 = mk tview2 (promises lc1)):
       read_step lc1 mem1 loc to val released ord lc2
   .
-  Hint Constructors read_step.
+  #[global]
+  Hint Constructors read_step: core.
 
   Inductive write_step (lc1:t) (sc1:TimeMap.t) (mem1:Memory.t) (loc:Loc.t) (from to:Time.t) (val:Const.t) (releasedm released:option View.t) (ord:Ordering.t) (lc2:t) (sc2:TimeMap.t) (mem2:Memory.t) (kind:Memory.op_kind): Prop :=
   | write_step_intro
@@ -284,7 +296,8 @@ Module Local.
       (SC2: sc2 = sc1):
       write_step lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind
   .
-  Hint Constructors write_step.
+  #[global]
+  Hint Constructors write_step: core.
 
   Inductive fence_step (lc1:t) (sc1:TimeMap.t) (ordr ordw:Ordering.t) (lc2:t) (sc2:TimeMap.t): Prop :=
   | fence_step_intro
@@ -295,13 +308,15 @@ Module Local.
       (SC2: sc2 = TView.write_fence_sc tview2 sc1 ordw):
       fence_step lc1 sc1 ordr ordw lc2 sc2
   .
-  Hint Constructors fence_step.
+  #[global]
+  Hint Constructors fence_step: core.
 
   Inductive failure_step (lc1:t): Prop :=
   | failure_step_intro
       (CONSISTENT: promise_consistent lc1)
   .
-  Hint Constructors failure_step.
+  #[global]
+  Hint Constructors failure_step: core.
 
   Inductive program_step:
     forall (e:ThreadEvent.t) (lc1:t) (sc1:TimeMap.t) (mem1:Memory.t) (lc2:t) (sc2:TimeMap.t) (mem2:Memory.t), Prop :=
@@ -341,7 +356,8 @@ Module Local.
       (LOCAL: Local.failure_step lc1):
       program_step ThreadEvent.failure lc1 sc1 mem1 lc1 sc1 mem1
   .
-  Hint Constructors program_step.
+  #[global]
+  Hint Constructors program_step: core.
 
 
   (* step_future *)

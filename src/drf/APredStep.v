@@ -360,6 +360,5 @@ Section PredStep.
       (STEP: pred_step P e t0 t1)
     :
       opt_pred_step P e t0 t1.
-  Hint Constructors opt_pred_step.
 
 End PredStep.

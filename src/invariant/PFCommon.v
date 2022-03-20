@@ -30,7 +30,8 @@ Module PFCommon.
       (TVIEW: (Local.tview lc_src) = (Local.tview lc_tgt))
       (PROMISES: (Local.promises lc_src) = Memory.bot)
   .
-  Hint Constructors sim_local.
+  #[global]
+  Hint Constructors sim_local: core.
 
   Definition vals_incl (mem1 mem2: Memory.t): Prop :=
     forall loc from to val released

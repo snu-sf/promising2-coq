@@ -943,7 +943,8 @@ Module PFCertify.
       (LOWER: Memory.add mem1 loc from_cap to_cap (Message.full val released_cap) mem2):
       add_cap caps mem1 mem2
   .
-  Hint Constructors add_cap.
+  #[export]
+  Hint Constructors add_cap: core.
 
   Program Instance add_cap_Reflexive: forall caps, Reflexive (add_cap caps).
 
@@ -955,7 +956,8 @@ Module PFCertify.
       (ADD: @add_cap caps mem2 mem3):
       pf_step caps e e1 (Thread.mk lang st2 lc2 sc2 mem3)
   .
-  Hint Constructors pf_step.
+  #[export]
+  Hint Constructors pf_step: core.
 
   Lemma add_cap_vals_incl
         caps mem1 mem2

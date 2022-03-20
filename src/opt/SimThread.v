@@ -115,6 +115,7 @@ Section SimulationThread.
     exploit STEP; eauto. i. des; eauto.
     right. esplits; eauto.
   Qed.
+  #[local]
   Hint Resolve _sim_thread_mon: paco.
 
   Definition sim_thread: SIM_THREAD := paco9 _sim_thread bot9.
@@ -134,6 +135,7 @@ Section SimulationThread.
       right. esplits; eauto.
   Qed.
 End SimulationThread.
+#[export]
 Hint Resolve _sim_thread_mon: paco.
 
 

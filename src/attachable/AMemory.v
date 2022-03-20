@@ -51,7 +51,8 @@ Module AMemory.
       (RESERVE: msg = Message.reserve):
       promise promises1 mem1 loc from to msg promises2 mem2 Memory.op_kind_cancel
   .
-  Hint Constructors promise.
+  #[global]
+  Hint Constructors promise: core.
 
   Inductive write
             (promises1 mem1:Memory.t)
@@ -62,7 +63,8 @@ Module AMemory.
       (PROMISE: promise promises1 mem1 loc from1 to1 (Message.full val released) promises2 mem2 kind)
       (REMOVE: Memory.remove promises2 loc from1 to1 (Message.full val released) promises3)
   .
-  Hint Constructors write.
+  #[global]
+  Hint Constructors write: core.
 
 
   (* Lemmas on op *)

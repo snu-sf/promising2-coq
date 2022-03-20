@@ -85,14 +85,16 @@ Section AssertInsertion.
           RegFile.eval_expr rs c <> 0):
       insert_assertion tid stmts_src ((Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts_tgt)
   .
-  Hint Constructors insert_assertion.
+  #[local]
+  Hint Constructors insert_assertion: core.
 
   Inductive sim_state (tid: Ident.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_intro
       (STMTS: insert_assertion tid (State.stmts st_src) (State.stmts st_tgt))
       (REGS: (State.regs st_src) = (State.regs st_tgt))
   .
-  Hint Constructors sim_state.
+  #[local]
+  Hint Constructors sim_state: core.
 
   Inductive sim_thread (tid: Ident.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_intro
@@ -101,7 +103,8 @@ Section AssertInsertion.
       (SC: (Thread.sc e_src) = (Thread.sc e_tgt))
       (MEMORY: (Thread.memory e_src) = (Thread.memory e_tgt))
   .
-  Hint Constructors sim_thread.
+  #[local]
+  Hint Constructors sim_thread: core.
 
 
   Lemma sim_state_step
@@ -325,7 +328,8 @@ Section AssertInsertion.
       (SC: (Configuration.sc c_src) = (Configuration.sc c_tgt))
       (MEMORY: (Configuration.memory c_src) = (Configuration.memory c_tgt))
   .
-  Hint Constructors sim_conf.
+  #[local]
+  Hint Constructors sim_conf: core.
 
 
   Lemma sim_conf_find

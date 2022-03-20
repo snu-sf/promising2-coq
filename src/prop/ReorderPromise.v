@@ -679,8 +679,11 @@ Proof.
     exploit Memory.add_get0; try exact MEM1. i. des. congr.
 Qed.
 
-Hint Constructors Thread.program_step.
-Hint Constructors Thread.step.
+
+#[export]
+Hint Constructors Thread.program_step: core.
+#[export]
+Hint Constructors Thread.step: core.
 
 Lemma reorder_nonpf_program
       lang

@@ -102,7 +102,8 @@ Section CELL.
     :
       times_sorted (hd :: tl)
   .
-  Hint Constructors times_sorted.
+  #[local]
+  Hint Constructors times_sorted: core.
 
   Fixpoint insert (to: Time.t) (l: list Time.t): list Time.t :=
     match l with
@@ -1486,7 +1487,8 @@ Inductive opt_pred_step P lang
     (STEP: pred_step P e t0 t1)
   :
     opt_pred_step P e t0 t1.
-Hint Constructors opt_pred_step.
+#[export]
+Hint Constructors opt_pred_step: core.
 
 
 Section UNCHANGABLES.
@@ -2010,7 +2012,8 @@ Lemma memory_concrete_le_le
 Proof.
   ii. eauto.
 Qed.
-Hint Resolve memory_concrete_le_le.
+#[export]
+Hint Resolve memory_concrete_le_le: core.
 
 Lemma memory_concrete_le_closed_timemap tm mem0 mem1
       (MLE: memory_concrete_le mem0 mem1)

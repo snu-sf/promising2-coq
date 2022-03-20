@@ -33,7 +33,8 @@ Module LowerPromises.
   | message_rel_reserve:
       message_rel Message.reserve Message.reserve
   .
-  Hint Constructors message_rel.
+  #[export]
+  Hint Constructors message_rel: core.
 
   Inductive promises_rel (promises1 promises2: Memory.t): Prop :=
   | promises_rel_intro

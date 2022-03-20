@@ -69,7 +69,8 @@ Module Memory.
           Interval.disjoint (from1, to1) (from2, to2) /\
           (to1, to2) <> (Time.bot, Time.bot))
   .
-  Hint Constructors disjoint.
+  #[global]
+  Hint Constructors disjoint: core.
 
   Global Program Instance disjoint_Symmetric: Symmetric disjoint.
   Next Obligation.
@@ -118,7 +119,8 @@ Module Memory.
 
   Definition bot_none (mem: t): Prop :=
     forall loc, get loc Time.bot mem = None.
-  Hint Unfold bot_none.
+  #[global]
+  Hint Unfold bot_none: core.
 
   Definition bot: t := fun _ => Cell.bot.
 
@@ -172,7 +174,8 @@ Module Memory.
       loc to:
       message_to Message.reserve loc to
   .
-  Hint Constructors message_to.
+  #[global]
+  Hint Constructors message_to: core.
 
   Definition closed_timemap (times:TimeMap.t) (mem:t): Prop :=
     forall loc, exists from val released, get loc (times loc) mem = Some (from, Message.full val released).
@@ -182,7 +185,8 @@ Module Memory.
       (PLN: closed_timemap (View.pln view) mem)
       (RLX: closed_timemap (View.rlx view) mem)
   .
-  Hint Constructors closed_view.
+  #[global]
+  Hint Constructors closed_view: core.
 
   Inductive closed_opt_view: forall (view:option View.t) (mem:t), Prop :=
   | closed_opt_view_some
@@ -193,7 +197,8 @@ Module Memory.
       mem:
       closed_opt_view None mem
   .
-  Hint Constructors closed_opt_view.
+  #[global]
+  Hint Constructors closed_opt_view: core.
 
   Inductive closed_message: forall (msg:Message.t) (mem:t), Prop :=
   | closed_message_full
@@ -204,12 +209,14 @@ Module Memory.
       mem:
       closed_message Message.reserve mem
   .
-  Hint Constructors closed_message.
+  #[global]
+  Hint Constructors closed_message: core.
 
 
   Definition inhabited (mem:t): Prop :=
     forall loc, get loc Time.bot mem = Some (Time.bot, Message.elt).
-  Hint Unfold inhabited.
+  #[global]
+  Hint Unfold inhabited: core.
 
   Inductive closed (mem:t): Prop :=
   | closed_intro
@@ -220,7 +227,8 @@ Module Memory.
           <<MSG_CLOSED: closed_message msg mem>>)
       (INHABITED: inhabited mem)
   .
-  Hint Constructors closed.
+  #[global]
+  Hint Constructors closed: core.
 
   Lemma closed_timemap_bot
         mem
@@ -257,7 +265,8 @@ Module Memory.
       (ADD: Cell.add (mem1 loc) from to msg r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors add.
+  #[global]
+  Hint Constructors add: core.
 
   Inductive split (mem1:t) (loc:Loc.t) (ts1 ts2 ts3:Time.t) (msg2 msg3:Message.t) (mem2:t): Prop :=
   | split_intro
@@ -265,7 +274,8 @@ Module Memory.
       (SPLIT: Cell.split (mem1 loc) ts1 ts2 ts3 msg2 msg3 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors split.
+  #[global]
+  Hint Constructors split: core.
 
   Inductive lower (mem1:t) (loc:Loc.t) (from to:Time.t) (msg1 msg2:Message.t) (mem2:t): Prop :=
   | lower_intro
@@ -273,7 +283,8 @@ Module Memory.
       (LOWER: Cell.lower (mem1 loc) from to msg1 msg2 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors lower.
+  #[global]
+  Hint Constructors lower: core.
 
   Inductive remove (mem1:t) (loc:Loc.t) (from1 to1:Time.t) (msg1:Message.t) (mem2:t): Prop :=
   | remove_intro
@@ -281,7 +292,8 @@ Module Memory.
       (REMOVE: Cell.remove (mem1 loc) from1 to1 msg1 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors remove.
+  #[global]
+  Hint Constructors remove: core.
 
   Inductive op_kind :=
   | op_kind_add
@@ -289,7 +301,8 @@ Module Memory.
   | op_kind_lower (msg1:Message.t)
   | op_kind_cancel
   .
-  Hint Constructors op_kind.
+  #[global]
+  Hint Constructors op_kind: core.
 
   Inductive op_kind_match: forall (k1 k2:op_kind), Prop :=
   | op_kind_match_add:
@@ -347,7 +360,8 @@ Module Memory.
       (REMOVE: remove mem1 loc from to msg mem2):
       op mem1 loc from to msg mem2 op_kind_cancel
   .
-  Hint Constructors op.
+  #[global]
+  Hint Constructors op: core.
 
   Inductive future_imm (mem1 mem2:t): Prop :=
   | future_imm_intro
@@ -356,10 +370,12 @@ Module Memory.
       (CLOSED: closed_message msg mem2)
       (TS: message_to msg loc to)
   .
-  Hint Constructors future_imm.
+  #[global]
+  Hint Constructors future_imm: core.
 
   Definition future := rtc future_imm.
-  Hint Unfold future.
+  #[global]
+  Hint Unfold future: core.
 
   Inductive promise
             (promises1 mem1:t)
@@ -396,7 +412,8 @@ Module Memory.
       (RESERVE: msg = Message.reserve):
       promise promises1 mem1 loc from to msg promises2 mem2 op_kind_cancel
   .
-  Hint Constructors promise.
+  #[global]
+  Hint Constructors promise: core.
 
   Inductive write
             (promises1 mem1:t)
@@ -407,7 +424,8 @@ Module Memory.
       (PROMISE: promise promises1 mem1 loc from1 to1 (Message.full val released) promises2 mem2 kind)
       (REMOVE: remove promises2 loc from1 to1 (Message.full val released) promises3)
   .
-  Hint Constructors write.
+  #[global]
+  Hint Constructors write: core.
 
 
   (* Lemmas on add, split, lower & remove *)
@@ -1336,7 +1354,8 @@ Module Memory.
           closed_opt_view released mem2 /\
           Time.le ((View.rlx (View.unwrap released)) loc) to)
   .
-  Hint Constructors future_weak.
+  #[global]
+  Hint Constructors future_weak: core.
 
   Lemma future_weak_closed_timemap
         times mem1 mem2
@@ -1717,7 +1736,8 @@ Module Memory.
       (MAX: max_full_timemap mem tm):
       max_full_view mem (View.mk tm tm)
   .
-  Hint Constructors max_full_view.
+  #[global]
+  Hint Constructors max_full_view: core.
 
   Lemma max_full_view_exists
         mem
@@ -2648,7 +2668,8 @@ Module Memory.
           (exists f m, get loc from mem1 = Some (f, m)) /\
           (from = max_ts loc mem1 -> latest_reserve loc promises mem1))
   .
-  Hint Constructors cap.
+  #[global]
+  Hint Constructors cap: core.
 
   Lemma cap_inv
         promises mem1 mem2

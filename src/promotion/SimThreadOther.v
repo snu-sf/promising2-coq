@@ -48,7 +48,8 @@ Module SimThreadOther.
       (FULFILLABLE: fulfillable l (Local.tview (Thread.local e_src)) (Thread.memory e_src)
                                   (Local.promises (Thread.local e_src)))
   .
-  Hint Constructors sim_thread.
+  #[export]
+  Hint Constructors sim_thread: core.
 
   Lemma sim_thread_promise_step
         l e1_src

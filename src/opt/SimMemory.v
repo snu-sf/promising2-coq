@@ -35,7 +35,8 @@ Inductive sim_message: forall (msg_src msg_tgt: Message.t), Prop :=
 | sim_message_reserve:
     sim_message Message.reserve Message.reserve
 .
-Hint Constructors sim_message.
+#[export]
+Hint Constructors sim_message: core.
 
 Program Instance sim_message_PreOrder: PreOrder sim_message.
 Next Obligation.
@@ -52,7 +53,8 @@ Inductive message_same_kind: forall (msg_src msg_tgt: Message.t), Prop :=
 | same_message_kine_reserve:
     message_same_kind Message.reserve Message.reserve
 .
-Hint Constructors sim_message.
+#[export]
+Hint Constructors sim_message: core.
 
 Program Instance message_same_kind_Equivalence: Equivalence message_same_kind.
 Next Obligation.

@@ -51,7 +51,8 @@ Module TimeMap <: JoinableType.
   Global Program Instance le_PreOrder: PreOrder le.
   Next Obligation. ii. refl. Qed.
   Next Obligation. ii. etrans; eauto. Qed.
-  Hint Resolve le_PreOrder_obligation_2.
+  #[global]
+  Hint Resolve le_PreOrder_obligation_2: core.
 
   Definition bot: t := fun _ => Time.bot.
 
@@ -169,7 +170,8 @@ Module View <: JoinableType.
   | wf_intro
       (PLN_RLX: TimeMap.le (pln view) (rlx view))
   .
-  Hint Constructors wf.
+  #[global]
+  Hint Constructors wf: core.
 
   Inductive opt_wf: forall (view:option View.t), Prop :=
   | opt_wf_some
@@ -179,7 +181,8 @@ Module View <: JoinableType.
   | opt_wf_none:
       opt_wf None
   .
-  Hint Constructors opt_wf.
+  #[global]
+  Hint Constructors opt_wf: core.
 
   Definition eq := @eq t.
 
@@ -197,7 +200,8 @@ Module View <: JoinableType.
   Next Obligation.
     ii. inv H. inv H0. econs; etrans; eauto.
   Qed.
-  Hint Resolve le_PreOrder_obligation_2.
+  #[global]
+  Hint Resolve le_PreOrder_obligation_2: core.
 
   Inductive opt_le: forall (lhs rhs:option t), Prop :=
   | opt_le_none
@@ -208,7 +212,8 @@ Module View <: JoinableType.
       (LE: le lhs rhs):
       opt_le (Some lhs) (Some rhs)
   .
-  Hint Constructors opt_le.
+  #[global]
+  Hint Constructors opt_le: core.
 
   Global Program Instance opt_le_PreOrder: PreOrder opt_le.
   Next Obligation.
@@ -217,7 +222,8 @@ Module View <: JoinableType.
   Next Obligation.
     ii. inv H; inv H0; econs. etrans; eauto.
   Qed.
-  Hint Resolve opt_le_PreOrder_obligation_2.
+  #[global]
+  Hint Resolve opt_le_PreOrder_obligation_2: core.
 
   Lemma ext l r
         (PLN: (pln l) = (pln r))

@@ -68,6 +68,7 @@ Proof.
   i. exploit STEP; eauto. i. des; eauto.
   right. esplits; eauto.
 Qed.
+#[export]
 Hint Resolve _sim_trace_mon: paco.
 
 Definition sim_trace: SIM_TRACE := paco3 _sim_trace bot3.

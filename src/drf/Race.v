@@ -34,7 +34,8 @@ Inductive pf_race_condition e1 e2: Prop :=
     (EVENT2: ProgramEvent.is_updating e2 = Some (loc, val2, ordu2))
     (ORDU: Ordering.le ordu1 Ordering.strong_relaxed)
 .
-Hint Constructors pf_race_condition.
+#[export]
+Hint Constructors pf_race_condition: core.
 
 Definition can_step lang (st : Language.state lang) (e : ProgramEvent.t) : Prop :=
   exists st', Language.step _ e st st'.
@@ -65,7 +66,8 @@ Inductive pf_race (c:Configuration.t): Prop :=
     (PROEVT2: can_step _ st2 e2)
     (RACE: pf_race_condition e1 e2)
 .
-Hint Constructors pf_race.
+#[export]
+Hint Constructors pf_race: core.
 
 Inductive step_all A B C D (step: A -> B -> C -> D -> Prop): C -> D -> Prop :=
 | step_all_intro

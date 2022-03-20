@@ -36,7 +36,8 @@ Module ALocal.
       (LC2: lc2 = Local.mk (Local.tview lc1) promises2):
       promise_step lc1 mem1 loc from to msg lc2 mem2 kind
   .
-  Hint Constructors promise_step.
+  #[global]
+  Hint Constructors promise_step: core.
 
   Inductive write_step (lc1:Local.t) (sc1:TimeMap.t) (mem1:Memory.t) (loc:Loc.t) (from to:Time.t) (val:Const.t) (releasedm released:option View.t) (ord:Ordering.t) (lc2:Local.t) (sc2:TimeMap.t) (mem2:Memory.t) (kind:Memory.op_kind): Prop :=
   | write_step_intro
@@ -49,7 +50,8 @@ Module ALocal.
       (SC2: sc2 = sc1):
       write_step lc1 sc1 mem1 loc from to val releasedm released ord lc2 sc2 mem2 kind
   .
-  Hint Constructors write_step.
+  #[global]
+  Hint Constructors write_step: core.
 
   Inductive program_step:
     forall (e:ThreadEvent.t) (lc1:Local.t) (sc1:TimeMap.t) (mem1:Memory.t) (lc2:Local.t) (sc2:TimeMap.t) (mem2:Memory.t), Prop :=
@@ -89,7 +91,8 @@ Module ALocal.
       (LOCAL: Local.failure_step lc1):
       program_step ThreadEvent.failure lc1 sc1 mem1 lc1 sc1 mem1
   .
-  Hint Constructors program_step.
+  #[global]
+  Hint Constructors program_step: core.
 
 
   (* step_future *)

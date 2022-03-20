@@ -45,7 +45,8 @@ Module SimThreadPromotion.
       (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
       (REGR: (State.regs st_tgt) r = val)
   .
-  Hint Constructors sim_state_synch.
+  #[export]
+  Hint Constructors sim_state_synch: core.
 
   Inductive sim_state_fa (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_fa_intro
@@ -58,7 +59,8 @@ Module SimThreadPromotion.
       (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
       (REGR: (State.regs st_tgt) r = val + RegFile.eval_value (State.regs st_src) addendum)
   .
-  Hint Constructors sim_state_fa.
+  #[export]
+  Hint Constructors sim_state_fa: core.
 
   Inductive sim_state_cas_success1 (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas1_intro
@@ -74,7 +76,8 @@ Module SimThreadPromotion.
       (REGR: (State.regs st_tgt) r = val)
       (SUCCESS: val = RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_success1.
+  #[export]
+  Hint Constructors sim_state_cas_success1: core.
 
   Inductive sim_state_cas_success2 (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas2_intro
@@ -88,7 +91,8 @@ Module SimThreadPromotion.
       (REGR: (State.regs st_tgt) r = RegFile.eval_value (State.regs st_src) new)
       (SUCCESS: val = RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_success2.
+  #[export]
+  Hint Constructors sim_state_cas_success2: core.
 
   Inductive sim_state_cas_fail (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas_fail_intro
@@ -102,7 +106,8 @@ Module SimThreadPromotion.
       (REGR: (State.regs st_tgt) r = val)
       (FAIL: val <> RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_fail.
+  #[export]
+  Hint Constructors sim_state_cas_fail: core.
 
   Definition sim_state (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
     sim_state_synch l r val st_src st_tgt \/
@@ -136,7 +141,8 @@ Module SimThreadPromotion.
       (PROMISES: forall to, Memory.get l to (Local.promises (Thread.local e_src)) = None)
       (SAFE: safe l (Thread.local e_src) (Thread.memory e_src))
   .
-  Hint Constructors sim_thread.
+  #[export]
+  Hint Constructors sim_thread: core.
 
   Inductive sim_thread_reserve (l: Loc.t) (r: Reg.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_reserve_intro
@@ -159,7 +165,8 @@ Module SimThreadPromotion.
           Memory.get l to (Local.promises (Thread.local e_src)) = None)
       (SAFE: safe l (Thread.local e_src) (Thread.memory e_src))
   .
-  Hint Constructors sim_thread_reserve.
+  #[export]
+  Hint Constructors sim_thread_reserve: core.
 
 
   Lemma step_sim_thread_reserve

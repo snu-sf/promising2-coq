@@ -33,11 +33,13 @@ Module PFConfiguration.
       (STEP: Thread.program_step e e2 (Thread.mk _ st3 lc3 sc3 memory3)):
       step (ThreadEvent.get_machine_event e) tid c1 (Configuration.mk (IdentMap.add tid (existT _ _ st3, lc3) (Configuration.threads c1)) sc3 memory3)
   .
-  Hint Constructors step.
+  #[export]
+  Hint Constructors step: core.
 
   Definition step_all (c0 c1: Configuration.t) :=
     union (fun e => union (step e)) c0 c1.
-  Hint Unfold step_all.
+  #[export]
+  Hint Unfold step_all: core.
 
   Inductive opt_step: forall (e: MachineEvent.t) (tid: Ident.t) (c1 c2: Configuration.t), Prop :=
   | step_none
@@ -48,7 +50,8 @@ Module PFConfiguration.
       (STEP: step e tid c1 c2):
       opt_step e tid c1 c2
   .
-  Hint Constructors opt_step.
+  #[export]
+  Hint Constructors opt_step: core.
 
   Lemma step_future
         e tid c1 c2

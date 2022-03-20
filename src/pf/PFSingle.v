@@ -45,7 +45,8 @@ Module PFSingle.
 
   Definition step_all (c0 c1: Configuration.t) :=
     union (fun e => union (step e)) c0 c1.
-  Hint Unfold step_all.
+  #[export]
+  Hint Unfold step_all: core.
 
   Lemma step_long_step
     :

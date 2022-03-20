@@ -95,7 +95,8 @@ Inductive loc_free_stmt (l: Loc.t): forall (stmt: Stmt.t), Prop :=
     (LOCFREE: List.Forall (loc_free_stmt l) stmts):
     loc_free_stmt l (Stmt.dowhile stmts cond)
 .
-Hint Constructors loc_free_stmt.
+#[export]
+Hint Constructors loc_free_stmt: core.
 
 Definition loc_free_stmts (l: Loc.t) (stmts: list Stmt.t): Prop :=
   List.Forall (loc_free_stmt l) stmts.
