@@ -131,9 +131,9 @@ Proof.
   }
   i. des.
   econs; [eauto|..]; s; eauto; etrans; eauto.
-Grab Existential Variables.
-{ econs 2. }
+Unshelve.
 { econs. econs 3. }
+{ econs 2. }
 Qed.
 
 Lemma sim_update_cap
@@ -204,7 +204,7 @@ Proof.
   esplits; eauto.
   econs; [eauto|..]; s; eauto using Memory.future_closed_timemap.
   etrans; eauto.
-Grab Existential Variables.
+Unshelve.
   { auto. }
   { auto. }
 Qed.
@@ -461,9 +461,9 @@ Proof.
     + left. eapply paco9_mon; [apply sim_stmts_nil|]; ss.
       * apply RegFun.add_add. ii. subst. apply REGS. apply RegSet.add_spec. auto.
       * etrans; eauto.
-Grab Existential Variables.
-{ econs 2. }
+Unshelve.
 { econs. econs 3. }
+{ econs 2. }
 Qed.
 
 Lemma sim_update_sim_thread:

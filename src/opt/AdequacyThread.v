@@ -292,6 +292,6 @@ Proof.
               eexists.
               eapply sim_thread_future; try exact x0;
                 try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
-Grab Existential Variables.
+Unshelve.
   { auto. }
 Qed.

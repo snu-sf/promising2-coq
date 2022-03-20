@@ -538,7 +538,7 @@ Module Cell.
     exists cell2, add cell1 from to msg cell2.
   Proof.
     destruct cell1. eexists (mk _). econs; s; eauto.
-    Grab Existential Variables.
+    Unshelve.
     eapply Raw.add_wf; eauto.
   Qed.
 
@@ -573,7 +573,7 @@ Module Cell.
     exists cell2, split cell1 ts1 ts2 ts3 msg2 msg3 cell2.
   Proof.
     destruct cell1. eexists (mk _). econs; s; eauto.
-  Grab Existential Variables.
+  Unshelve.
     eapply Raw.split_wf; eauto.
   Qed.
 
@@ -595,7 +595,7 @@ Module Cell.
     exists cell2, lower cell1 from to msg1 msg2 cell2.
   Proof.
     destruct cell1. eexists (mk _). unfold lower. econs; eauto. ss.
-  Grab Existential Variables.
+  Unshelve.
     eapply Raw.lower_wf; eauto.
   Qed.
 
@@ -752,7 +752,7 @@ Module Cell.
     exists cell2, remove cell1 from to msg cell2.
   Proof.
     eexists (mk _). destruct cell1. ss.
-    Grab Existential Variables.
+    Unshelve.
     { eapply Raw.remove_wf.
       - econs; eauto.
       - apply WF.
