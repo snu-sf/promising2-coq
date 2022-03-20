@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -102,7 +102,7 @@ Module Promotion.
     { (* terminal *)
       dup SIM. inv SIM0. des. ss.
       dup WF_SRC. inv WF_SRC0. inv WF.
-      exploit THREADS; eauto. i. clear DISJOINT THREADS.
+      exploit THREADS; eauto. intro x. clear DISJOINT THREADS.
       exploit SimThreadPromotion.step_reserve_sim_thread; try exact SIM_THREAD; eauto. i. des.
       destruct e2_src.
       esplits.
@@ -246,7 +246,7 @@ Module Promotion.
 
     { (* other: failure *)
       exploit sim_conf_find; eauto. i. des.
-      exploit x1; eauto. i. des. clear x0 x1.
+      exploit x1; eauto. intro x. des. clear x0 x1.
       destruct c_src as [ths1_src sc1_src mem1_src].
       destruct c_tgt as [ths1_tgt sc1_tgt mem1_tgt].
       dup SIM. inv SIM0. ss.
@@ -299,7 +299,7 @@ Module Promotion.
 
     { (* other: normal *)
       exploit sim_conf_find; eauto. i. des.
-      exploit x1; eauto. i. des. clear x0 x1.
+      exploit x1; eauto. intro x. des. clear x0 x1.
       destruct c_src as [ths1_src sc1_src mem1_src].
       destruct c_tgt as [ths1_tgt sc1_tgt mem1_tgt].
       dup SIM. inv SIM0. ss.

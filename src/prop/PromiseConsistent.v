@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -189,7 +189,7 @@ Lemma promise_consistent_promise_read
       (CONS: Local.promise_consistent lc2):
   Time.lt to t.
 Proof.
-  inv STEP. exploit CONS; eauto. s. i.
+  inv STEP. exploit CONS; eauto. s. intro x.
   apply TimeFacts.join_lt_des in x. des.
   apply TimeFacts.join_lt_des in AC. des.
   revert BC0. unfold View.singleton_ur_if. condtac; ss.
@@ -213,7 +213,7 @@ Proof.
     { inv PROMISE0; ss. }
     i. des. inv MSG_LE.
     rewrite X0 in *. inv GET.
-    exploit CONS; eauto. i. ss.
+    exploit CONS; eauto. intro x. ss.
     apply TimeFacts.join_lt_des in x. des.
     left. revert BC. unfold TimeMap.singleton, LocFun.add. condtac; ss.
   - inv STEP. inv WRITE.

@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -70,7 +70,7 @@ Module PFStep.
   Proof.
     inv MEM.
     destruct (Memory.get loc to promises) as [[f m]|] eqn:GETP; eauto.
-    exploit LE_TGT; eauto. i.
+    exploit LE_TGT; eauto. intro x.
     rewrite GET_TGT in x. inv x. eauto.
   Qed.
 
@@ -213,7 +213,7 @@ Module PFStep.
     - (* split *)
       clear TS RESERVE.
       exploit (@Memory.add_exists mem1_src loc from to msg); eauto.
-      { ii. exploit SOUND; eauto. i.
+      { ii. exploit SOUND; eauto. intro x0.
         exploit Memory.split_get0; try exact MEM. i. des.
         exploit Memory.get_disjoint; [exact x0|exact GET0|..]. i. des.
         { subst. exploit Memory.split_get0; try exact PROMISES. i. des.
@@ -483,8 +483,8 @@ Module PFStep.
     destruct (Memory.get loc to mem_src) as [[from_src msg_src]|] eqn:GETS; cycle 1.
     { exists mem_src. econs; i; ss; eauto.
       inv IN; eauto. inv H. ss. }
-    exploit SOUND; eauto. i.
-    exploit LE; eauto. i.
+    exploit SOUND; eauto. intro x.
+    exploit LE; eauto. intro x0.
     rewrite x in *. inv x0.
     exploit Memory.remove_exists; try exact GETS. i. des.
     exists mem2. econs; ss; ii.

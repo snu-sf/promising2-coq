@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -71,7 +71,7 @@ Lemma map_ident_in_memory_closed_timemap
     timemap_map f tm tm.
 Proof.
   ii. eapply MAP; eauto.
-  exploit CLOSED; eauto. i. des.
+  exploit CLOSED; eauto. intro x. des.
   eapply Memory.max_ts_spec in x. des. eauto.
 Qed.
 
@@ -1046,7 +1046,7 @@ Proof.
       * destruct (MAX loc). des. unfold Memory.get in Heq0.
         rewrite FULL in GET. clarify .
       * clarify. unfold pf_consistent_drf_shift in *. des.
-        exploit UPDATESMAX; eauto. i. ss. rewrite x in *. esplits; eauto.
+        exploit UPDATESMAX; eauto. intro x. ss. rewrite x in *. esplits; eauto.
 
     + i. hexploit (CONSISTENTFUTURE m sc); eauto.
       { eapply not_attatched_mon; eauto. i. des; ss; auto. }

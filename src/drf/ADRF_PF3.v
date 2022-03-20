@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -442,7 +442,7 @@ Section CAP.
       from = Memory.max_ts l mem0.
   Proof.
     unfold caps in CAPS. des. inv CAP.
-    exploit COMPLETE; eauto. i. des.
+    exploit COMPLETE; eauto. intro x. des.
     destruct (classic (Memory.max_ts l mem0 = from)); eauto. exfalso.
     set (@cell_elements_least
            (mem0 l)
@@ -470,7 +470,7 @@ Section CAP.
           - eapply Time.lt_strorder. eapply TimeFacts.lt_le_lt.
             eapply GET. etrans; eauto. }
         { i. exploit memory_get_from_inj.
-          - eapply x1.
+          - eapply x2.
           - eapply GET1.
           - i. des; clarify. eapply Time.lt_strorder; eauto. }
       * destruct H0.
@@ -501,9 +501,9 @@ Section CAP.
   Proof.
     exploit caps_concrete_last; eauto. i. clarify.
     unfold caps in CAPS. des. inv CAP.
-    exploit COMPLETE; eauto. i. des.
+    exploit COMPLETE; eauto. intro x. des.
     exploit Memory.latest_val_exists; eauto. i. des.
-    exploit BACK; eauto. i.
+    exploit BACK; eauto. intro x1.
     exploit memory_get_from_inj.
     { eapply x1. }
     { eapply GET1. } i. des; clarify.
@@ -671,7 +671,7 @@ Section PFCONSISTENT.
     ii. exploit Memory.max_full_timemap_exists; eauto. intros MAX. des.
     ii. exploit Memory.max_full_timemap_exists.
     { eapply le_inhabited; eauto. eapply Memory.cap_le; eauto. refl. }
-    i. des. exploit CONSISTENT; eauto. i.
+    i. des. exploit CONSISTENT; eauto. intro x.
 
     assert (exists e2,
                (<<STEPS: rtc (tau (Thread.step true))

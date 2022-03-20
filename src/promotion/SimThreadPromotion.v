@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -1113,8 +1113,8 @@ Module SimThreadPromotion.
     Memory.max_ts l mem1 = Memory.max_ts l mem2.
   Proof.
     dup CAP. inv CAP.
-    exploit SOUND; try exact MEM. i.
-    exploit SOUND; try exact LATEST. i.
+    exploit SOUND; try exact MEM. intro x.
+    exploit SOUND; try exact LATEST. intro x0.
     exploit Memory.max_ts_spec; try exact x. i. des.
     inv MAX; ss.
     exploit Memory.cap_inv; try exact GET; eauto. i. des.

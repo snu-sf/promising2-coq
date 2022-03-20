@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -115,7 +115,7 @@ Lemma caps_get_reserve mem0 prom mem1 loc to from
 .
 Proof.
   unfold caps in CAPS. des. inv CAP.
-  exploit COMPLETE; eauto. i. des.
+  exploit COMPLETE; eauto. intro x. des.
   set (@cell_elements_least
          (mem0 loc)
          (fun t => Time.lt from t)). des.
@@ -125,7 +125,7 @@ Proof.
       exfalso. exploit LEAST.
       - eapply GET2.
       - eauto.
-      - i. exploit Memory.get_ts; try apply GET.
+      - intro x1. exploit Memory.get_ts; try apply GET.
         i. des; clarify.
         + eapply Time.lt_strorder. eapply TimeFacts.lt_le_lt.
           * eapply SAT.
@@ -139,7 +139,7 @@ Proof.
       - eapply x.
       - eapply GET.
       - eauto.
-      - i. destruct x2; auto. destruct H. exfalso.
+      - intro x2. destruct x2; auto. destruct H. exfalso.
         exploit memory_get_from_inj.
         { eapply SOUND. eapply GET. }
         { eapply GET1. }
@@ -169,7 +169,7 @@ Proof.
       { inv CLOSED. eauto. } i. des.
       exploit BACK; eauto. i.
       exploit memory_get_from_inj.
-      * eapply x1.
+      * eapply x4.
       * eapply GET1.
       * i. des; clarify.
         { exfalso. eapply Time.lt_strorder. eapply TimeFacts.lt_le_lt.
@@ -1261,7 +1261,7 @@ Proof.
            (fun loc to => <<SAT: L loc>> /\ Memory.max_full_ts (Thread.memory th) loc to)
              \2/
              (fun loc to => <<SAT: ~ L loc>> /\ Memory.max_full_ts (Thread.memory th) loc to)); cycle 1.
-    { i. destruct (classic (L x1)).
+    { i. destruct (classic (L x0)).
       - left. split; auto.
       - right. split; auto. }
     eapply not_attatched_sum.
@@ -1304,7 +1304,7 @@ Proof.
       { ss. inv WF.
         exploit caps_collapsing_memory_max_other; try apply COLLAPSABLE; try apply CAP; eauto.
         i. exploit Memory.max_full_ts_inj.
-        { eapply x1. }
+        { eapply x0. }
         { eapply MAX. }
         i. right. auto. }
 
@@ -1319,7 +1319,7 @@ Proof.
       instantiate (1:=loc). i. des. ss.
       clarify. dup GET0.
       exploit cancels_memory_decrease; try apply STEP; eauto. i. ss.
-      dup x1. eapply Memory.max_ts_spec in x1. des.
+      dup x0. eapply Memory.max_ts_spec in x0. des.
       erewrite <- (@caps_collapsing_memory_max_self _ mem1 mem2) in MAX2; eauto; cycle 1.
       exploit Memory.max_full_ts_inj.
       { eapply MAX0. }
@@ -1333,8 +1333,8 @@ Proof.
           - unfold collapsing_latest_reserves_times, collapsing_caps_times,
             collapsing_latest_reserves, collapsing_caps. ii. des; clarify. }
         i. des; clarify.
-        { erewrite x1 in *. eapply Time.lt_strorder; eauto. }
-        { eapply x1.
+        { erewrite x0 in *. eapply Time.lt_strorder; eauto. }
+        { eapply x0.
           - econs; [|refl]. ss.
             eapply memory_get_ts_strong in GET1. des; clarify.
             erewrite GET3 in *. exfalso. eapply Time.lt_strorder.
@@ -1817,7 +1817,7 @@ Proof.
         destruct (Time.le_lt_dec to ts).
         { exploit LEAST; eauto. i.
           eapply Time.lt_strorder. eapply TimeFacts.le_lt_lt.
-          { eapply x. }
+          { eapply x0. }
           eapply TimeFacts.le_lt_lt.
           { eapply TS3. }
           { eapply memory_get_ts_strong in GET. des; clarify; ss.
@@ -1826,7 +1826,7 @@ Proof.
             - eauto. } }
         { exploit GREATEST; eauto. i.
           eapply Time.lt_strorder. eapply TimeFacts.le_lt_lt.
-          { eapply x. }
+          { eapply x0. }
           { eauto. } }
     + eapply TimeFacts.lt_le_lt; eauto.
     + i. econs; eauto. econs; eauto.
@@ -2060,7 +2060,7 @@ Proof.
   { eapply steps_promises_le; eauto. inv LCWFSRC. auto. } intros WRITENOTIN.
   exploit traced_step_wf_event; try apply STEPS1.
   { ii. eapply cancels_concrete_same; eauto. ss.
-    exploit collapsing_caps_forget_closed; eauto. i. inv x1. auto. } intros WFEVT.
+    exploit collapsing_caps_forget_closed; eauto. intro x. inv x. auto. } intros WFEVT.
 
   hexploit (list_filter_exists (fun locto => L (fst locto)) updates). i. des.
   hexploit (list_filter_exists (fun locto => ~ L (fst locto)) updates). i. des.
@@ -2080,7 +2080,7 @@ Proof.
 
   exists e1, (List.map fst l'), (List.map fst l'0). splits; auto.
   { i. apply List.in_map_iff in INAU. apply List.in_map_iff in INU. des. clarify.
-    apply (proj2 (@COMPLETE0 x1)) in INU0.
+    apply (proj2 (@COMPLETE0 x0)) in INU0.
     apply (proj2 (@COMPLETE1 x)) in INAU0. des.
     rewrite INAU in *. clarify. }
   { i. apply List.in_map_iff in INAU. des. clarify.
@@ -2109,10 +2109,10 @@ Proof.
         destruct (classic (L loc)).
         * left. exploit (proj1 (@COMPLETE0 (loc, max loc))).
           { splits; eauto. }
-          i. eapply (List.in_map fst) in x1; eauto.
+          i. eapply (List.in_map fst) in x0; eauto.
         * right. exploit (proj1 (@COMPLETE1 (loc, max loc))).
           { splits; eauto. }
-          i. eapply (List.in_map fst) in x1; eauto.
+          i. eapply (List.in_map fst) in x0; eauto.
       + i. des. exists to'. splits.
         * i. clarify.
         * i. splits; auto.
@@ -2566,7 +2566,7 @@ Proof.
         etrans; eauto.
     + exploit COVERED.
       * econs; eauto. refl.
-      * i. inv x. eapply Memory.max_ts_spec in GET. des.
+      * intro x. inv x. eapply Memory.max_ts_spec in GET. des.
         etrans; eauto. inv TO. inv ITV. ss. etrans; eauto.
   - exfalso. eapply Time.lt_strorder. eapply OUT; eauto. refl.
 Qed.

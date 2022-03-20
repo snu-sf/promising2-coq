@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 Require Import Coq.Lists.ListDec Decidable.
 
@@ -109,7 +109,7 @@ Module PFCertify.
         rewrite GET_TGT in *. inv CAP_TGT.
         splits; auto.
     - destruct (Memory.get loc to promises) as [[]|] eqn:GETP.
-      + exploit LE_TGT; eauto. i.
+      + exploit LE_TGT; eauto. intro x.
         rewrite GET_TGT in x. inv x. eauto.
       + exploit COMPLETE2; eauto.
   Qed.
@@ -316,7 +316,7 @@ Module PFCertify.
       <<LOCAL2: sim_local lc2_src lc2_tgt>>.
   Proof.
     destruct (Memory.get loc to mem1_src) as [[]|] eqn:GET_SRC.
-    { inv MEM1. exploit SOUND; eauto. i.
+    { inv MEM1. exploit SOUND; eauto. intro x.
       inv STEP_TGT. rewrite GET in *. inv x.
       destruct lc1_src, lc1_tgt. inv LOCAL1. ss. subst.
       esplits; econs; eauto.
@@ -396,7 +396,7 @@ Module PFCertify.
         * guardH o. des. subst.
           revert LHS.
           erewrite Memory.add_o; eauto. condtac; ss. i.
-          exploit SOUND; try exact LHS. i.
+          exploit SOUND; try exact LHS. intro x.
           rewrite x in *. ss.
         * revert LHS.
           erewrite Memory.add_o; eauto. condtac; ss. i.
@@ -527,12 +527,12 @@ Module PFCertify.
         exploit Memory.get_disjoint; [exact CAP_TGT|exact GET1|..]. i. des.
         + subst. timetac.
         + eapply x1; eauto.
-      - guardH o. exploit SOUND; eauto. i.
+      - guardH o. exploit SOUND; eauto. intro x0.
         exploit Memory.get_disjoint; [exact CAP_TGT|exact x0|..]. i. des.
         + subst. congr.
         + eapply x2; eauto. }
     { exploit Memory.get_ts; try exact CAP_TGT. i. des; ss.
-      subst. exploit LATESTS; eauto. i. inv x. }
+      subst. exploit LATESTS; eauto. intro x. inv x. }
     { inv CLOSED1_TGT. exploit CLOSED; try exact CAP_TGT. i. des. ss. }
     i. des.
     erewrite Memory.lower_o; eauto. condtac; ss.
@@ -676,7 +676,7 @@ Module PFCertify.
         * guardH o. des. subst.
           revert LHS.
           erewrite Memory.add_o; eauto. condtac; ss. i.
-          exploit SOUND; try exact LHS. i.
+          exploit SOUND; try exact LHS. intro x.
           rewrite x in *. ss.
         * revert LHS.
           erewrite Memory.add_o; eauto. condtac; ss. i.
@@ -794,7 +794,7 @@ Module PFCertify.
           i. des. congr.
         + eapply x3; eauto.
       - clear TS RESERVE.
-        exploit SOUND; eauto. i.
+        exploit SOUND; eauto. intro x0.
         exploit Memory.split_get0; eauto. i. des.
         exploit Memory.get_disjoint; [exact x0|exact GET0|..]. i. des.
         + subst.
@@ -807,7 +807,7 @@ Module PFCertify.
           etrans; eauto. econs.
           inv MEM. inv SPLIT. ss.
       - clear TS.
-        exploit SOUND; eauto. i.
+        exploit SOUND; eauto. intro x0.
         exploit Memory.lower_get0; try exact MEM. i. des.
         exploit Memory.get_disjoint; [exact x0|exact GET|..]. i. des.
         + subst.
@@ -946,6 +946,7 @@ Module PFCertify.
   #[export]
   Hint Constructors add_cap: core.
 
+  #[export]
   Program Instance add_cap_Reflexive: forall caps, Reflexive (add_cap caps).
 
   Inductive pf_step (lang: language) (caps: Loc.t -> option Time.t) (e: ThreadEvent.t):
@@ -1226,6 +1227,7 @@ Module PFCertify.
     exists f t r,
       <<GET2: Cell.get t cell2 = Some (f, Message.full val r)>>.
 
+  #[export]
   Program Instance vals_incl_cell_PreOrder: PreOrder vals_incl_cell.
   Next Obligation.
     ii. eauto.
@@ -1353,7 +1355,7 @@ Module PFCertify.
     }
     destruct (Cell.get to cell_src) as [[]|] eqn:GETS.
     { exists cell_src. split; auto.
-      inv IHdom. exploit SOUND; eauto. i.
+      inv IHdom. exploit SOUND; eauto. intro x.
       rewrite GETT in *. inv x.
       econs; ii; eauto; ss.
       - inv IN; eauto.
@@ -1380,13 +1382,13 @@ Module PFCertify.
       }
       exploit (@Cell.add_exists cell_src t to Message.reserve).
       { ii. inv IHdom.
-        exploit SOUND; try exact GET2. i.
+        exploit SOUND; try exact GET2. intro x0.
         exploit Cell.get_disjoint; [exact GETT|exact x0|..]. i. des.
         - subst. congr.
         - eapply x2; eauto. }
       { exploit Cell.get_ts; try exact GETT. i. des; ss.
         subst. inv CLOSED1_TGT. specialize (INHABITED loc).
-        inv CAP. exploit SOUND; try exact INHABITED. i.
+        inv CAP. exploit SOUND; try exact INHABITED. intro x.
         unfold Memory.get in *. rewrite x in *. inv GETT. }
       { econs. }
       i. des.
@@ -1421,10 +1423,10 @@ Module PFCertify.
     exploit BACK; eauto. i. des.
     exploit Cell.max_full_ts_inj; [eapply MAX|exact LATEST|..]. i. subst.
     clear LATEST SOUND MIDDLE BACK COMPLETE.
-    unfold Memory.max_ts in *. rewrite GETT in *. inv x0.
+    unfold Memory.max_ts in *. rewrite GETT in *. inv x1.
     destruct (Cell.get (latests loc) (promises loc)) as [[]|] eqn:LATESTP.
-    { exploit LE_TGT; try exact LATESTP. i.
-      unfold Memory.get in *. rewrite x in *. inv x0.
+    { exploit LE_TGT; try exact LATESTP. intro x.
+      unfold Memory.get in *. rewrite x in *. clarify.
       exists cell_src. split; auto.
       inv IHdom. econs; ii; eauto; ss.
       - inv IN; eauto. congr.
@@ -1434,7 +1436,7 @@ Module PFCertify.
     }
     exploit (@Cell.add_exists cell_src (Cell.max_ts (mem1_tgt loc))
                               (Time.incr (Cell.max_ts (mem1_tgt loc))) (Message.full val released)).
-    { ii. inv IHdom. exploit SOUND; try exact GET2. i.
+    { ii. inv IHdom. exploit SOUND; try exact GET2. intro x1.
       exploit Memory.get_disjoint; [exact GETT|exact x1|..]. i. des.
       - subst. congr.
       - eapply x3; eauto. }
@@ -1446,8 +1448,8 @@ Module PFCertify.
     { etrans; eauto. ii. revert GET1.
       erewrite Cell.add_o; eauto. condtac; ss; eauto. i.
       des. subst. inv GET1.
-      inv CAP. exploit SOUND; try exact x. i.
-      inv IHdom. exploit COMPLETE2; try exact x0; eauto.
+      inv CAP. exploit SOUND; try exact x0. i.
+      inv IHdom. exploit COMPLETE2; try exact x1; eauto.
       ii. exploit LATESTS; eauto. i. timetac. }
     inv IHdom. econs; ii; eauto; ss.
     - revert LHS.
@@ -1542,7 +1544,7 @@ Module PFCertify.
     inv SIM. ii.
     specialize (BOT loc). specialize (INHABITED_TGT loc).
     exploit COMPLETE2; eauto. ii.
-    exploit LATESTS; eauto. i. inv x.
+    exploit LATESTS; eauto. intro x. inv x.
   Qed.
 
   Lemma sim_memory_bot

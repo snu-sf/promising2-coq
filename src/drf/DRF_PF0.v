@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -1554,7 +1554,7 @@ Section UNCHANGABLES.
       exploit DISJOINT; eauto. intros LCDISJ. inv LCDISJ. destruct p.
       inv DISJOINT0. exploit DISJOINT1; eauto. i. des.
       eapply Memory.get_ts in GET. eapply Memory.get_ts in GET0. des; clarify.
-      eapply x1; eauto.
+      eapply x2; eauto.
       + instantiate (1:=t). econs; ss; eauto. refl.
       + econs; ss; eauto. refl.
   Qed.
@@ -1710,12 +1710,12 @@ Section UNCHANGABLES.
   Proof.
     inv CWF. inv WF. inv COV. destruct st1, st2.
     rewrite unwritable_eq; cycle 1.
-    { exploit THREADS; try apply TID1. i. inv x1. auto. }
+    { exploit THREADS; try apply TID1. intro x1. inv x1. auto. }
     unfold unwritable2. esplits; eauto.
     - exploit THREADS; try apply TID2; eauto. intros LCWF. inv LCWF.
       econs; eauto.
     - ii. inv H. exploit DISJOINT; eauto. intros LCDISJ. inv LCDISJ.
-      inv DISJOINT0. exploit DISJOINT1; eauto. i. des.
+      inv DISJOINT0. exploit DISJOINT1; eauto. intro x1. des.
       eapply x1; eauto.
   Qed.
 

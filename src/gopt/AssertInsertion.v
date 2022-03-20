@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -407,7 +407,7 @@ Section AssertInsertion.
         + repeat rewrite Threads.tids_add.
           repeat rewrite IdentSet.add_mem; ss.
           * rewrite Threads.tids_o. rewrite TID. ss.
-          * rewrite Threads.tids_o. rewrite x. ss.
+          * rewrite Threads.tids_o. rewrite x2. ss.
         + i. revert FIND. rewrite IdentMap.gsspec. condtac; ss; i.
           * inv FIND. ss.
           * inv SIM. eapply FIND_SRC; eauto.
@@ -511,7 +511,7 @@ Section AssertInsertion.
       hexploit Memory.max_full_timemap_closed; try exact x1; eauto. intro SC_MAX.
       dup SIM0. inv SIM1. ss. subst. ii. ss.
       exploit Memory.cap_inj; [exact CAP|exact CAP0|..]; eauto. i. subst.
-      exploit Memory.max_full_timemap_inj; [exact x1|exact SC_MAX0|..]. i. subst.
+      exploit Memory.max_full_timemap_inj; [exact x0|exact SC_MAX0|..]. i. subst.
       exploit CONSISTENT; eauto. s. i. des.
       - (* failure certification *)
         left. unfold Thread.steps_failure in *. des.
@@ -650,7 +650,7 @@ Section AssertInsertion.
     - repeat rewrite Threads.tids_add.
       repeat rewrite IdentSet.add_mem; ss.
       + rewrite Threads.tids_o. rewrite TID. ss.
-      + rewrite Threads.tids_o. rewrite x. ss.
+      + rewrite Threads.tids_o. rewrite x2. ss.
     - i. revert FIND. rewrite IdentMap.gsspec. condtac; ss; i.
       + inv FIND. ss.
       + inv SIM. eapply FIND_SRC; eauto.

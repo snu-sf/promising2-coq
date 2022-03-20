@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -178,7 +178,7 @@ Section MAPPED.
     - eapply MAP0.
     - eapply MAP1.
     - left. eauto.
-    - i. destruct x; auto. exfalso. apply CLPS.
+    - intro x. destruct x; auto. exfalso. apply CLPS.
       destruct H0. eexists. eauto.
   Qed.
   #[local]
@@ -1772,7 +1772,7 @@ Section MAPPED.
         eapply map_le; eauto. eapply map_rlx. eapply unwrap_map; eauto.
       + inv MSG. econs.
     - i. clarify. inv MSG.
-      inv MEM0. exploit RESERVE; eauto. i. des.
+      inv MEM0. exploit RESERVE; eauto. intro x. des.
       eapply msg_get_map in x; eauto. des; clarify.
       inv MSG. inv MSGLE.
       hexploit (map_eq TO0 FROM). i. clarify.
@@ -2283,7 +2283,7 @@ Section MAPPED.
         - destruct kind; ss. exploit UNWRITABLE.
           + exists to', to. unfold collapsed. esplits; eauto.
             instantiate (1:=to). econs; ss. refl.
-          + ii. inv x. inv UNCH. inv PROMISE.
+          + intro x. inv x. inv UNCH. inv PROMISE.
             eapply Memory.remove_get0 in MEM0.
             eapply Memory.remove_get0 in PROMISES1. des.
             exploit Memory.get_disjoint.

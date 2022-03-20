@@ -38,6 +38,7 @@ Inductive sim_local (pview:SimPromises.t) (lc_src lc_tgt:Local.t): Prop :=
     (PROMISES: SimPromises.sem pview SimPromises.bot (Local.promises lc_src) (Local.promises lc_tgt))
 .
 
+#[export]
 Program Instance sim_local_PreOrder: PreOrder (sim_local SimPromises.bot).
 Next Obligation.
   econs; try refl. apply SimPromises.sem_bot.
@@ -499,12 +500,12 @@ Lemma sim_local_promise_consistent
 Proof.
   inv LOCAL. inv PROMISES. ii.
   destruct (Memory.get loc ts (Local.promises lc_tgt)) as [[]|] eqn:GETP.
-  - exploit LE; eauto. i. rewrite PROMISE in x. inv x.
+  - exploit LE; eauto. intro x. rewrite PROMISE in x. inv x.
     destruct t0; ss.
     exploit CONS_TGT; eauto. i.
     eapply TimeFacts.le_lt_lt; eauto.
     inv TVIEW. inv CUR. eauto.
-  - exploit COMPLETE; eauto. i.
+  - exploit COMPLETE; eauto. intro x.
     rewrite MemoryDomain.bot_spec in x. ss.
 Qed.
 
@@ -587,7 +588,7 @@ Proof.
        end).
     inv LOCAL1. econs; ss. inv PROMISES0. econs; ss.
     + ii.
-      exploit LE; eauto. i.
+      exploit LE; eauto. intro x.
       exploit Memory.lower_get0; try exact PROMISES; eauto. i.
       erewrite Memory.lower_o; eauto.
       unfold SimPromises.none_if, SimPromises.none_if_released.
@@ -660,13 +661,13 @@ Proof.
   }
   destruct a as [loc to]. i.
   destruct (Memory.get loc to (Local.promises lc1_src)) as [[? []]|] eqn:X; cycle 1.
-  { eapply IHdom; eauto. i. exploit FINITE'; eauto. i. inv x; ss.
+  { eapply IHdom; eauto. i. exploit FINITE'; eauto. intro x. inv x; ss.
     inv H1. rewrite X in H. inv H. inv H0. }
-  { eapply IHdom; eauto. i. exploit FINITE'; eauto. i. inv x; ss.
+  { eapply IHdom; eauto. i. exploit FINITE'; eauto. intro x. inv x; ss.
     inv H1. congr.
   }
   destruct released; cycle 1.
-  { eapply IHdom; eauto. i. exploit FINITE'; eauto. i. inv x; ss.
+  { eapply IHdom; eauto. i. exploit FINITE'; eauto. intro x. inv x; ss.
     inv H1. rewrite H in X. inv X. ss.
   }
   exploit MemoryFacts.promise_exists_None; eauto.
@@ -680,7 +681,7 @@ Proof.
   { s. i. inv x0. revert H.
     erewrite Memory.lower_o; eauto. condtac; ss.
     - i. des. inv H. ss.
-    - guardH o. i. exploit FINITE'; eauto. i. des; ss. inv x.
+    - guardH o. i. exploit FINITE'; eauto. intro x. des; ss. inv x.
       unguardH o. des; congr.
   }
   i. des. esplits; try exact NONSYNCH2; eauto.

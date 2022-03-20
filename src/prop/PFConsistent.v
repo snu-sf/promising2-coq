@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -51,7 +51,7 @@ Lemma rtc_union_step_nonpf_failure
       Thread.step true ThreadEvent.failure e1 e1'.
 Proof.
   ginduction STEP; eauto.
-  i. exploit IHSTEP; eauto. i. des.
+  i. exploit IHSTEP; eauto. intro x0. des.
   exists (Thread.mk _ (Thread.state e1') (Thread.local x) (Thread.sc x) (Thread.memory x)).
   inv x0; inv STEP0. inv LOCAL. inv LOCAL0.
   inv H. inv USTEP. inv STEP0.

@@ -124,7 +124,7 @@ Module SimPromises.
       exploit sim_memory_add; try apply SIM1; try refl; eauto. i.
       esplits; eauto.
       + none_if_tac.
-        * inv INV1. exploit PVIEW; eauto. i. des.
+        * inv INV1. exploit PVIEW; eauto. intro x. des.
           hexploit Memory.add_get0; try exact PROMISES; eauto. i. des. congr.
         * econs 1; eauto; try congr.
           i. exploit sim_memory_get_inv; try exact GET; eauto.
@@ -158,7 +158,7 @@ Module SimPromises.
           { apply INV1. }
         * i. inv INV1. exploit PVIEW; eauto. i. des.
           erewrite Memory.add_o; eauto. condtac; eauto.
-          ss. des. subst. exploit LE; eauto. i.
+          ss. des. subst. exploit LE; eauto. intro x.
           inv x1. inv ADD. exfalso.
           eapply DISJOINT; eauto; econs; eauto; try refl. ss.
           exploit Memory.get_ts; try eapply x. i. des; ss.
@@ -180,7 +180,7 @@ Module SimPromises.
       esplits; eauto.
       + unfold none_if. destruct msg; ss.
         unfold none_if_released. condtac; ss.
-        * inv INV1. exploit PVIEW; eauto. i. des.
+        * inv INV1. exploit PVIEW; eauto. intro x. des.
           hexploit Memory.split_get0; try exact PROMISES; eauto. congr.
         * econs 2; eauto; congr.
       + econs.
@@ -192,7 +192,7 @@ Module SimPromises.
             exploit Memory.split_get0; try exact PROMISES; eauto. congr. }
           { guardH o. i. des. inv LHS. ss. }
           { apply INV1. }
-        * i. inv INV1. exploit PVIEW; eauto. i. des.
+        * i. inv INV1. exploit PVIEW; eauto. intro x. des.
           erewrite Memory.split_o; eauto. repeat condtac; eauto.
           des; ss. subst. rewrite GET0 in x. inv x. eauto.
         * i. inv INV1. exploit SOUND; eauto. i.
@@ -228,7 +228,7 @@ Module SimPromises.
           condtac; ss.
           { i. des. inv LHS. ss. }
           { apply INV1. }
-        * i. inv INV1. exploit PVIEW; eauto. i. des.
+        * i. inv INV1. exploit PVIEW; eauto. intro x. des.
           erewrite Memory.lower_o; eauto. condtac; eauto.
           des. ss. subst. rewrite GET in x. inv x.
           inv MSG_LE. esplits; eauto.
@@ -440,8 +440,8 @@ Module SimPromises.
       + inv SEM. exploit LE; eauto. s. i. congr.
       + inv SEM. exploit LE; eauto. s. i. congr.
     - destruct (Memory.get loc ts promises_src) as [[? []]|] eqn:Y.
-      + inv SEM. exploit COMPLETE; eauto. i. inv x.
-      + inv SEM. exploit COMPLETE; eauto. i. inv x.
+      + inv SEM. exploit COMPLETE; eauto. intro x. inv x.
+      + inv SEM. exploit COMPLETE; eauto. intro x. inv x.
       + ss.
   Qed.
 
@@ -552,7 +552,7 @@ Module SimPromises.
     rename mem2 into mem2_tgt. econs; i; try split; i.
     - inv H.
       destruct (Memory.get loc to mem1_src) as [[]|] eqn:GET1.
-      + inv CAP_SRC. exploit SOUND; eauto. i.
+      + inv CAP_SRC. exploit SOUND; eauto. intro x.
         rewrite x in GET. inv GET.
         eapply cap_cover; eauto.
         inv MEM1. rewrite <- COVER.
@@ -561,7 +561,7 @@ Module SimPromises.
         econs; eauto.
     - inv H.
       destruct (Memory.get loc to mem1_tgt) as [[]|] eqn:GET1.
-      + inv CAP. exploit SOUND; eauto. i.
+      + inv CAP. exploit SOUND; eauto. intro x.
         rewrite x in GET. inv GET.
         eapply cap_cover; eauto.
         inv MEM1. rewrite COVER.
@@ -569,7 +569,7 @@ Module SimPromises.
       + exploit cap_get_tgt; eauto. i. des.
         econs; eauto.
     - destruct (Memory.get loc to mem1_tgt) as [[]|] eqn:GET1.
-      + inv CAP. exploit SOUND; eauto. i.
+      + inv CAP. exploit SOUND; eauto. intro x.
         rewrite x in GET. inv GET.
         inv MEM1. exploit MSG; eauto. i. des.
         inv CAP_SRC. exploit SOUND; eauto. i.
@@ -577,13 +577,13 @@ Module SimPromises.
       + exploit cap_get_tgt; eauto. i. des.
         esplits; eauto. refl.
     - destruct (Memory.get loc to mem1_src) as [[]|] eqn:GET1.
-      + inv CAP_SRC. exploit SOUND; eauto. i.
+      + inv CAP_SRC. exploit SOUND; eauto. intro x.
         rewrite x in H. inv H.
         inv MEM1. rewrite RESERVE in GET1.
         inv CAP. exploit SOUND0; eauto.
       + exploit cap_get_src; eauto. i. des. auto.
     - destruct (Memory.get loc to mem1_tgt) as [[]|] eqn:GET1.
-      + inv CAP. exploit SOUND; eauto. i.
+      + inv CAP. exploit SOUND; eauto. intro x.
         rewrite x in H. inv H.
         inv MEM1. rewrite <- RESERVE in GET1.
         inv CAP_SRC. exploit SOUND0; eauto.

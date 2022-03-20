@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 Require Import Decidable.
 Require Import Coq.Lists.ListDec.
@@ -41,6 +41,7 @@ Module Message.
   #[global]
   Hint Constructors le: core.
 
+  #[global]
   Program Instance le_PreOrder: PreOrder le.
   Next Obligation.
     ii. destruct x; econs. refl.
@@ -384,7 +385,7 @@ Module Cell.
   Proof.
     destruct cell. unfold get in *. ss.
     inv WF0. exploit VOLUME; eauto. i. des.
-    - inv x. auto.
+    - inv x0. auto.
     - generalize (Time.le_lteq from to). i. des. auto.
   Qed.
 
@@ -629,7 +630,7 @@ Module Cell.
       + apply Interval.mem_ub. auto.
       + apply Interval.mem_ub.
         destruct (Cell.WF cell1). exploit VOLUME; eauto. i. des; ss.
-        inv x. inv TO.
+        inv x0. inv TO.
     - rewrite CELL2, DOMap.gsspec. condtac; ss.
   Qed.
 
@@ -648,7 +649,7 @@ Module Cell.
       + apply GET2.
       + ii. subst. eapply Time.lt_strorder. eauto.
       + apply Interval.mem_ub. exploit VOLUME; eauto. i. des; auto.
-        inv x. inv TS12.
+        inv x0. inv TS12.
       + econs; ss. left. auto.
     - unfold get. rewrite CELL2. rewrite ? DOMap.gsspec.
       repeat condtac; ss.
@@ -1056,34 +1057,34 @@ Module Cell.
     - exploit IHl; eauto. i. des.
       + subst. left. split; auto. ii. des.
         * subst. timetac.
-        * eapply x0; eauto.
+        * eapply x1; eauto.
       + right. splits; eauto. ii. des.
         * subst. timetac.
-        * eapply x1; eauto.
+        * eapply x2; eauto.
     - destruct init0.
       + revert NEXT. condtac; ss; i.
         * exploit IHl; eauto. i. des.
-          { inv x. left. split; auto. ii. des.
+          { inv x0. left. split; auto. ii. des.
             - subst. timetac.
-            - eapply x0; eauto. }
+            - eapply x1; eauto. }
           { right. splits; eauto. ii. des.
             - subst. exploit next_le; eauto. i.
               rewrite l1 in x3. timetac.
-            - eapply x1; eauto. }
+            - eapply x2; eauto. }
         * exploit IHl; eauto. i. des.
-          { inv x. right. splits; eauto. ii. des.
+          { inv x0. right. splits; eauto. ii. des.
             - subst. timetac.
-            - eapply x0; eauto. }
+            - eapply x1; eauto. }
           { right. splits; eauto. ii. des.
             - subst. exploit next_le; eauto. i. timetac.
-            - eapply x1; eauto. }
+            - eapply x2; eauto. }
       + right. exploit IHl; eauto. i. des.
-        * inv x. esplits; eauto. ii. des.
+        * inv x0. esplits; eauto. ii. des.
           { subst. timetac. }
-          { eapply x0; eauto. }
+          { eapply x1; eauto. }
         * esplits; eauto. ii. des.
           { subst. exploit next_le; eauto. i. timetac. }
-          { eapply x1; eauto. }
+          { eapply x2; eauto. }
   Qed.
 
   Lemma next_spec_Some
@@ -1334,14 +1335,14 @@ Module Cell.
     { exists cell1. econs; ss; i. congr. }
     exploit IHdom; eauto. i. des. clear IHdom.
     destruct (In_decidable time_decidable a dom).
-    { exists cell2. inv x. econs; ii; eauto.
+    { exists cell2. inv x0. econs; ii; eauto.
       - inv IN; eauto.
       - inv IN; eauto.
       - exploit COMPLETE; eauto. i. des.
         split; eauto. econs 2; eauto.
     }
     destruct (get a cell1) as [[from msg]|] eqn:GET1; cycle 1.
-    { exists cell2. inv x. econs; ii; eauto.
+    { exists cell2. inv x0. econs; ii; eauto.
       - inv IN; eauto. inv ADJ. congr.
       - inv IN; eauto.
         exploit max_ts_spec; eauto. i. des. congr.
@@ -1353,7 +1354,7 @@ Module Cell.
     { exploit adjacent_exists; try exact GET1; ss. i. des.
       exploit adjacent_ts; eauto. i. inv x2; cycle 1.
       { inv H1.
-        exists cell2. inv x. econs; ii; eauto.
+        exists cell2. inv x0. econs; ii; eauto.
         - inv IN; eauto.
           exploit adjacent_inj; [exact x1|exact ADJ|..]. i. des. subst.
           timetac.
@@ -1362,11 +1363,11 @@ Module Cell.
           split; eauto. econs 2; eauto.
       }
       exploit (@add_exists cell2 a from2 Message.reserve); ii.
-      { inv x. inv x1. inv LHS. inv RHS. ss.
+      { inv x0. inv x1. inv LHS. inv RHS. ss.
         clear MIDDLE BACK.
         destruct (get to0 cell1) as [[]|] eqn:GET4.
         - exploit SOUND; try exact GET4. i.
-          rewrite x in *. inv GET2.
+          rewrite x1 in *. inv GET2.
           destruct (Time.le_lt_dec to0 from2).
           { exploit (EMPTY to0); try congr.
             eapply TimeFacts.lt_le_lt; try exact FROM; ss. }
@@ -1388,9 +1389,9 @@ Module Cell.
           destruct (Time.le_lt_dec from1 a).
           + inv l; try by (inv H2; ss).
             exploit SOUND; try exact GET0. i.
-            exploit get_ts; try exact x3. i. des.
+            exploit get_ts; try exact x4. i. des.
             { subst. inv H2. }
-            exploit get_disjoint; [exact x3|exact GET2|..]. i. des.
+            exploit get_disjoint; [exact x4|exact GET2|..]. i. des.
             { subst. timetac. }
             exfalso.
             apply (x6 a); econs; ss; try refl.
@@ -1401,7 +1402,7 @@ Module Cell.
       { ss. }
       { econs. }
       des.
-      exists cell0. inv x. econs; ii; ss.
+      exists cell0. inv x0. econs; ii; ss.
       - exploit SOUND; eauto. i.
         eapply add_get1; eauto.
       - exploit add_get0; eauto. i. des.
@@ -1421,7 +1422,7 @@ Module Cell.
     }
     inv H0. clear from0 msg0 GET.
     destruct (@latest_reserve_dec promises cell1); cycle 1.
-    { exists cell2. inv x. econs; ii; ss; eauto.
+    { exists cell2. inv x0. econs; ii; ss; eauto.
       - inv IN; eauto. inv ADJ.
         exploit max_ts_spec; try exact GET2. i. des.
         timetac.
@@ -1431,10 +1432,10 @@ Module Cell.
     exploit latest_val_exists; eauto. i. des.
     exploit (@add_exists cell2 (max_ts cell1) (Time.incr (max_ts cell1))
                          (Message.full val (Some view))); ii.
-    { inv x. inv LHS. inv RHS. ss.
+    { inv x0. inv LHS. inv RHS. ss.
       destruct (get to2 cell1) as [[]|] eqn:GET3.
       { exploit SOUND; eauto. i.
-        rewrite x in *. inv GET2.
+        rewrite x2 in *. inv GET2.
         exploit max_ts_spec; try exact GET3. i. des.
         exploit TimeFacts.le_lt_lt; try exact FROM; try exact MAX. i.
         timetac. }
@@ -1443,22 +1444,22 @@ Module Cell.
       destruct (Time.le_lt_dec from2 (max_ts cell1)).
       - inv l; try by (inv H1; ss).
         exploit SOUND; try exact GET1. i.
-        exploit get_ts; try exact x4. i. des.
-        { subst. rewrite x5 in *. inv H1. }
+        exploit get_ts; try exact x5. i. des.
+        { subst. rewrite x4 in *. inv H1. }
         exploit get_ts; try exact GET2. i. des.
         { subst. timetac. }
-        exploit get_disjoint; [exact x4|exact GET2|..]. i. des.
+        exploit get_disjoint; [exact x5|exact GET2|..]. i. des.
         { subst. timetac. }
         exfalso.
         apply (x8 (max_ts cell1)); econs; ss; try refl.
         econs. eapply TimeFacts.lt_le_lt; try exact FROM. ss.
-      - exploit max_ts_spec; try exact x2. i. des.
+      - exploit max_ts_spec; try exact x0. i. des.
         timetac.
     }
     { apply Time.incr_spec. }
     { econs. econs. ss. }
     des.
-    exists cell0. inv x. econs; ii; ss; eauto.
+    exists cell0. inv x0. econs; ii; ss; eauto.
     - exploit SOUND; eauto. i.
       eapply add_get1; eauto.
     - exploit add_get0; eauto. i. des.

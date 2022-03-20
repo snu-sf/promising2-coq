@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -1222,7 +1222,7 @@ Proof.
   inv PROMISE.
   - ii. erewrite Memory.add_o in GET; eauto. des_ifs.
     + ss; des; clarify. exploit RESERVE0; eauto.
-      i. des. eapply Memory.add_get1 in x; eauto.
+      intro x. des. eapply Memory.add_get1 in x; eauto.
     + eapply RESERVE in GET; eauto. clear o. des.
       eapply Memory.add_get1 in GET; eauto.
   - ii. des. clarify. erewrite Memory.split_o in GET; eauto. des_ifs.
@@ -1301,7 +1301,7 @@ Proof.
   inv MAX. des.
   destruct msg.
   - left. eapply MAX0; eauto.
-  - exploit RESERVEWF; eauto. i. des.
+  - exploit RESERVEWF; eauto. intro x. des.
     destruct (TimeFacts.le_lt_dec to ts); auto.
     dup x. eapply MAX0 in x; eauto. destruct x.
     + exfalso. exploit memory_get_from_mon.
@@ -1816,7 +1816,7 @@ Proof.
         erewrite Memory.lower_o in NONE; eauto. des_ifs. guardH o.
         exploit DIFF1; eauto.
       * i. exploit UNCH.
-        { eapply diff_after_promise_unchangable; eauto. } i. inv x.
+        { eapply diff_after_promise_unchangable; eauto. } intro x. inv x.
         eapply CAPS in CAP. des. splits; eauto.
         { i. erewrite Memory.lower_o in NONE; eauto. des_ifs. guardH o.
           eapply SRCGET in NONE. des. eapply Memory.lower_get1 in PROM0; eauto.
@@ -1839,7 +1839,7 @@ Proof.
       * i. erewrite Memory.remove_o in GET; eauto.
         erewrite Memory.remove_o in NONE; eauto. des_ifs. eauto.
       * i. exploit UNCH.
-        { eapply diff_after_promise_unchangable; eauto. } i. inv x.
+        { eapply diff_after_promise_unchangable; eauto. } intro x. inv x.
         eapply CAPS in CAP. des. splits; eauto.
         { i. erewrite Memory.remove_o in NONE; eauto. des_ifs.
           - ss. eapply Memory.remove_get0 in PROMISES. des; clarify.

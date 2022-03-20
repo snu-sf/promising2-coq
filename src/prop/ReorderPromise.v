@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 Require Import Bool.
 
@@ -256,7 +256,7 @@ Proof.
           { i. revert GET.
             erewrite Memory.add_o; eauto. condtac; ss; eauto.
             i. des. inv GET.
-            exploit LOCTS2; eauto. i.
+            exploit LOCTS2; eauto. intro x.
             inv ADD0. inv ADD. rewrite x in TO. timetac.
           }
         * eapply Memory.add_closed_message; cycle 1; eauto.
@@ -311,7 +311,7 @@ Proof.
             - econs; eauto.
               + i. subst.
                 erewrite Memory.split_o; eauto. repeat condtac; ss; eauto.
-                guardH o. des. subst. exploit RESERVE; eauto. i. des.
+                guardH o. des. subst. exploit RESERVE; eauto. intro x. des.
                 exploit Memory.split_get0; try exact SPLIT0. i. des.
                 rewrite x in GET0. inv GET0. esplits; eauto.
               + i. revert GET.

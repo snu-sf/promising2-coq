@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -39,6 +39,7 @@ Module PFCommon.
     exists f t r,
       <<GET2: Memory.get loc t mem2 = Some (f, Message.full val r)>>.
 
+  #[global]
   Program Instance vals_incl_PreOrder: PreOrder vals_incl.
   Next Obligation.
     ii. eauto.

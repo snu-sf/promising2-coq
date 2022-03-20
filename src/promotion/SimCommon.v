@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -39,6 +39,7 @@ Module SimCommon.
   Definition sim_timemap (l: Loc.t) (tm_src tm_tgt: TimeMap.t): Prop :=
     forall loc (LOC: loc <> l), tm_src loc = tm_tgt loc.
 
+  #[global]
   Program Instance sim_timemap_Equivalence: forall l, Equivalence (sim_timemap l).
   Next Obligation.
     ii. ss.
@@ -58,6 +59,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_view: core.
 
+  #[global]
   Program Instance sim_view_Equivalence: forall l, Equivalence (sim_view l).
   Next Obligation.
     ii. ss.
@@ -80,6 +82,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_opt_view: core.
 
+  #[global]
   Program Instance sim_opt_view_Equivalence: forall l, Equivalence (sim_opt_view l).
   Next Obligation.
     ii. destruct x; ss. econs; ss.
@@ -101,6 +104,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_tview: core.
 
+  #[global]
   Program Instance sim_tview_Equivalence: forall l, Equivalence (sim_tview l).
   Next Obligation.
     ii. destruct x; ss.
@@ -131,11 +135,11 @@ Module SimCommon.
     inv SIM1. inv SIM2.
     unfold View.join, TimeMap.join.
     econs; ss; ii.
-    - exploit PLN; eauto. i.
-      exploit PLN0; eauto. i.
+    - exploit PLN; eauto. intro x.
+      exploit PLN0; eauto. intro x0.
       rewrite x. rewrite x0. refl.
-    - exploit RLX; eauto. i.
-      exploit RLX0; eauto. i.
+    - exploit RLX; eauto. intro x.
+      exploit RLX0; eauto. intro x0.
       rewrite x. rewrite x0. refl.
   Qed.
 
@@ -158,9 +162,9 @@ Module SimCommon.
     TView.readable (TView.cur tview_src) loc to released_src ord.
   Proof.
     inv TVIEW. inv CUR. inv READABLE_TGT. econs; i.
-    - exploit PLN; eauto. i. rewrite x. ss.
-    - exploit RLX0; eauto. i.
-      exploit RLX; eauto. i. rewrite x0. ss.
+    - exploit PLN; eauto. intro x. rewrite x. ss.
+    - exploit RLX0; eauto. intro x.
+      exploit RLX; eauto. intro x0. rewrite x0. ss.
   Qed.
 
   Lemma sim_read_tview
@@ -202,15 +206,15 @@ Module SimCommon.
                  (TView.write_released tview_tgt sc_tgt loc to releasedm_tgt ord).
   Proof.
     inv TVIEW. inv CUR.
-    exploit REL; eauto. i. inv x.
+    exploit REL; eauto. intro x. inv x.
     unfold TView.write_released. condtac; ss.
     econs. apply sim_view_join; eauto using sim_opt_view_unwrap.
     condtac; econs; ss; ii; unfold LocFun.add;
       condtac; ss; unfold TimeMap.join.
-    - exploit PLN; eauto. i. rewrite x. refl.
-    - exploit RLX; eauto. i. rewrite x. refl.
-    - exploit PLN0; eauto. i. rewrite x. refl.
-    - exploit RLX0; eauto. i. rewrite x. refl.
+    - exploit PLN; eauto. intro x. rewrite x. refl.
+    - exploit RLX; eauto. intro x. rewrite x. refl.
+    - exploit PLN0; eauto. intro x. rewrite x. refl.
+    - exploit RLX0; eauto. intro x. rewrite x. refl.
   Qed.
 
   Lemma sim_writable
@@ -224,7 +228,7 @@ Module SimCommon.
     TView.writable (TView.cur tview_src) sc_src loc to ord.
   Proof.
     inv TVIEW. inv CUR. inv WRITABLE_TGT. econs; i.
-    exploit RLX; eauto. i. rewrite x. ss.
+    exploit RLX; eauto. intro x. rewrite x. ss.
   Qed.
 
   Lemma sim_write_tview
@@ -274,8 +278,8 @@ Module SimCommon.
     inv TVIEW. inv CUR.
     unfold TView.write_fence_sc. condtac; ss.
     ii. unfold TimeMap.join.
-    exploit SC; eauto. i.
-    exploit RLX; eauto. i.
+    exploit SC; eauto. intro x.
+    exploit RLX; eauto. intro x0.
     rewrite x. rewrite x0. refl.
   Qed.
 
@@ -330,6 +334,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_message: core.
 
+  #[global]
   Program Instance sim_message_Equivalence: forall l, Equivalence (sim_message l).
   Next Obligation.
     ii. destruct x; ss. econs. refl.
@@ -359,6 +364,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_memory: core.
 
+  #[global]
   Program Instance sim_memory_Equivalence: forall l, Equivalence (sim_memory l).
   Next Obligation.
     ii. econs; i.
@@ -390,6 +396,7 @@ Module SimCommon.
   #[global]
   Hint Constructors sim_local: core.
 
+  #[global]
   Program Instance sim_local_Equivalence: forall l, Equivalence (sim_local l).
   Next Obligation.
     ii. econs; refl.
@@ -430,7 +437,8 @@ Module SimCommon.
     <<PLN: Time.le ((View.pln view1) l) ((View.pln view2) l)>> /\
     <<RLX: Time.le ((View.rlx view1) l) ((View.rlx view2) l)>>.
 
-  Global Program Instance view_le_loc_PreOrder: forall l, PreOrder (view_le_loc l).
+  #[global]
+  Program Instance view_le_loc_PreOrder: forall l, PreOrder (view_le_loc l).
   Next Obligation.
     ii. econs; unnw; refl.
   Qed.
@@ -940,21 +948,21 @@ Module SimCommon.
             - unfold TimeMap.bot.
               ii. unfold LocFun.add. condtac; ss.
               + subst. eapply Time.join_spec; eauto using Time.bot_spec.
-              + exploit PLN; try eapply n. i. rewrite x. apply LE.
+              + exploit PLN; try eapply n. intro x. rewrite x. apply LE.
             - unfold TimeMap.bot.
               ii. unfold LocFun.add. condtac; ss.
               + subst. eapply Time.join_spec; eauto using Time.bot_spec.
-              + exploit RLX; try eapply n. i. rewrite x. apply LE.
+              + exploit RLX; try eapply n. intro x. rewrite x. apply LE.
           }
           destruct (Memory.get loc from mem1_src) as [[? [? []|]]|] eqn:GET_PREV; econs; econs; ss.
           unfold prev_released_le_loc in PREV. rewrite GET_PREV in *.
           inv SIM. inv TVIEW. inv PREV. econs; ss.
           + ii. unfold LocFun.add. condtac; ss.
             * subst. eapply Time.join_spec; eauto.
-            * exploit PLN; try eapply n. i. rewrite x. apply LE.
+            * exploit PLN; try eapply n. intro x. rewrite x. apply LE.
           + ii. unfold LocFun.add. condtac; ss.
             * subst. eapply Time.join_spec; eauto.
-            * exploit RLX; try eapply n. i. rewrite x. apply LE.
+            * exploit RLX; try eapply n. intro x. rewrite x. apply LE.
       }
       i. des.
       exploit Memory.lower_exists_le; try exact x0; eauto. i. des.
@@ -1566,12 +1574,12 @@ Module SimCommon.
           rewrite REL_GET0 in PREV. inv PREV.
           econs; ii.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit PLN; eauto. i.
-            exploit PLN0; eauto. i.
+            exploit PLN; eauto. intro x.
+            exploit PLN0; eauto. intro x0.
             rewrite x. rewrite x0. ss.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit RLX; eauto. i.
-            exploit RLX0; eauto. i.
+            exploit RLX; eauto. intro x.
+            exploit RLX0; eauto. intro x0.
             rewrite x. rewrite x0. ss.
         + revert x1. unfold LocFun.add. condtac; ss. i.
           inv RELEASED. inv SIM. inv LC1. inv TVIEW. destruct (REL0 loc). ss.
@@ -1582,21 +1590,21 @@ Module SimCommon.
           eapply View.join_spec.
           { econs; ii.
             - destruct (Loc.eq_dec loc0 l); subst; ss.
-              exploit PLN; eauto. i.
-              exploit PLN0; eauto. i.
+              exploit PLN; eauto. intro x.
+              exploit PLN0; eauto. intro x2.
               rewrite x. rewrite x2. ss.
             - destruct (Loc.eq_dec loc0 l); subst; ss.
-              exploit RLX; eauto. i.
-              exploit RLX0; eauto. i.
+              exploit RLX; eauto. intro x.
+              exploit RLX0; eauto. intro x2.
               rewrite x. rewrite x2. ss. }
           { econs; ss; ii.
             - specialize (PLN2 loc0). revert PLN2.
               unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-              + subst. exploit PLN; eauto. i. rewrite x. ss.
+              + subst. exploit PLN; eauto. intro x. rewrite x. ss.
               + unfold LocFun.find, LocFun.init. apply Time.bot_spec.
             - specialize (RLX2 loc0). revert RLX2.
               unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-              + subst. exploit RLX; eauto. i. rewrite x. ss.
+              + subst. exploit RLX; eauto. intro x. rewrite x. ss.
               + unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
       - inv RELEASED. inv REL_LE.
         revert H0. unfold TView.write_released. condtac; ss. }
@@ -1616,8 +1624,8 @@ Module SimCommon.
         * unguard. des; ss.
         * eapply Time.join_spec; try refl.
           inv LC1. inv TVIEW.
-          exploit REL0; eauto. i. inv x. ss.
-          exploit RLX; eauto. i. rewrite x.
+          exploit REL0; eauto. intro x. inv x. ss.
+          exploit RLX; eauto. intro x. rewrite x.
           inv WRITABLE. etrans; [|econs; eauto].
           inv WF1_TGT. inv TVIEW_WF. destruct (REL_CUR loc). ss.
       + unfold TimeMap.bot. apply Time.bot_spec.
@@ -1625,7 +1633,7 @@ Module SimCommon.
       eapply sim_memory_remove; try apply LC1; eauto.
     - unguardH RELEASED_TGT. subst.
       exploit Memory.remove_get0; try exact REMOVE. i. des.
-      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. i.
+      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. intro x.
       clear GET4 TVIEW_WF TVIEW_CLOSED PROMISES FINITE BOT RESERVE.
       inv MEM1. econs; i.
       + revert GET_SRC0.
@@ -1699,12 +1707,12 @@ Module SimCommon.
         rewrite REL_GET0 in PREV. inv PREV.
         econs; ii.
         + destruct (Loc.eq_dec loc0 l); subst; ss.
-          exploit PLN; eauto. i.
-          exploit PLN0; eauto. i.
+          exploit PLN; eauto. intro x.
+          exploit PLN0; eauto. intro x0.
           rewrite x. rewrite x0. ss.
         + destruct (Loc.eq_dec loc0 l); subst; ss.
-          exploit RLX; eauto. i.
-          exploit RLX0; eauto. i.
+          exploit RLX; eauto. intro x.
+          exploit RLX0; eauto. intro x0.
           rewrite x. rewrite x0. ss.
       - revert x1. unfold LocFun.add. condtac; ss. i.
         inv SIM. inv LC1. inv TVIEW. inv CUR. inv STRONG. ss.
@@ -1715,21 +1723,21 @@ Module SimCommon.
         eapply View.join_spec.
         + econs; ii.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit PLN; eauto. i.
-            exploit PLN0; eauto. i.
+            exploit PLN; eauto. intro x.
+            exploit PLN0; eauto. intro x2.
             rewrite x. rewrite x2. ss.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit RLX; eauto. i.
-            exploit RLX0; eauto. i.
+            exploit RLX; eauto. intro x.
+            exploit RLX0; eauto. intro x2.
             rewrite x. rewrite x2. ss.
         + econs; ss; ii.
           * specialize (PLN2 loc0). revert PLN2.
             unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-            { subst. exploit PLN; eauto. i. rewrite x. ss. }
+            { subst. exploit PLN; eauto. intro x. rewrite x. ss. }
             { unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
           * specialize (RLX2 loc0). revert RLX2.
             unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-            { subst. exploit RLX; eauto. i. rewrite x. ss. }
+            { subst. exploit RLX; eauto. intro x. rewrite x. ss. }
             { unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
     }
     i. des.
@@ -1748,13 +1756,13 @@ Module SimCommon.
       + unguard. des; ss.
       + eapply Time.join_spec; try refl.
         inv LC1. inv TVIEW. inv CUR. ss.
-        exploit RLX; eauto. i. rewrite x.
+        exploit RLX; eauto. intro x. rewrite x.
         inv WRITABLE. etrans; [|econs; eauto]. refl.
     - exploit MemoryReorder.lower_remove_same; try exact x0; eauto. i. des.
       eapply sim_memory_remove; try apply LC1; eauto.
     - unguardH RELEASED_TGT.
       exploit Memory.remove_get0; try exact REMOVE. i. des.
-      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. i.
+      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. intro x.
       clear GET4 TVIEW_WF TVIEW_CLOSED PROMISES FINITE BOT RESERVE.
       inv MEM1. econs; i.
       + revert GET_SRC0.
@@ -2061,9 +2069,9 @@ Module SimCommon.
     inv STEP_TGT. econs. ii.
     assert (LOC: loc <> l) by (ii; subst; congr).
     inv LC1. inv PROMISES0.
-    exploit SOUND; eauto. i. des. inv MSG.
-    exploit CONSISTENT; eauto. i.
-    inv TVIEW. inv CUR. exploit RLX; eauto. i.
+    exploit SOUND; eauto. intro x. des. inv MSG.
+    exploit CONSISTENT; eauto. intro x.
+    inv TVIEW. inv CUR. exploit RLX; eauto. intro x0.
     rewrite x0. ss.
   Qed.
 
@@ -2443,7 +2451,7 @@ Module SimCommon.
     destruct (Memory.get loc from mem2) as [[? [? []|]]|] eqn:GET2; ss.
     exploit Memory.cap_inv; try exact CAP; eauto. i. des; ss.
     - rewrite x0 in *. ss.
-    - subst. exploit LE; eauto. i.
+    - subst. exploit LE; eauto. intro x.
       specialize (Time.incr_spec (Memory.max_ts loc mem1)). i.
       exploit Memory.get_ts; try exact x. i. des.
       { subst. rewrite x3 in *. inv H. }
