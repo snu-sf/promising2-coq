@@ -26,16 +26,16 @@ Section SimulationThread.
   Variable (lang_src lang_tgt:language).
 
   Definition SIM_TERMINAL :=
-    forall (st_src:lang_src.(Language.state)) (st_tgt:lang_tgt.(Language.state)), Prop.
+    forall (st_src:(Language.state lang_src)) (st_tgt:(Language.state lang_tgt)), Prop.
 
   Definition SIM_THREAD :=
     forall (sim_terminal: SIM_TERMINAL)
-      (st1_src:lang_src.(Language.state)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
-      (st1_tgt:lang_tgt.(Language.state)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t), Prop.
+      (st1_src:(Language.state lang_src)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
+      (st1_tgt:(Language.state lang_tgt)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t), Prop.
 
   Definition _sim_thread_step
-             (sim_thread: forall (st1_src:lang_src.(Language.state)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
-                            (st1_tgt:lang_tgt.(Language.state)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t), Prop)
+             (sim_thread: forall (st1_src:(Language.state lang_src)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
+                            (st1_tgt:(Language.state lang_tgt)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t), Prop)
              st1_src lc1_src sc1_src mem1_src
              st1_tgt lc1_tgt sc1_tgt mem1_tgt
     :=
@@ -60,8 +60,8 @@ Section SimulationThread.
   Definition _sim_thread
              (sim_thread: SIM_THREAD)
              (sim_terminal: SIM_TERMINAL)
-             (st1_src:lang_src.(Language.state)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
-             (st1_tgt:lang_tgt.(Language.state)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t): Prop :=
+             (st1_src:(Language.state lang_src)) (lc1_src:Local.t) (sc0_src:TimeMap.t) (mem0_src:Memory.t)
+             (st1_tgt:(Language.state lang_tgt)) (lc1_tgt:Local.t) (sc0_tgt:TimeMap.t) (mem0_tgt:Memory.t): Prop :=
     forall sc1_src mem1_src
       sc1_tgt mem1_tgt
       (SC: TimeMap.le sc1_src sc1_tgt)
@@ -78,7 +78,7 @@ Section SimulationThread.
       (MEM_TGT: Memory.closed mem1_tgt)
       (CONS_TGT: Local.promise_consistent lc1_tgt),
       <<TERMINAL:
-        forall (TERMINAL_TGT: lang_tgt.(Language.is_terminal) st1_tgt),
+        forall (TERMINAL_TGT: (Language.is_terminal lang_tgt) st1_tgt),
           <<FAILURE: Thread.steps_failure (Thread.mk _ st1_src lc1_src sc1_src mem1_src)>> \/
           exists st2_src lc2_src sc2_src mem2_src,
             <<STEPS: rtc (@Thread.tau_step _)
@@ -86,24 +86,24 @@ Section SimulationThread.
                          (Thread.mk _ st2_src lc2_src sc2_src mem2_src)>> /\
             <<SC: TimeMap.le sc2_src sc1_tgt>> /\
             <<MEMORY: sim_memory mem2_src mem1_tgt>> /\
-            <<TERMINAL_SRC: lang_src.(Language.is_terminal) st2_src>> /\
+            <<TERMINAL_SRC: (Language.is_terminal lang_src) st2_src>> /\
             <<LOCAL: sim_local SimPromises.bot lc2_src lc1_tgt>> /\
             <<TERMINAL: sim_terminal st2_src st1_tgt>>>> /\
       <<CAP:
         forall mem2_src
-          (CAP_SRC: Memory.cap lc1_src.(Local.promises) mem1_src mem2_src),
+          (CAP_SRC: Memory.cap (Local.promises lc1_src) mem1_src mem2_src),
         exists mem2_tgt,
           <<MEMORY: sim_memory mem2_src mem2_tgt>> /\
-          <<CAP_TGT: Memory.cap lc1_tgt.(Local.promises) mem1_tgt mem2_tgt>>>> /\
+          <<CAP_TGT: Memory.cap (Local.promises lc1_tgt) mem1_tgt mem2_tgt>>>> /\
       <<PROMISES:
-        forall (PROMISES_TGT: lc1_tgt.(Local.promises) = Memory.bot)
+        forall (PROMISES_TGT: (Local.promises lc1_tgt) = Memory.bot)
           (NORESERVE: Memory.no_reserve mem1_tgt),
           <<FAILURE: Thread.steps_failure (Thread.mk _ st1_src lc1_src sc1_src mem1_src)>> \/
           exists st2_src lc2_src sc2_src mem2_src,
             <<STEPS: rtc (@Thread.tau_step _)
                          (Thread.mk _ st1_src lc1_src sc1_src mem1_src)
                          (Thread.mk _ st2_src lc2_src sc2_src mem2_src)>> /\
-            <<PROMISES_SRC: lc2_src.(Local.promises) = Memory.bot>>>> /\
+            <<PROMISES_SRC: (Local.promises lc2_src) = Memory.bot>>>> /\
       <<STEP: _sim_thread_step (sim_thread sim_terminal)
                                st1_src lc1_src sc1_src mem1_src
                                st1_tgt lc1_tgt sc1_tgt mem1_tgt>>.
@@ -115,6 +115,7 @@ Section SimulationThread.
     exploit STEP; eauto. i. des; eauto.
     right. esplits; eauto.
   Qed.
+  #[local]
   Hint Resolve _sim_thread_mon: paco.
 
   Definition sim_thread: SIM_THREAD := paco9 _sim_thread bot9.
@@ -134,6 +135,7 @@ Section SimulationThread.
       right. esplits; eauto.
   Qed.
 End SimulationThread.
+#[export]
 Hint Resolve _sim_thread_mon: paco.
 
 
@@ -238,30 +240,30 @@ Lemma sim_thread_rtc_step
       st1_src lc1_src sc1_src mem1_src
       e1_tgt e2_tgt
       (STEPS: rtc (@Thread.tau_step lang_tgt) e1_tgt e2_tgt)
-      (SC: TimeMap.le sc1_src e1_tgt.(Thread.sc))
-      (MEMORY: sim_memory mem1_src e1_tgt.(Thread.memory))
+      (SC: TimeMap.le sc1_src (Thread.sc e1_tgt))
+      (MEMORY: sim_memory mem1_src (Thread.memory e1_tgt))
       (WF_SRC: Local.wf lc1_src mem1_src)
-      (WF_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
+      (WF_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
       (SC_SRC: Memory.closed_timemap sc1_src mem1_src)
-      (SC_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
+      (SC_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
       (MEM_SRC: Memory.closed mem1_src)
-      (MEM_TGT: Memory.closed e1_tgt.(Thread.memory))
-      (CONS_TGT: Local.promise_consistent e2_tgt.(Thread.local))
-      (SIM: sim_thread sim_terminal st1_src lc1_src sc1_src mem1_src e1_tgt.(Thread.state) e1_tgt.(Thread.local) e1_tgt.(Thread.sc) e1_tgt.(Thread.memory)):
+      (MEM_TGT: Memory.closed (Thread.memory e1_tgt))
+      (CONS_TGT: Local.promise_consistent (Thread.local e2_tgt))
+      (SIM: sim_thread sim_terminal st1_src lc1_src sc1_src mem1_src (Thread.state e1_tgt) (Thread.local e1_tgt) (Thread.sc e1_tgt) (Thread.memory e1_tgt)):
   <<FAILURE: Thread.steps_failure (Thread.mk lang_src st1_src lc1_src sc1_src mem1_src)>> \/
   exists st2_src lc2_src sc2_src mem2_src,
     <<STEPS: rtc (@Thread.tau_step lang_src)
                  (Thread.mk _ st1_src lc1_src sc1_src mem1_src)
                  (Thread.mk _ st2_src lc2_src sc2_src mem2_src)>> /\
-    <<SC: TimeMap.le sc2_src e2_tgt.(Thread.sc)>> /\
-    <<MEMORY: sim_memory mem2_src e2_tgt.(Thread.memory)>> /\
+    <<SC: TimeMap.le sc2_src (Thread.sc e2_tgt)>> /\
+    <<MEMORY: sim_memory mem2_src (Thread.memory e2_tgt)>> /\
     <<WF_SRC: Local.wf lc2_src mem2_src>> /\
-    <<WF_TGT: Local.wf e2_tgt.(Thread.local) e2_tgt.(Thread.memory)>> /\
+    <<WF_TGT: Local.wf (Thread.local e2_tgt) (Thread.memory e2_tgt)>> /\
     <<SC_SRC: Memory.closed_timemap sc2_src mem2_src>> /\
-    <<SC_TGT: Memory.closed_timemap e2_tgt.(Thread.sc) e2_tgt.(Thread.memory)>> /\
+    <<SC_TGT: Memory.closed_timemap (Thread.sc e2_tgt) (Thread.memory e2_tgt)>> /\
     <<MEM_SRC: Memory.closed mem2_src>> /\
-    <<MEM_TGT: Memory.closed e2_tgt.(Thread.memory)>> /\
-    <<SIM: sim_thread sim_terminal st2_src lc2_src sc2_src mem2_src e2_tgt.(Thread.state) e2_tgt.(Thread.local) e2_tgt.(Thread.sc) e2_tgt.(Thread.memory)>>.
+    <<MEM_TGT: Memory.closed (Thread.memory e2_tgt)>> /\
+    <<SIM: sim_thread sim_terminal st2_src lc2_src sc2_src mem2_src (Thread.state e2_tgt) (Thread.local e2_tgt) (Thread.sc e2_tgt) (Thread.memory e2_tgt)>>.
 Proof.
   revert SC MEMORY WF_SRC WF_TGT SC_SRC SC_TGT MEM_SRC MEM_TGT SIM.
   revert st1_src lc1_src sc1_src mem1_src.
@@ -294,16 +296,16 @@ Lemma sim_thread_plus_step
       e1_tgt e2_tgt e3_tgt
       (STEPS: rtc (@Thread.tau_step lang_tgt) e1_tgt e2_tgt)
       (STEP: @Thread.step lang_tgt pf_tgt e_tgt e2_tgt e3_tgt)
-      (SC: TimeMap.le sc1_src e1_tgt.(Thread.sc))
-      (MEMORY: sim_memory mem1_src e1_tgt.(Thread.memory))
+      (SC: TimeMap.le sc1_src (Thread.sc e1_tgt))
+      (MEMORY: sim_memory mem1_src (Thread.memory e1_tgt))
       (WF_SRC: Local.wf lc1_src mem1_src)
-      (WF_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
+      (WF_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
       (SC_SRC: Memory.closed_timemap sc1_src mem1_src)
-      (SC_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
+      (SC_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
       (MEM_SRC: Memory.closed mem1_src)
-      (MEM_TGT: Memory.closed e1_tgt.(Thread.memory))
-      (CONS_TGT: Local.promise_consistent e3_tgt.(Thread.local))
-      (SIM: sim_thread sim_terminal st1_src lc1_src sc1_src mem1_src e1_tgt.(Thread.state) e1_tgt.(Thread.local) e1_tgt.(Thread.sc) e1_tgt.(Thread.memory)):
+      (MEM_TGT: Memory.closed (Thread.memory e1_tgt))
+      (CONS_TGT: Local.promise_consistent (Thread.local e3_tgt))
+      (SIM: sim_thread sim_terminal st1_src lc1_src sc1_src mem1_src (Thread.state e1_tgt) (Thread.local e1_tgt) (Thread.sc e1_tgt) (Thread.memory e1_tgt)):
   <<FAILURE: Thread.steps_failure (Thread.mk lang_src st1_src lc1_src sc1_src mem1_src)>> \/
   exists e_src st2_src lc2_src sc2_src mem2_src st3_src lc3_src sc3_src mem3_src,
     <<FAILURE: e_tgt <> ThreadEvent.failure>> /\
@@ -314,15 +316,15 @@ Lemma sim_thread_plus_step
                             (Thread.mk _ st2_src lc2_src sc2_src mem2_src)
                             (Thread.mk _ st3_src lc3_src sc3_src mem3_src)>> /\
     <<EVENT: ThreadEvent.get_machine_event e_src = ThreadEvent.get_machine_event e_tgt>> /\
-    <<SC: TimeMap.le sc3_src e3_tgt.(Thread.sc)>> /\
-    <<MEMORY: sim_memory mem3_src e3_tgt.(Thread.memory)>> /\
+    <<SC: TimeMap.le sc3_src (Thread.sc e3_tgt)>> /\
+    <<MEMORY: sim_memory mem3_src (Thread.memory e3_tgt)>> /\
     <<WF_SRC: Local.wf lc3_src mem3_src>> /\
-    <<WF_TGT: Local.wf e3_tgt.(Thread.local) e3_tgt.(Thread.memory)>> /\
+    <<WF_TGT: Local.wf (Thread.local e3_tgt) (Thread.memory e3_tgt)>> /\
     <<SC_SRC: Memory.closed_timemap sc3_src mem3_src>> /\
-    <<SC_TGT: Memory.closed_timemap e3_tgt.(Thread.sc) e3_tgt.(Thread.memory)>> /\
+    <<SC_TGT: Memory.closed_timemap (Thread.sc e3_tgt) (Thread.memory e3_tgt)>> /\
     <<MEM_SRC: Memory.closed mem3_src>> /\
-    <<MEM_TGT: Memory.closed e3_tgt.(Thread.memory)>> /\
-    <<SIM: sim_thread sim_terminal st3_src lc3_src sc3_src mem3_src e3_tgt.(Thread.state) e3_tgt.(Thread.local) e3_tgt.(Thread.sc) e3_tgt.(Thread.memory)>>.
+    <<MEM_TGT: Memory.closed (Thread.memory e3_tgt)>> /\
+    <<SIM: sim_thread sim_terminal st3_src lc3_src sc3_src mem3_src (Thread.state e3_tgt) (Thread.local e3_tgt) (Thread.sc e3_tgt) (Thread.memory e3_tgt)>>.
 Proof.
   destruct e1_tgt, e2_tgt, e3_tgt. ss.
   exploit Thread.rtc_tau_step_future; eauto. s. i. des.
@@ -356,7 +358,7 @@ Qed.
 
 Lemma cap_property
       mem1 mem2 lc sc
-      (CAP: Memory.cap lc.(Local.promises) mem1 mem2)
+      (CAP: Memory.cap (Local.promises lc) mem1 mem2)
       (WF: Local.wf lc mem1)
       (SC: Memory.closed_timemap sc mem1)
       (CLOSED: Memory.closed mem1):
@@ -364,7 +366,7 @@ Lemma cap_property
   <<WF: Local.wf lc mem2>> /\
   <<SC: Memory.closed_timemap sc mem2>> /\
   <<CLOSED: Memory.closed mem2>> /\
-  <<NORESERVE: Memory.no_reserve_except lc.(Local.promises) mem2>>.
+  <<NORESERVE: Memory.no_reserve_except (Local.promises lc) mem2>>.
 Proof.
   splits.
   - eapply Memory.cap_future_weak; eauto.

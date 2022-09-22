@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -147,7 +147,8 @@ Section MAPPED.
       + left. eauto.
       + i. timetac.
   Qed.
-  Hint Resolve map_lt_only_if.
+  #[local]
+  Hint Resolve map_lt_only_if: core.
 
   Definition map_eq_iff
              loc t0 t1 ft0 ft1
@@ -160,7 +161,8 @@ Section MAPPED.
     split; i; clarify; eauto.
     exfalso. apply CLPS. eexists. eauto.
   Qed.
-  Hint Resolve map_eq_iff.
+  #[local]
+  Hint Resolve map_eq_iff: core.
 
   Definition map_lt_iff
              loc t0 t1 ft0 ft1
@@ -176,10 +178,11 @@ Section MAPPED.
     - eapply MAP0.
     - eapply MAP1.
     - left. eauto.
-    - i. destruct x; auto. exfalso. apply CLPS.
+    - intro x. destruct x; auto. exfalso. apply CLPS.
       destruct H0. eexists. eauto.
   Qed.
-  Hint Resolve map_lt_iff.
+  #[local]
+  Hint Resolve map_lt_iff: core.
 
   Definition map_le_iff
              loc t0 t1 ft0 ft1
@@ -194,7 +197,8 @@ Section MAPPED.
     - left. erewrite <- map_lt_iff; eauto.
     - right. eapply map_eq_iff; eauto.
   Qed.
-  Hint Resolve map_le_iff.
+  #[local]
+  Hint Resolve map_le_iff: core.
 
   Definition timemap_map (tm ftm: TimeMap.t): Prop :=
     forall loc, f loc (tm loc) (ftm loc).
@@ -202,8 +206,8 @@ Section MAPPED.
 
   Record view_map (vw fvw: View.t): Prop :=
     view_map_intro
-      { map_pln: timemap_map vw.(View.pln) fvw.(View.pln);
-        map_rlx: timemap_map vw.(View.rlx) fvw.(View.rlx);
+      { map_pln: timemap_map (View.pln vw) (View.pln fvw);
+        map_rlx: timemap_map (View.rlx vw) (View.rlx fvw);
       }.
 
   Inductive opt_view_map: option View.t -> option View.t -> Prop :=
@@ -219,9 +223,9 @@ Section MAPPED.
 
   Record tview_map (vw fvw: TView.t): Prop :=
     tview_map_intro
-      { map_rel: forall loc, view_map (vw.(TView.rel) loc) (fvw.(TView.rel) loc);
-        map_cur: view_map vw.(TView.cur) fvw.(TView.cur);
-        map_acq: view_map vw.(TView.acq) fvw.(TView.acq);
+      { map_rel: forall loc, view_map ((TView.rel vw) loc) ((TView.rel fvw) loc);
+        map_cur: view_map (TView.cur vw) (TView.cur fvw);
+        map_acq: view_map (TView.acq vw) (TView.acq fvw);
       }.
 
   Inductive msg_map: Message.t -> Message.t -> Prop :=
@@ -254,7 +258,8 @@ Section MAPPED.
     :
       memory_op_kind_map loc (Memory.op_kind_cancel) (Memory.op_kind_cancel)
   .
-  Hint Constructors memory_op_kind_map.
+  #[local]
+  Hint Constructors memory_op_kind_map: core.
 
   Inductive tevent_map: ThreadEvent.t -> ThreadEvent.t -> Prop :=
   | tevent_map_promise
@@ -505,18 +510,18 @@ Section MAPPED.
 
   Lemma collapsable_unwritable_step pf e lang (th0 th1: Thread.t lang)
         (STEP: AThread.step pf e th0 th1)
-        (WFMEM: collapsable_unwritable th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (WFMEM: collapsable_unwritable (Local.promises (Thread.local th0)) (Thread.memory th0))
     :
-      collapsable_unwritable th1.(Thread.local).(Local.promises) th1.(Thread.memory) .
+      collapsable_unwritable (Local.promises (Thread.local th1)) (Thread.memory th1) .
   Proof.
     ii. eapply unwritable_increase; eauto.
   Qed.
 
   Lemma collapsable_unwritable_steps P lang (th0 th1: Thread.t lang)
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
-        (WFMEM: collapsable_unwritable th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (WFMEM: collapsable_unwritable (Local.promises (Thread.local th0)) (Thread.memory th0))
     :
-      collapsable_unwritable th1.(Thread.local).(Local.promises) th1.(Thread.memory) .
+      collapsable_unwritable (Local.promises (Thread.local th1)) (Thread.memory th1) .
   Proof.
     revert WFMEM. induction STEP; auto.
     i. eapply IHSTEP. inv H. inv TSTEP. inv STEP0.
@@ -541,7 +546,8 @@ Section MAPPED.
     eapply memory_map2_memory_map.
     eapply promises_map_memory_map2; eauto.
   Qed.
-  Hint Resolve promises_map_memory_map.
+  #[local]
+  Hint Resolve promises_map_memory_map: core.
 
   Lemma closed_timemap_map m fm tm ftm
         (MEM: memory_map m fm)
@@ -1766,7 +1772,7 @@ Section MAPPED.
         eapply map_le; eauto. eapply map_rlx. eapply unwrap_map; eauto.
       + inv MSG. econs.
     - i. clarify. inv MSG.
-      inv MEM0. exploit RESERVE; eauto. i. des.
+      inv MEM0. exploit RESERVE; eauto. intro x. des.
       eapply msg_get_map in x; eauto. des; clarify.
       inv MSG. inv MSGLE.
       hexploit (map_eq TO0 FROM). i. clarify.
@@ -1933,15 +1939,15 @@ Section MAPPED.
   Inductive local_map (lc flc: Local.t): Prop :=
   | local_map_intro
       ftv'
-      (TVIEWLE: TView.le flc.(Local.tview) ftv')
-      (TVIEW: tview_map lc.(Local.tview) ftv')
+      (TVIEWLE: TView.le (Local.tview flc) ftv')
+      (TVIEW: tview_map (Local.tview lc) ftv')
       (* (TVWF: TView.wf ftv') *)
-      (PROMISES: promises_map lc.(Local.promises) flc.(Local.promises))
+      (PROMISES: promises_map (Local.promises lc) (Local.promises flc))
   .
 
   Lemma read_step_map lc0 flc0 mem0 fmem0 loc to val released ord lc1
         (LOCAL: local_map lc0 flc0)
-        (TVWF: TView.wf flc0.(Local.tview))
+        (TVWF: TView.wf (Local.tview flc0))
         (MEM: memory_map mem0 fmem0)
         (READ: Local.read_step lc0 mem0 loc to val released ord lc1)
     :
@@ -1992,10 +1998,10 @@ Section MAPPED.
   Lemma write_step_map lc0 flc0 mem0 mem1 fmem0 loc from to val releasedr releasedw ord lc1
         kind ffrom fto freleasedr freleasedr' sc0 sc1 fsc0 fsc0'
         (LOCAL: local_map lc0 flc0)
-        (MLE: Memory.le flc0.(Local.promises) fmem0)
-        (TVWF: TView.wf flc0.(Local.tview))
+        (MLE: Memory.le (Local.promises flc0) fmem0)
+        (TVWF: TView.wf (Local.tview flc0))
         (MEM: memory_map mem0 fmem0)
-        (UNWRITABLE: collapsable_unwritable lc0.(Local.promises) mem0)
+        (UNWRITABLE: collapsable_unwritable (Local.promises lc0) mem0)
         (RELEASEDR: opt_view_map releasedr freleasedr')
         (RELEASEDRLE: View.opt_le freleasedr freleasedr')
         (RELEASEDRWF: View.opt_wf freleasedr)
@@ -2060,7 +2066,7 @@ Section MAPPED.
         (LOCAL: local_map lc0 flc0)
         (SC: timemap_map sc0 fsc0')
         (SCLE: TimeMap.le fsc0 fsc0')
-        (TVWF: TView.wf flc0.(Local.tview))
+        (TVWF: TView.wf (Local.tview flc0))
         (FENCE: Local.fence_step lc0 sc0 ordr ordw lc1 sc1)
     :
       exists flc1 fsc1 fsc1',
@@ -2240,7 +2246,7 @@ Section MAPPED.
         (CLOSED: Memory.closed fmem0)
         (LOCAL: local_map lc0 flc0)
         (MEM: memory_map mem0 fmem0)
-        (UNWRITABLE: collapsable_unwritable lc0.(Local.promises) mem0)
+        (UNWRITABLE: collapsable_unwritable (Local.promises lc0) mem0)
         (SC: timemap_map sc0 fsc0')
         (SCLE: TimeMap.le fsc0 fsc0')
     :
@@ -2277,7 +2283,7 @@ Section MAPPED.
         - destruct kind; ss. exploit UNWRITABLE.
           + exists to', to. unfold collapsed. esplits; eauto.
             instantiate (1:=to). econs; ss. refl.
-          + ii. inv x. inv UNCH. inv PROMISE.
+          + intro x. inv x. inv UNCH. inv PROMISE.
             eapply Memory.remove_get0 in MEM0.
             eapply Memory.remove_get0 in PROMISES1. des.
             exploit Memory.get_disjoint.
@@ -2369,7 +2375,7 @@ Section MAPPED.
         (CLOSEDSC1: Memory.closed_timemap sc0 mem0)
         (LOCAL: local_map lc0 flc0)
         (MEM: memory_map mem0 fmem0)
-        (UNWRITABLE: collapsable_unwritable lc0.(Local.promises) mem0)
+        (UNWRITABLE: collapsable_unwritable (Local.promises lc0) mem0)
         (SC: timemap_map sc0 fsc0')
         (SCLE: TimeMap.le fsc0 fsc0')
         (SHIFT: te_pred_shift P1 P0 tevent_map)
@@ -2416,7 +2422,7 @@ Section MAPPED.
         (CLOSEDSC1: Memory.closed_timemap sc0 mem0)
         (LOCAL: local_map lc0 flc0)
         (MEM: memory_map mem0 fmem0)
-        (UNWRITABLE: collapsable_unwritable lc0.(Local.promises) mem0)
+        (UNWRITABLE: collapsable_unwritable (Local.promises lc0) mem0)
         (SC: timemap_map sc0 fsc0')
         (SCLE: TimeMap.le fsc0 fsc0')
     :

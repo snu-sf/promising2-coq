@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -34,13 +34,13 @@ Set Implicit Arguments.
 
 Definition pf_consistent lang (e:Thread.t lang): Prop :=
   forall mem1 sc1
-         (CAP: Memory.cap e.(Thread.local).(Local.promises) e.(Thread.memory) mem1)
+         (CAP: Memory.cap (Local.promises (Thread.local e)) (Thread.memory e) mem1)
          (SC_MAX: Memory.max_full_timemap mem1 sc1),
   exists e2,
-    (<<STEPS: rtc (tau (Thread.step true)) (Thread.mk _ e.(Thread.state) e.(Thread.local) sc1 mem1) e2>>) /\
+    (<<STEPS: rtc (tau (Thread.step true)) (Thread.mk _ (Thread.state e) (Thread.local e) sc1 mem1) e2>>) /\
     ((exists e3,
          (<< FAILURE: Thread.step true ThreadEvent.failure e2 e3 >>)) \/
-     (<<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>)).
+     (<<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>)).
 
 Lemma rtc_union_step_nonpf_failure
       lang e1 e2 e2'
@@ -51,8 +51,8 @@ Lemma rtc_union_step_nonpf_failure
       Thread.step true ThreadEvent.failure e1 e1'.
 Proof.
   ginduction STEP; eauto.
-  i. exploit IHSTEP; eauto. i. des.
-  exists (Thread.mk _ e1'.(Thread.state) x.(Thread.local) x.(Thread.sc) x.(Thread.memory)).
+  i. exploit IHSTEP; eauto. intro x0. des.
+  exists (Thread.mk _ (Thread.state e1') (Thread.local x) (Thread.sc x) (Thread.memory x)).
   inv x0; inv STEP0. inv LOCAL. inv LOCAL0.
   inv H. inv USTEP. inv STEP0.
   econs 2; eauto. econs; eauto. econs; eauto. econs; eauto.
@@ -60,8 +60,8 @@ Proof.
 Qed.
 
 Lemma consistent_pf_consistent lang (e:Thread.t lang)
-      (WF: Local.wf e.(Thread.local) e.(Thread.memory))
-      (MEM: Memory.closed e.(Thread.memory))
+      (WF: Local.wf (Thread.local e) (Thread.memory e))
+      (MEM: Memory.closed (Thread.memory e))
       (CONSISTENT: Thread.consistent e)
   :
     pf_consistent e.

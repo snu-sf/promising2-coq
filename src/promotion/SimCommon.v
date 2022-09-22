@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -39,6 +39,7 @@ Module SimCommon.
   Definition sim_timemap (l: Loc.t) (tm_src tm_tgt: TimeMap.t): Prop :=
     forall loc (LOC: loc <> l), tm_src loc = tm_tgt loc.
 
+  #[global]
   Program Instance sim_timemap_Equivalence: forall l, Equivalence (sim_timemap l).
   Next Obligation.
     ii. ss.
@@ -52,11 +53,13 @@ Module SimCommon.
 
   Inductive sim_view (l: Loc.t) (view_src view_tgt: View.t): Prop :=
   | sim_view_intro
-      (PLN: sim_timemap l view_src.(View.pln) view_tgt.(View.pln))
-      (RLX: sim_timemap l view_src.(View.rlx) view_tgt.(View.rlx))
+      (PLN: sim_timemap l (View.pln view_src) (View.pln view_tgt))
+      (RLX: sim_timemap l (View.rlx view_src) (View.rlx view_tgt))
   .
-  Hint Constructors sim_view.
+  #[global]
+  Hint Constructors sim_view: core.
 
+  #[global]
   Program Instance sim_view_Equivalence: forall l, Equivalence (sim_view l).
   Next Obligation.
     ii. ss.
@@ -76,8 +79,10 @@ Module SimCommon.
   | sim_opt_view_none:
       sim_opt_view l None None
   .
-  Hint Constructors sim_opt_view.
+  #[global]
+  Hint Constructors sim_opt_view: core.
 
+  #[global]
   Program Instance sim_opt_view_Equivalence: forall l, Equivalence (sim_opt_view l).
   Next Obligation.
     ii. destruct x; ss. econs; ss.
@@ -92,12 +97,14 @@ Module SimCommon.
   Inductive sim_tview (l: Loc.t) (tview_src tview_tgt: TView.t): Prop :=
   | sim_tview_intro
       (REL: forall loc (LOC: loc <> l),
-          sim_view l (tview_src.(TView.rel) loc) (tview_tgt.(TView.rel) loc))
-      (CUR: sim_view l tview_src.(TView.cur) tview_tgt.(TView.cur))
-      (ACQ: sim_view l tview_src.(TView.acq) tview_tgt.(TView.acq))
+          sim_view l ((TView.rel tview_src) loc) ((TView.rel tview_tgt) loc))
+      (CUR: sim_view l (TView.cur tview_src) (TView.cur tview_tgt))
+      (ACQ: sim_view l (TView.acq tview_src) (TView.acq tview_tgt))
   .
-  Hint Constructors sim_tview.
+  #[global]
+  Hint Constructors sim_tview: core.
 
+  #[global]
   Program Instance sim_tview_Equivalence: forall l, Equivalence (sim_tview l).
   Next Obligation.
     ii. destruct x; ss.
@@ -128,18 +135,18 @@ Module SimCommon.
     inv SIM1. inv SIM2.
     unfold View.join, TimeMap.join.
     econs; ss; ii.
-    - exploit PLN; eauto. i.
-      exploit PLN0; eauto. i.
+    - exploit PLN; eauto. intro x.
+      exploit PLN0; eauto. intro x0.
       rewrite x. rewrite x0. refl.
-    - exploit RLX; eauto. i.
-      exploit RLX0; eauto. i.
+    - exploit RLX; eauto. intro x.
+      exploit RLX0; eauto. intro x0.
       rewrite x. rewrite x0. refl.
   Qed.
 
   Lemma sim_opt_view_unwrap
         l view_src view_tgt
         (SIM: sim_opt_view l view_src view_tgt):
-    sim_view l view_src.(View.unwrap) view_tgt.(View.unwrap).
+    sim_view l (View.unwrap view_src) (View.unwrap view_tgt).
   Proof.
     inv SIM; ss.
   Qed.
@@ -151,13 +158,13 @@ Module SimCommon.
         (TVIEW: sim_tview l tview_src tview_tgt)
         (RELEASED: sim_opt_view l released_src released_tgt)
         (LOC: loc <> l)
-        (READABLE_TGT: TView.readable tview_tgt.(TView.cur) loc to released_tgt ord):
-    TView.readable tview_src.(TView.cur) loc to released_src ord.
+        (READABLE_TGT: TView.readable (TView.cur tview_tgt) loc to released_tgt ord):
+    TView.readable (TView.cur tview_src) loc to released_src ord.
   Proof.
     inv TVIEW. inv CUR. inv READABLE_TGT. econs; i.
-    - exploit PLN; eauto. i. rewrite x. ss.
-    - exploit RLX0; eauto. i.
-      exploit RLX; eauto. i. rewrite x0. ss.
+    - exploit PLN; eauto. intro x. rewrite x. ss.
+    - exploit RLX0; eauto. intro x.
+      exploit RLX; eauto. intro x0. rewrite x0. ss.
   Qed.
 
   Lemma sim_read_tview
@@ -199,15 +206,15 @@ Module SimCommon.
                  (TView.write_released tview_tgt sc_tgt loc to releasedm_tgt ord).
   Proof.
     inv TVIEW. inv CUR.
-    exploit REL; eauto. i. inv x.
+    exploit REL; eauto. intro x. inv x.
     unfold TView.write_released. condtac; ss.
     econs. apply sim_view_join; eauto using sim_opt_view_unwrap.
     condtac; econs; ss; ii; unfold LocFun.add;
       condtac; ss; unfold TimeMap.join.
-    - exploit PLN; eauto. i. rewrite x. refl.
-    - exploit RLX; eauto. i. rewrite x. refl.
-    - exploit PLN0; eauto. i. rewrite x. refl.
-    - exploit RLX0; eauto. i. rewrite x. refl.
+    - exploit PLN; eauto. intro x. rewrite x. refl.
+    - exploit RLX; eauto. intro x. rewrite x. refl.
+    - exploit PLN0; eauto. intro x. rewrite x. refl.
+    - exploit RLX0; eauto. intro x. rewrite x. refl.
   Qed.
 
   Lemma sim_writable
@@ -217,11 +224,11 @@ Module SimCommon.
         loc to ord
         (LOC: loc <> l)
         (TVIEW: sim_tview l tview_src tview_tgt)
-        (WRITABLE_TGT: TView.writable tview_tgt.(TView.cur) sc_tgt loc to ord):
-    TView.writable tview_src.(TView.cur) sc_src loc to ord.
+        (WRITABLE_TGT: TView.writable (TView.cur tview_tgt) sc_tgt loc to ord):
+    TView.writable (TView.cur tview_src) sc_src loc to ord.
   Proof.
     inv TVIEW. inv CUR. inv WRITABLE_TGT. econs; i.
-    exploit RLX; eauto. i. rewrite x. ss.
+    exploit RLX; eauto. intro x. rewrite x. ss.
   Qed.
 
   Lemma sim_write_tview
@@ -271,8 +278,8 @@ Module SimCommon.
     inv TVIEW. inv CUR.
     unfold TView.write_fence_sc. condtac; ss.
     ii. unfold TimeMap.join.
-    exploit SC; eauto. i.
-    exploit RLX; eauto. i.
+    exploit SC; eauto. intro x.
+    exploit RLX; eauto. intro x0.
     rewrite x. rewrite x0. refl.
   Qed.
 
@@ -324,8 +331,10 @@ Module SimCommon.
   | sim_message_reserve:
       sim_message l Message.reserve Message.reserve
   .
-  Hint Constructors sim_message.
+  #[global]
+  Hint Constructors sim_message: core.
 
+  #[global]
   Program Instance sim_message_Equivalence: forall l, Equivalence (sim_message l).
   Next Obligation.
     ii. destruct x; ss. econs. refl.
@@ -352,8 +361,10 @@ Module SimCommon.
             <<GET_SRC: Memory.get loc to mem_src = Some (from, msg_src)>> /\
             <<MSG: sim_message l msg_src msg_tgt>>)
   .
-  Hint Constructors sim_memory.
+  #[global]
+  Hint Constructors sim_memory: core.
 
+  #[global]
   Program Instance sim_memory_Equivalence: forall l, Equivalence (sim_memory l).
   Next Obligation.
     ii. econs; i.
@@ -379,11 +390,13 @@ Module SimCommon.
 
   Inductive sim_local (l: Loc.t) (lc_src lc_tgt: Local.t): Prop :=
   | sim_local_intro
-      (TVIEW: sim_tview l lc_src.(Local.tview) lc_tgt.(Local.tview))
-      (PROMISES1: sim_memory l lc_src.(Local.promises) lc_tgt.(Local.promises))
+      (TVIEW: sim_tview l (Local.tview lc_src) (Local.tview lc_tgt))
+      (PROMISES1: sim_memory l (Local.promises lc_src) (Local.promises lc_tgt))
   .
-  Hint Constructors sim_local.
+  #[global]
+  Hint Constructors sim_local: core.
 
+  #[global]
   Program Instance sim_local_Equivalence: forall l, Equivalence (sim_local l).
   Next Obligation.
     ii. econs; refl.
@@ -421,10 +434,11 @@ Module SimCommon.
   (* fulfillable *)
 
   Definition view_le_loc (l: Loc.t) (view1 view2: View.t): Prop :=
-    <<PLN: Time.le (view1.(View.pln) l) (view2.(View.pln) l)>> /\
-    <<RLX: Time.le (view1.(View.rlx) l) (view2.(View.rlx) l)>>.
+    <<PLN: Time.le ((View.pln view1) l) ((View.pln view2) l)>> /\
+    <<RLX: Time.le ((View.rlx view1) l) ((View.rlx view2) l)>>.
 
-  Global Program Instance view_le_loc_PreOrder: forall l, PreOrder (view_le_loc l).
+  #[global]
+  Program Instance view_le_loc_PreOrder: forall l, PreOrder (view_le_loc l).
   Next Obligation.
     ii. econs; unnw; refl.
   Qed.
@@ -434,7 +448,7 @@ Module SimCommon.
   Qed.
 
   Definition tview_released_le_loc (l loc: Loc.t) (tview: TView.t) (released: View.t): Prop :=
-    view_le_loc l (tview.(TView.rel) loc) released.
+    view_le_loc l ((TView.rel tview) loc) released.
 
   Definition prev_released_le_loc (l loc: Loc.t) (from: Time.t) (mem: Memory.t) (released: View.t): Prop :=
     match Memory.get loc from mem with
@@ -458,19 +472,19 @@ Module SimCommon.
     then
       View.mk
         (LocFun.add
-           l (Time.join (tview_src.(TView.cur).(View.pln) l) (released_prev.(View.pln) l))
-           released_tgt.(View.pln))
+           l (Time.join ((View.pln (TView.cur tview_src)) l) ((View.pln released_prev) l))
+           (View.pln released_tgt))
         (LocFun.add
-           l (Time.join (tview_src.(TView.cur).(View.rlx) l) (released_prev.(View.rlx) l))
-           released_tgt.(View.rlx))
+           l (Time.join ((View.rlx (TView.cur tview_src)) l) ((View.rlx released_prev) l))
+           (View.rlx released_tgt))
     else
       View.mk
         (LocFun.add
-           l (Time.join ((tview_src.(TView.rel) loc).(View.pln) l) (released_prev.(View.pln) l))
-           released_tgt.(View.pln))
+           l (Time.join (((TView.rel tview_src) loc).(View.pln) l) ((View.pln released_prev) l))
+           (View.pln released_tgt))
         (LocFun.add
-           l (Time.join ((tview_src.(TView.rel) loc).(View.rlx) l) (released_prev.(View.rlx) l))
-           released_tgt.(View.rlx)).
+           l (Time.join (((TView.rel tview_src) loc).(View.rlx) l) ((View.rlx released_prev) l))
+           (View.rlx released_tgt)).
 
   Definition get_message_src (strong: bool) (l loc: Loc.t) (msg_tgt: Message.t)
              (tview_src: TView.t) (from: Time.t) (mem_src: Memory.t): Message.t :=
@@ -934,21 +948,21 @@ Module SimCommon.
             - unfold TimeMap.bot.
               ii. unfold LocFun.add. condtac; ss.
               + subst. eapply Time.join_spec; eauto using Time.bot_spec.
-              + exploit PLN; try eapply n. i. rewrite x. apply LE.
+              + exploit PLN; try eapply n. intro x. rewrite x. apply LE.
             - unfold TimeMap.bot.
               ii. unfold LocFun.add. condtac; ss.
               + subst. eapply Time.join_spec; eauto using Time.bot_spec.
-              + exploit RLX; try eapply n. i. rewrite x. apply LE.
+              + exploit RLX; try eapply n. intro x. rewrite x. apply LE.
           }
           destruct (Memory.get loc from mem1_src) as [[? [? []|]]|] eqn:GET_PREV; econs; econs; ss.
           unfold prev_released_le_loc in PREV. rewrite GET_PREV in *.
           inv SIM. inv TVIEW. inv PREV. econs; ss.
           + ii. unfold LocFun.add. condtac; ss.
             * subst. eapply Time.join_spec; eauto.
-            * exploit PLN; try eapply n. i. rewrite x. apply LE.
+            * exploit PLN; try eapply n. intro x. rewrite x. apply LE.
           + ii. unfold LocFun.add. condtac; ss.
             * subst. eapply Time.join_spec; eauto.
-            * exploit RLX; try eapply n. i. rewrite x. apply LE.
+            * exploit RLX; try eapply n. intro x. rewrite x. apply LE.
       }
       i. des.
       exploit Memory.lower_exists_le; try exact x0; eauto. i. des.
@@ -1375,14 +1389,14 @@ Module SimCommon.
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: loc <> l)
         (STEP_TGT: Local.promise_step lc1_tgt mem1_tgt loc from to msg_tgt lc2_tgt mem2_tgt kind_tgt):
     exists msg_src lc2_src mem2_src kind_src,
       <<STEP_SRC: Local.promise_step lc1_src mem1_src loc from to msg_src lc2_src mem2_src kind_src>> /\
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
       <<MEM2: sim_memory l mem2_src mem2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem2_src lc2_src.(Local.promises)>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem2_src (Local.promises lc2_src)>>.
   Proof.
     inv STEP_TGT.
     exploit promise; try exact PROMISE; try apply LC1;
@@ -1407,7 +1421,7 @@ Module SimCommon.
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: loc <> l)
         (STEP_TGT: Local.promise_step lc1_tgt mem1_tgt loc from to
                                       (Message.full val (Some (released_tgt))) lc2_tgt mem2_tgt kind_tgt)
@@ -1420,15 +1434,15 @@ Module SimCommon.
                                      (Message.full val (Some (released_src))) lc2_src mem2_src kind_src>> /\
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
       <<MEM2: sim_memory l mem2_src mem2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem2_src lc2_src.(Local.promises)>> /\
-      <<STRONG: view_le_loc l lc1_src.(Local.tview).(TView.cur) released_src>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem2_src (Local.promises lc2_src)>> /\
+      <<STRONG: view_le_loc l (TView.cur (Local.tview lc1_src)) released_src>>.
   Proof.
     inv STEP_TGT.
     exploit promise_strong_relaxed; try exact PROMISE; try apply LC1;
       try apply WF1_SRC; try apply WF1_TGT; eauto.
     i. des.
     exploit (@get_message_src_closed true l loc (Message.full val (Some released_tgt))
-                                     lc1_src.(Local.tview) from mem1_src mem2_src mem2_tgt); eauto.
+                                     (Local.tview lc1_src) from mem1_src mem2_src mem2_tgt); eauto.
     { apply WF1_SRC. }
     { exploit Memory.promise_op; try exact PROMISE_SRC. i.
       eapply Memory.op_closed_view; eauto. }
@@ -1485,13 +1499,13 @@ Module SimCommon.
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: loc <> l)
         (STEP_TGT: Local.read_step lc1_tgt mem1_tgt loc to val released_tgt ord lc2_tgt):
     exists released_src lc2_src,
       <<STEP_SRC: Local.read_step lc1_src mem1_src loc to val released_src ord lc2_src>> /\
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem1_src lc2_src.(Local.promises)>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem1_src (Local.promises lc2_src)>>.
   Proof.
     inv STEP_TGT.
     inv MEM1. exploit COMPLETE; eauto. i. des. inv MSG.
@@ -1512,25 +1526,25 @@ Module SimCommon.
         (REL: sim_opt_view l releasedm_src releasedm_tgt)
         (REL_WF: View.opt_wf releasedm_src)
         (REL_GET: __guard__ (
-                      Time.le (releasedm_src.(View.unwrap).(View.rlx) loc) to /\
+                      Time.le ((View.rlx (View.unwrap releasedm_src)) loc) to /\
                       (releasedm_src = None \/
                        exists from' val',
                          Memory.get loc from mem1_src = Some (from', Message.full val' releasedm_src))))
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: loc <> l)
         (ORD: Ordering.le ord Ordering.strong_relaxed)
         (RELEASED_TGT: __guard__ (
                            released_tgt =
-                           TView.write_released lc1_tgt.(Local.tview) sc1_tgt loc to releasedm_tgt ord))
+                           TView.write_released (Local.tview lc1_tgt) sc1_tgt loc to releasedm_tgt ord))
         (STEP_TGT: fulfill_step lc1_tgt sc1_tgt loc from to val releasedm_tgt released_tgt ord lc2_tgt sc2_tgt):
     exists released_src promises2_src mem2_src,
-      <<WRITE_SRC: Memory.write lc1_src.(Local.promises) mem1_src loc from to
-                                val (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord)
+      <<WRITE_SRC: Memory.write (Local.promises lc1_src) mem1_src loc from to
+                                val (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord)
                                 promises2_src mem2_src
                                 (Memory.op_kind_lower (Message.full val released_src))>> /\
-      <<PROMISES2: sim_memory l promises2_src lc2_tgt.(Local.promises)>> /\
+      <<PROMISES2: sim_memory l promises2_src (Local.promises lc2_tgt)>> /\
       <<MEM2: sim_memory l mem2_src mem1_tgt>>.
   Proof.
     inv STEP_TGT.
@@ -1560,12 +1574,12 @@ Module SimCommon.
           rewrite REL_GET0 in PREV. inv PREV.
           econs; ii.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit PLN; eauto. i.
-            exploit PLN0; eauto. i.
+            exploit PLN; eauto. intro x.
+            exploit PLN0; eauto. intro x0.
             rewrite x. rewrite x0. ss.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit RLX; eauto. i.
-            exploit RLX0; eauto. i.
+            exploit RLX; eauto. intro x.
+            exploit RLX0; eauto. intro x0.
             rewrite x. rewrite x0. ss.
         + revert x1. unfold LocFun.add. condtac; ss. i.
           inv RELEASED. inv SIM. inv LC1. inv TVIEW. destruct (REL0 loc). ss.
@@ -1576,21 +1590,21 @@ Module SimCommon.
           eapply View.join_spec.
           { econs; ii.
             - destruct (Loc.eq_dec loc0 l); subst; ss.
-              exploit PLN; eauto. i.
-              exploit PLN0; eauto. i.
+              exploit PLN; eauto. intro x.
+              exploit PLN0; eauto. intro x2.
               rewrite x. rewrite x2. ss.
             - destruct (Loc.eq_dec loc0 l); subst; ss.
-              exploit RLX; eauto. i.
-              exploit RLX0; eauto. i.
+              exploit RLX; eauto. intro x.
+              exploit RLX0; eauto. intro x2.
               rewrite x. rewrite x2. ss. }
           { econs; ss; ii.
             - specialize (PLN2 loc0). revert PLN2.
               unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-              + subst. exploit PLN; eauto. i. rewrite x. ss.
+              + subst. exploit PLN; eauto. intro x. rewrite x. ss.
               + unfold LocFun.find, LocFun.init. apply Time.bot_spec.
             - specialize (RLX2 loc0). revert RLX2.
               unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-              + subst. exploit RLX; eauto. i. rewrite x. ss.
+              + subst. exploit RLX; eauto. intro x. rewrite x. ss.
               + unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
       - inv RELEASED. inv REL_LE.
         revert H0. unfold TView.write_released. condtac; ss. }
@@ -1610,8 +1624,8 @@ Module SimCommon.
         * unguard. des; ss.
         * eapply Time.join_spec; try refl.
           inv LC1. inv TVIEW.
-          exploit REL0; eauto. i. inv x. ss.
-          exploit RLX; eauto. i. rewrite x.
+          exploit REL0; eauto. intro x. inv x. ss.
+          exploit RLX; eauto. intro x. rewrite x.
           inv WRITABLE. etrans; [|econs; eauto].
           inv WF1_TGT. inv TVIEW_WF. destruct (REL_CUR loc). ss.
       + unfold TimeMap.bot. apply Time.bot_spec.
@@ -1619,7 +1633,7 @@ Module SimCommon.
       eapply sim_memory_remove; try apply LC1; eauto.
     - unguardH RELEASED_TGT. subst.
       exploit Memory.remove_get0; try exact REMOVE. i. des.
-      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. i.
+      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. intro x.
       clear GET4 TVIEW_WF TVIEW_CLOSED PROMISES FINITE BOT RESERVE.
       inv MEM1. econs; i.
       + revert GET_SRC0.
@@ -1642,27 +1656,27 @@ Module SimCommon.
         (REL: sim_opt_view l releasedm_src releasedm_tgt)
         (REL_WF: View.opt_wf releasedm_src)
         (REL_GET: __guard__ (
-                      Time.le (releasedm_src.(View.unwrap).(View.rlx) loc) to /\
+                      Time.le ((View.rlx (View.unwrap releasedm_src)) loc) to /\
                       (releasedm_src = None \/
                        exists from' val',
                          Memory.get loc from mem1_src = Some (from', Message.full val' releasedm_src))))
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
-        (GET_SRC: Memory.get loc to lc1_src.(Local.promises) = Some (from, Message.full val (Some released_src)))
-        (STRONG: view_le_loc l lc1_src.(Local.tview).(TView.cur) released_src)
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
+        (GET_SRC: Memory.get loc to (Local.promises lc1_src) = Some (from, Message.full val (Some released_src)))
+        (STRONG: view_le_loc l (TView.cur (Local.tview lc1_src)) released_src)
         (LOC: loc <> l)
         (ORD: Ordering.le Ordering.acqrel ord)
         (RELEASED_TGT: __guard__ (
                            released_tgt =
-                           TView.write_released lc1_tgt.(Local.tview) sc1_tgt loc to releasedm_tgt ord))
+                           TView.write_released (Local.tview lc1_tgt) sc1_tgt loc to releasedm_tgt ord))
         (STEP_TGT: fulfill_step lc1_tgt sc1_tgt loc from to val releasedm_tgt released_tgt ord lc2_tgt sc2_tgt):
     exists released_src promises2_src mem2_src,
-      <<WRITE_SRC: Memory.write lc1_src.(Local.promises) mem1_src loc from to
-                                val (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord)
+      <<WRITE_SRC: Memory.write (Local.promises lc1_src) mem1_src loc from to
+                                val (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord)
                                 promises2_src mem2_src
                                 (Memory.op_kind_lower (Message.full val (Some released_src)))>> /\
-      <<PROMISES2: sim_memory l promises2_src lc2_tgt.(Local.promises)>> /\
+      <<PROMISES2: sim_memory l promises2_src (Local.promises lc2_tgt)>> /\
       <<MEM2: sim_memory l mem2_src mem1_tgt>>.
   Proof.
     inv STEP_TGT.
@@ -1693,12 +1707,12 @@ Module SimCommon.
         rewrite REL_GET0 in PREV. inv PREV.
         econs; ii.
         + destruct (Loc.eq_dec loc0 l); subst; ss.
-          exploit PLN; eauto. i.
-          exploit PLN0; eauto. i.
+          exploit PLN; eauto. intro x.
+          exploit PLN0; eauto. intro x0.
           rewrite x. rewrite x0. ss.
         + destruct (Loc.eq_dec loc0 l); subst; ss.
-          exploit RLX; eauto. i.
-          exploit RLX0; eauto. i.
+          exploit RLX; eauto. intro x.
+          exploit RLX0; eauto. intro x0.
           rewrite x. rewrite x0. ss.
       - revert x1. unfold LocFun.add. condtac; ss. i.
         inv SIM. inv LC1. inv TVIEW. inv CUR. inv STRONG. ss.
@@ -1709,21 +1723,21 @@ Module SimCommon.
         eapply View.join_spec.
         + econs; ii.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit PLN; eauto. i.
-            exploit PLN0; eauto. i.
+            exploit PLN; eauto. intro x.
+            exploit PLN0; eauto. intro x2.
             rewrite x. rewrite x2. ss.
           * destruct (Loc.eq_dec loc0 l); subst; ss.
-            exploit RLX; eauto. i.
-            exploit RLX0; eauto. i.
+            exploit RLX; eauto. intro x.
+            exploit RLX0; eauto. intro x2.
             rewrite x. rewrite x2. ss.
         + econs; ss; ii.
           * specialize (PLN2 loc0). revert PLN2.
             unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-            { subst. exploit PLN; eauto. i. rewrite x. ss. }
+            { subst. exploit PLN; eauto. intro x. rewrite x. ss. }
             { unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
           * specialize (RLX2 loc0). revert RLX2.
             unfold TimeMap.singleton, LocFun.add. condtac; ss; i.
-            { subst. exploit RLX; eauto. i. rewrite x. ss. }
+            { subst. exploit RLX; eauto. intro x. rewrite x. ss. }
             { unfold LocFun.find, LocFun.init. apply Time.bot_spec. }
     }
     i. des.
@@ -1742,13 +1756,13 @@ Module SimCommon.
       + unguard. des; ss.
       + eapply Time.join_spec; try refl.
         inv LC1. inv TVIEW. inv CUR. ss.
-        exploit RLX; eauto. i. rewrite x.
+        exploit RLX; eauto. intro x. rewrite x.
         inv WRITABLE. etrans; [|econs; eauto]. refl.
     - exploit MemoryReorder.lower_remove_same; try exact x0; eauto. i. des.
       eapply sim_memory_remove; try apply LC1; eauto.
     - unguardH RELEASED_TGT.
       exploit Memory.remove_get0; try exact REMOVE. i. des.
-      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. i.
+      dup WF1_TGT. inv WF1_TGT0. exploit PROMISES; try exact GET3. intro x.
       clear GET4 TVIEW_WF TVIEW_CLOSED PROMISES FINITE BOT RESERVE.
       inv MEM1. econs; i.
       + revert GET_SRC0.
@@ -1776,7 +1790,7 @@ Module SimCommon.
         (REL_WF_TGT: View.opt_wf releasedm_tgt)
         (REL_CLOSED_TGT: Memory.closed_opt_view releasedm_tgt mem1_tgt)
         (REL_GET: __guard__ (
-                      Time.le (releasedm_src.(View.unwrap).(View.rlx) loc) to /\
+                      Time.le ((View.rlx (View.unwrap releasedm_src)) loc) to /\
                       (releasedm_src = None \/
                        exists from' val',
                          Memory.get loc from mem1_src = Some (from', Message.full val' releasedm_src))))
@@ -1786,7 +1800,7 @@ Module SimCommon.
         (SC1_TGT: Memory.closed_timemap sc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
         (CLOSED1_TGT: Memory.closed mem1_tgt)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: loc <> l)
         (STEP_TGT: Local.write_step lc1_tgt sc1_tgt mem1_tgt loc from to val releasedm_tgt released_tgt
                                     ord lc2_tgt sc2_tgt mem2_tgt kind_tgt):
@@ -1796,7 +1810,7 @@ Module SimCommon.
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
       <<SC2: sim_timemap l sc2_src sc2_tgt>> /\
       <<MEM2: sim_memory l mem2_src mem2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem2_src lc2_src.(Local.promises)>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem2_src (Local.promises lc2_src)>>.
   Proof.
     destruct (Ordering.le ord Ordering.strong_relaxed) eqn:ORD.
     { (* relaxed *)
@@ -2010,14 +2024,14 @@ Module SimCommon.
         (WF1_SRC: Local.wf lc1_src mem1_src)
         (WF1_TGT: Local.wf lc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
-        (PROMISES1: forall to, Memory.get l to lc1_src.(Local.promises) = None)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (PROMISES1: forall to, Memory.get l to (Local.promises lc1_src) = None)
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (STEP_TGT: Local.fence_step lc1_tgt sc1_tgt ordr ordw lc2_tgt sc2_tgt):
     exists lc2_src sc2_src,
       <<STEP_SRC: Local.fence_step lc1_src sc1_src ordr ordw lc2_src sc2_src>> /\
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
       <<SC2: sim_timemap l sc2_src sc2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem1_src lc2_src.(Local.promises)>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem1_src (Local.promises lc2_src)>>.
   Proof.
     inv STEP_TGT. esplits.
     - econs; eauto. ii.
@@ -2048,16 +2062,16 @@ Module SimCommon.
         lc1_src
         lc1_tgt
         (LC1: sim_local l lc1_src lc1_tgt)
-        (PROMISES1: forall to, Memory.get l to lc1_src.(Local.promises) = None)
+        (PROMISES1: forall to, Memory.get l to (Local.promises lc1_src) = None)
         (STEP_TGT: Local.failure_step lc1_tgt):
     <<STEP_SRC: Local.failure_step lc1_src>>.
   Proof.
     inv STEP_TGT. econs. ii.
     assert (LOC: loc <> l) by (ii; subst; congr).
     inv LC1. inv PROMISES0.
-    exploit SOUND; eauto. i. des. inv MSG.
-    exploit CONSISTENT; eauto. i.
-    inv TVIEW. inv CUR. exploit RLX; eauto. i.
+    exploit SOUND; eauto. intro x. des. inv MSG.
+    exploit CONSISTENT; eauto. intro x.
+    inv TVIEW. inv CUR. exploit RLX; eauto. intro x0.
     rewrite x0. ss.
   Qed.
 
@@ -2074,8 +2088,8 @@ Module SimCommon.
         (SC1_TGT: Memory.closed_timemap sc1_tgt mem1_tgt)
         (CLOSED1_SRC: Memory.closed mem1_src)
         (CLOSED1_TGT: Memory.closed mem1_tgt)
-        (PROMISES1: forall to, Memory.get l to lc1_src.(Local.promises) = None)
-        (FULFILLABLE1: fulfillable l lc1_src.(Local.tview) mem1_src lc1_src.(Local.promises))
+        (PROMISES1: forall to, Memory.get l to (Local.promises lc1_src) = None)
+        (FULFILLABLE1: fulfillable l (Local.tview lc1_src) mem1_src (Local.promises lc1_src))
         (LOC: ~ ThreadEvent.is_accessing_loc l e_tgt)
         (STEP_TGT: Local.program_step e_tgt lc1_tgt sc1_tgt mem1_tgt lc2_tgt sc2_tgt mem2_tgt):
     exists e_src lc2_src sc2_src mem2_src,
@@ -2085,7 +2099,7 @@ Module SimCommon.
       <<LC2: sim_local l lc2_src lc2_tgt>> /\
       <<SC2: sim_timemap l sc2_src sc2_tgt>> /\
       <<MEM2: sim_memory l mem2_src mem2_tgt>> /\
-      <<FULFILLABLE2: fulfillable l lc2_src.(Local.tview) mem2_src lc2_src.(Local.promises)>>.
+      <<FULFILLABLE2: fulfillable l (Local.tview lc2_src) mem2_src (Local.promises lc2_src)>>.
   Proof.
     unfold ThreadEvent.is_accessing_loc in *.
     inv STEP_TGT; ss.
@@ -2127,7 +2141,7 @@ Module SimCommon.
         e lc1 sc1 mem1 lc2 sc2 mem2
         (STEP: Local.program_step e lc1 sc1 mem1 lc2 sc2 mem2)
         (LOC: ~ ThreadEvent.is_accessing_loc l e):
-    forall to, Memory.get l to lc1.(Local.promises) = Memory.get l to lc2.(Local.promises).
+    forall to, Memory.get l to (Local.promises lc1) = Memory.get l to (Local.promises lc2).
   Proof.
     unfold ThreadEvent.is_accessing_loc in *.
     inv STEP; ss; try by inv LOCAL.
@@ -2437,7 +2451,7 @@ Module SimCommon.
     destruct (Memory.get loc from mem2) as [[? [? []|]]|] eqn:GET2; ss.
     exploit Memory.cap_inv; try exact CAP; eauto. i. des; ss.
     - rewrite x0 in *. ss.
-    - subst. exploit LE; eauto. i.
+    - subst. exploit LE; eauto. intro x.
       specialize (Time.incr_spec (Memory.max_ts loc mem1)). i.
       exploit Memory.get_ts; try exact x. i. des.
       { subst. rewrite x3 in *. inv H. }

@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -41,68 +41,73 @@ Module SimThreadPromotion.
 
   Inductive sim_state_synch (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_synch_intro
-      (STMTS: st_tgt.(State.stmts) = promote_stmts l r st_src.(State.stmts))
-      (REGS: RegFile.eq_except (RegSet.singleton r) st_src.(State.regs) st_tgt.(State.regs))
-      (REGR: st_tgt.(State.regs) r = val)
+      (STMTS: (State.stmts st_tgt) = promote_stmts l r (State.stmts st_src))
+      (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
+      (REGR: (State.regs st_tgt) r = val)
   .
-  Hint Constructors sim_state_synch.
+  #[export]
+  Hint Constructors sim_state_synch: core.
 
   Inductive sim_state_fa (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_fa_intro
       lhs addendum ordr ordw stmts_src stmts_tgt
-      (STMTS_SRC: st_src.(State.stmts) =
+      (STMTS_SRC: (State.stmts st_src) =
                   (Stmt.instr (Instr.update lhs l (Instr.fetch_add addendum) ordr ordw)) :: stmts_src)
-      (STMTS_TGT: st_tgt.(State.stmts) =
+      (STMTS_TGT: (State.stmts st_tgt) =
                   (Stmt.instr (Instr.assign lhs (Instr.expr_val (Value.reg r)))) :: stmts_tgt)
       (STMTS: stmts_tgt = promote_stmts l r stmts_src)
-      (REGS: RegFile.eq_except (RegSet.singleton r) st_src.(State.regs) st_tgt.(State.regs))
-      (REGR: st_tgt.(State.regs) r = val + RegFile.eval_value st_src.(State.regs) addendum)
+      (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
+      (REGR: (State.regs st_tgt) r = val + RegFile.eval_value (State.regs st_src) addendum)
   .
-  Hint Constructors sim_state_fa.
+  #[export]
+  Hint Constructors sim_state_fa: core.
 
   Inductive sim_state_cas_success1 (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas1_intro
       lhs old new ordr ordw stmts_src stmts_tgt
-      (STMTS_SRC: st_src.(State.stmts) =
+      (STMTS_SRC: (State.stmts st_src) =
                   (Stmt.instr (Instr.update lhs l (Instr.cas old new) ordr ordw)) :: stmts_src)
-      (STMTS_TGT: st_tgt.(State.stmts) =
+      (STMTS_TGT: (State.stmts st_tgt) =
                   Stmt.instr (Instr.assign r new) ::
                              Stmt.instr (Instr.assign lhs (Instr.expr_val (Value.const 1)))
                              :: stmts_tgt)
       (STMTS: stmts_tgt = promote_stmts l r stmts_src)
-      (REGS: RegFile.eq_except (RegSet.singleton r) st_src.(State.regs) st_tgt.(State.regs))
-      (REGR: st_tgt.(State.regs) r = val)
-      (SUCCESS: val = RegFile.eval_value st_src.(State.regs) old)
+      (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
+      (REGR: (State.regs st_tgt) r = val)
+      (SUCCESS: val = RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_success1.
+  #[export]
+  Hint Constructors sim_state_cas_success1: core.
 
   Inductive sim_state_cas_success2 (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas2_intro
       lhs old new ordr ordw stmts_src stmts_tgt
-      (STMTS_SRC: st_src.(State.stmts) =
+      (STMTS_SRC: (State.stmts st_src) =
                   (Stmt.instr (Instr.update lhs l (Instr.cas old new) ordr ordw)) :: stmts_src)
-      (STMTS_TGT: st_tgt.(State.stmts) =
+      (STMTS_TGT: (State.stmts st_tgt) =
                   Stmt.instr (Instr.assign lhs (Instr.expr_val (Value.const 1))) :: stmts_tgt)
       (STMTS: stmts_tgt = promote_stmts l r stmts_src)
-      (REGS: RegFile.eq_except (RegSet.singleton r) st_src.(State.regs) st_tgt.(State.regs))
-      (REGR: st_tgt.(State.regs) r = RegFile.eval_value st_src.(State.regs) new)
-      (SUCCESS: val = RegFile.eval_value st_src.(State.regs) old)
+      (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
+      (REGR: (State.regs st_tgt) r = RegFile.eval_value (State.regs st_src) new)
+      (SUCCESS: val = RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_success2.
+  #[export]
+  Hint Constructors sim_state_cas_success2: core.
 
   Inductive sim_state_cas_fail (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_cas_fail_intro
       lhs old new ordr ordw stmts_src stmts_tgt
-      (STMTS_SRC: st_src.(State.stmts) =
+      (STMTS_SRC: (State.stmts st_src) =
                   (Stmt.instr (Instr.update lhs l (Instr.cas old new) ordr ordw)) :: stmts_src)
-      (STMTS_TGT: st_tgt.(State.stmts) =
+      (STMTS_TGT: (State.stmts st_tgt) =
                   Stmt.instr (Instr.assign lhs (Instr.expr_val (Value.const 0))) :: stmts_tgt)
       (STMTS: stmts_tgt = promote_stmts l r stmts_src)
-      (REGS: RegFile.eq_except (RegSet.singleton r) st_src.(State.regs) st_tgt.(State.regs))
-      (REGR: st_tgt.(State.regs) r = val)
-      (FAIL: val <> RegFile.eval_value st_src.(State.regs) old)
+      (REGS: RegFile.eq_except (RegSet.singleton r) (State.regs st_src) (State.regs st_tgt))
+      (REGR: (State.regs st_tgt) r = val)
+      (FAIL: val <> RegFile.eval_value (State.regs st_src) old)
   .
-  Hint Constructors sim_state_cas_fail.
+  #[export]
+  Hint Constructors sim_state_cas_fail: core.
 
   Definition sim_state (l: Loc.t) (r: Reg.t) (val: Const.t) (st_src st_tgt: State.t): Prop :=
     sim_state_synch l r val st_src st_tgt \/
@@ -118,53 +123,55 @@ Module SimThreadPromotion.
   Definition safe (l: Loc.t) (lc: Local.t) (mem: Memory.t): Prop :=
     forall from to val released
       (GET: Memory.get l to mem = Some (from, Message.full val (Some released))),
-      View.le released lc.(Local.tview).(TView.cur).
+      View.le released (TView.cur (Local.tview lc)).
 
   Inductive sim_thread (l: Loc.t) (r: Reg.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_intro
       val
-      (REGFREE: reg_free_stmts r e_src.(Thread.state).(State.stmts))
-      (STATE: sim_state l r val e_src.(Thread.state) e_tgt.(Thread.state))
-      (LOCAL: sim_local l e_src.(Thread.local) e_tgt.(Thread.local))
-      (SC: sim_timemap l e_src.(Thread.sc) e_tgt.(Thread.sc))
-      (MEMORY: sim_memory l e_src.(Thread.memory) e_tgt.(Thread.memory))
-      (FULFILLABLE: fulfillable l e_src.(Thread.local).(Local.tview) e_src.(Thread.memory)
-                                  e_src.(Thread.local).(Local.promises))
+      (REGFREE: reg_free_stmts r (State.stmts (Thread.state e_src)))
+      (STATE: sim_state l r val (Thread.state e_src) (Thread.state e_tgt))
+      (LOCAL: sim_local l (Thread.local e_src) (Thread.local e_tgt))
+      (SC: sim_timemap l (Thread.sc e_src) (Thread.sc e_tgt))
+      (MEMORY: sim_memory l (Thread.memory e_src) (Thread.memory e_tgt))
+      (FULFILLABLE: fulfillable l (Local.tview (Thread.local e_src)) (Thread.memory e_src)
+                                  (Local.promises (Thread.local e_src)))
       (LATEST: exists from released,
-          Memory.get l (Memory.max_ts l e_src.(Thread.memory)) e_src.(Thread.memory) =
+          Memory.get l (Memory.max_ts l (Thread.memory e_src)) (Thread.memory e_src) =
           Some (from, Message.full val released))
-      (PROMISES: forall to, Memory.get l to e_src.(Thread.local).(Local.promises) = None)
-      (SAFE: safe l e_src.(Thread.local) e_src.(Thread.memory))
+      (PROMISES: forall to, Memory.get l to (Local.promises (Thread.local e_src)) = None)
+      (SAFE: safe l (Thread.local e_src) (Thread.memory e_src))
   .
-  Hint Constructors sim_thread.
+  #[export]
+  Hint Constructors sim_thread: core.
 
   Inductive sim_thread_reserve (l: Loc.t) (r: Reg.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_reserve_intro
       val
-      (REGFREE: reg_free_stmts r e_src.(Thread.state).(State.stmts))
-      (STATE: sim_state l r val e_src.(Thread.state) e_tgt.(Thread.state))
-      (LOCAL: sim_local l e_src.(Thread.local) e_tgt.(Thread.local))
-      (SC: sim_timemap l e_src.(Thread.sc) e_tgt.(Thread.sc))
-      (MEMORY: sim_memory l e_src.(Thread.memory) e_tgt.(Thread.memory))
-      (FULFILLABLE: fulfillable l e_src.(Thread.local).(Local.tview) e_src.(Thread.memory)
-                                  e_src.(Thread.local).(Local.promises))
+      (REGFREE: reg_free_stmts r (State.stmts (Thread.state e_src)))
+      (STATE: sim_state l r val (Thread.state e_src) (Thread.state e_tgt))
+      (LOCAL: sim_local l (Thread.local e_src) (Thread.local e_tgt))
+      (SC: sim_timemap l (Thread.sc e_src) (Thread.sc e_tgt))
+      (MEMORY: sim_memory l (Thread.memory e_src) (Thread.memory e_tgt))
+      (FULFILLABLE: fulfillable l (Local.tview (Thread.local e_src)) (Thread.memory e_src)
+                                  (Local.promises (Thread.local e_src)))
       (LATEST: exists from from' released,
-          <<MEM: Memory.get l (Memory.max_ts l e_src.(Thread.memory)) e_src.(Thread.memory) =
+          <<MEM: Memory.get l (Memory.max_ts l (Thread.memory e_src)) (Thread.memory e_src) =
                  Some (from, Message.reserve)>> /\
-          <<PROMISE: Memory.get l (Memory.max_ts l e_src.(Thread.memory)) e_src.(Thread.local).(Local.promises) =
+          <<PROMISE: Memory.get l (Memory.max_ts l (Thread.memory e_src)) (Local.promises (Thread.local e_src)) =
                      Some (from, Message.reserve)>> /\
-          <<LATEST: Memory.get l from e_src.(Thread.memory) =
+          <<LATEST: Memory.get l from (Thread.memory e_src) =
                     Some (from', Message.full val released)>>)
-      (PROMISES: forall to (TO: to <> Memory.max_ts l e_src.(Thread.memory)),
-          Memory.get l to e_src.(Thread.local).(Local.promises) = None)
-      (SAFE: safe l e_src.(Thread.local) e_src.(Thread.memory))
+      (PROMISES: forall to (TO: to <> Memory.max_ts l (Thread.memory e_src)),
+          Memory.get l to (Local.promises (Thread.local e_src)) = None)
+      (SAFE: safe l (Thread.local e_src) (Thread.memory e_src))
   .
-  Hint Constructors sim_thread_reserve.
+  #[export]
+  Hint Constructors sim_thread_reserve: core.
 
 
   Lemma step_sim_thread_reserve
         l r e1_src e_tgt
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
         (SIM1: sim_thread l r e1_src e_tgt):
     exists from to e2_src,
       <<STEP: Thread.step false (ThreadEvent.promise l from to Message.reserve Memory.op_kind_add)
@@ -227,8 +234,8 @@ Module SimThreadPromotion.
 
   Lemma step_reserve_sim_thread
         l r e1_src e_tgt
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
         (SIM1: sim_thread_reserve l r e1_src e_tgt):
     exists from to e2_src,
       <<STEP: Thread.step true (ThreadEvent.promise l from to Message.reserve Memory.op_kind_cancel)
@@ -307,9 +314,9 @@ Module SimThreadPromotion.
         l r e1_src
         pf e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
         (STEP_TGT: Thread.promise_step pf e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_promise_step e_src e1_src e2_src>> /\
@@ -350,8 +357,8 @@ Module SimThreadPromotion.
         (STEP_TGT: State.step e (State.mk regs1_tgt (stmt :: stmts1_tgt)) st2_tgt):
     exists st2_src,
       <<STEP_SRC: State.step e (State.mk regs1_src (stmt :: stmts1_src)) st2_src>> /\
-      <<REGS2: RegFile.eq_except (RegSet.singleton r) st2_src.(State.regs) st2_tgt.(State.regs)>> /\
-      <<STMTS2: st2_tgt.(State.stmts) = promote_stmts l r st2_src.(State.stmts)>>.
+      <<REGS2: RegFile.eq_except (RegSet.singleton r) (State.regs st2_src) (State.regs st2_tgt)>> /\
+      <<STMTS2: (State.stmts st2_tgt) = promote_stmts l r (State.stmts st2_src)>>.
   Proof.
     subst. inv STEP_TGT.
     - inv REGFREE.
@@ -385,12 +392,12 @@ Module SimThreadPromotion.
         l r e1_src
         e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.program_step e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_program_step e_src e1_src e2_src>> /\
@@ -748,7 +755,7 @@ Module SimThreadPromotion.
       - econs; eauto; ss.
         + eapply step_reg_free; eauto. ss.
         + left. econs; eauto.
-        + assert (VAL: regs1_tgt r = st2.(State.regs) r).
+        + assert (VAL: regs1_tgt r = (State.regs st2) r).
           { inv STATE; ss. destruct i; inv INSTR; ss.
             - unfold RegFun.add. condtac; ss. subst.
               exfalso. inv REGFREE. inv H1. ss.
@@ -813,12 +820,12 @@ Module SimThreadPromotion.
         l r e1_src
         pf e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.step pf e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_step e_src e1_src e2_src>> /\
@@ -846,12 +853,12 @@ Module SimThreadPromotion.
         l r e1_src
         e_tgt e1_tgt e2_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEP_TGT: Thread.opt_step e_tgt e1_tgt e2_tgt):
     exists e_src e2_src,
       <<STEP_SRC: Thread.opt_step e_src e1_src e2_src>> /\
@@ -867,12 +874,12 @@ Module SimThreadPromotion.
         l r e1_src
         e1_tgt e2_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt):
     exists e2_src,
       <<STEPS_SRC: rtc (@Thread.tau_step lang) e1_src e2_src>> /\
@@ -897,12 +904,12 @@ Module SimThreadPromotion.
         l r e1_src
         pf e_tgt e1_tgt e2_tgt e3_tgt
         (SIM1: sim_thread l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt)
         (STEP_TGT: Thread.step pf e_tgt e2_tgt e3_tgt):
     exists e_src e2_src e3_src,
@@ -952,12 +959,12 @@ Module SimThreadPromotion.
         l r e1_src
         e1_tgt e2_tgt
         (SIM1: sim_thread_reserve l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt):
     exists e2_src,
       <<STEPS_SRC: rtc (@Thread.tau_step lang) e1_src e2_src>> /\
@@ -975,12 +982,12 @@ Module SimThreadPromotion.
         l r e1_src
         pf e_tgt e1_tgt e2_tgt e3_tgt
         (SIM1: sim_thread_reserve l r e1_src e1_tgt)
-        (WF1_SRC: Local.wf e1_src.(Thread.local) e1_src.(Thread.memory))
-        (WF1_TGT: Local.wf e1_tgt.(Thread.local) e1_tgt.(Thread.memory))
-        (SC1_SRC: Memory.closed_timemap e1_src.(Thread.sc) e1_src.(Thread.memory))
-        (SC1_TGT: Memory.closed_timemap e1_tgt.(Thread.sc) e1_tgt.(Thread.memory))
-        (CLOSED1_SRC: Memory.closed e1_src.(Thread.memory))
-        (CLOSED1_TGT: Memory.closed e1_tgt.(Thread.memory))
+        (WF1_SRC: Local.wf (Thread.local e1_src) (Thread.memory e1_src))
+        (WF1_TGT: Local.wf (Thread.local e1_tgt) (Thread.memory e1_tgt))
+        (SC1_SRC: Memory.closed_timemap (Thread.sc e1_src) (Thread.memory e1_src))
+        (SC1_TGT: Memory.closed_timemap (Thread.sc e1_tgt) (Thread.memory e1_tgt))
+        (CLOSED1_SRC: Memory.closed (Thread.memory e1_src))
+        (CLOSED1_TGT: Memory.closed (Thread.memory e1_tgt))
         (STEPS_TGT: rtc (@Thread.tau_step lang) e1_tgt e2_tgt)
         (STEP_TGT: Thread.step pf e_tgt e2_tgt e3_tgt):
     exists e_src e2_src e3_src,
@@ -1064,8 +1071,8 @@ Module SimThreadPromotion.
   Lemma sim_thread_promises_bot
         l r e_src e_tgt
         (SIM: sim_thread l r e_src e_tgt)
-        (PROMISES_TGT: e_tgt.(Thread.local).(Local.promises) = Memory.bot):
-    <<PROMISES_SRC: e_src.(Thread.local).(Local.promises) = Memory.bot>>.
+        (PROMISES_TGT: (Local.promises (Thread.local e_tgt)) = Memory.bot):
+    <<PROMISES_SRC: (Local.promises (Thread.local e_src)) = Memory.bot>>.
   Proof.
     inv SIM. inv LOCAL. apply Memory.ext. i.
     rewrite Memory.bot_get.
@@ -1078,8 +1085,8 @@ Module SimThreadPromotion.
   Lemma sim_thread_terminal
         l r e_src e_tgt
         (SIM: sim_thread l r e_src e_tgt)
-        (TERMINAL_TGT: lang.(Language.is_terminal) e_tgt.(Thread.state)):
-    <<TERMINAL_SRC: lang.(Language.is_terminal) e_src.(Thread.state)>>.
+        (TERMINAL_TGT: (Language.is_terminal lang) (Thread.state e_tgt)):
+    <<TERMINAL_SRC: (Language.is_terminal lang) (Thread.state e_src)>>.
   Proof.
     unfold Language.is_terminal in *. ss.
     unfold State.is_terminal in *.
@@ -1106,8 +1113,8 @@ Module SimThreadPromotion.
     Memory.max_ts l mem1 = Memory.max_ts l mem2.
   Proof.
     dup CAP. inv CAP.
-    exploit SOUND; try exact MEM. i.
-    exploit SOUND; try exact LATEST. i.
+    exploit SOUND; try exact MEM. intro x.
+    exploit SOUND; try exact LATEST. intro x0.
     exploit Memory.max_ts_spec; try exact x. i. des.
     inv MAX; ss.
     exploit Memory.cap_inv; try exact GET; eauto. i. des.
@@ -1127,17 +1134,17 @@ Module SimThreadPromotion.
         sc_src sc_tgt
         cap_src cap_tgt
         (SIM: sim_thread_reserve l r e_src e_tgt)
-        (WF_SRC: Local.wf e_src.(Thread.local) e_src.(Thread.memory))
-        (WF_TGT: Local.wf e_tgt.(Thread.local) e_tgt.(Thread.memory))
-        (CLOSED_SRC: Memory.closed e_src.(Thread.memory))
-        (CLOSED_TGT: Memory.closed e_tgt.(Thread.memory))
+        (WF_SRC: Local.wf (Thread.local e_src) (Thread.memory e_src))
+        (WF_TGT: Local.wf (Thread.local e_tgt) (Thread.memory e_tgt))
+        (CLOSED_SRC: Memory.closed (Thread.memory e_src))
+        (CLOSED_TGT: Memory.closed (Thread.memory e_tgt))
         (SC_SRC: Memory.max_full_timemap cap_src sc_src)
         (SC_TGT: Memory.max_full_timemap cap_tgt sc_tgt)
-        (CAP_SRC: Memory.cap e_src.(Thread.local).(Local.promises) e_src.(Thread.memory) cap_src)
-        (CAP_TGT: Memory.cap e_tgt.(Thread.local).(Local.promises) e_tgt.(Thread.memory) cap_tgt):
+        (CAP_SRC: Memory.cap (Local.promises (Thread.local e_src)) (Thread.memory e_src) cap_src)
+        (CAP_TGT: Memory.cap (Local.promises (Thread.local e_tgt)) (Thread.memory e_tgt) cap_tgt):
     sim_thread_reserve l r
-                       (Thread.mk lang e_src.(Thread.state) e_src.(Thread.local) sc_src cap_src)
-                       (Thread.mk lang e_tgt.(Thread.state) e_tgt.(Thread.local) sc_tgt cap_tgt).
+                       (Thread.mk lang (Thread.state e_src) (Thread.local e_src) sc_src cap_src)
+                       (Thread.mk lang (Thread.state e_tgt) (Thread.local e_tgt) sc_tgt cap_tgt).
   Proof.
     inv SIM. inv LOCAL.
     exploit sim_memory_cap; [apply PROMISES1|exact MEMORY|..]; eauto. i. des.
@@ -1158,12 +1165,12 @@ Module SimThreadPromotion.
   Lemma sim_thread_reserve_consistent
         l r e_src e_tgt
         (SIM: sim_thread_reserve l r e_src e_tgt)
-        (WF_SRC: Local.wf e_src.(Thread.local) e_src.(Thread.memory))
-        (WF_TGT: Local.wf e_tgt.(Thread.local) e_tgt.(Thread.memory))
-        (SC_SRC: Memory.closed_timemap e_src.(Thread.sc) e_src.(Thread.memory))
-        (SC_TGT: Memory.closed_timemap e_tgt.(Thread.sc) e_tgt.(Thread.memory))
-        (CLOSED_SRC: Memory.closed e_src.(Thread.memory))
-        (CLOSED_TGT: Memory.closed e_tgt.(Thread.memory))
+        (WF_SRC: Local.wf (Thread.local e_src) (Thread.memory e_src))
+        (WF_TGT: Local.wf (Thread.local e_tgt) (Thread.memory e_tgt))
+        (SC_SRC: Memory.closed_timemap (Thread.sc e_src) (Thread.memory e_src))
+        (SC_TGT: Memory.closed_timemap (Thread.sc e_tgt) (Thread.memory e_tgt))
+        (CLOSED_SRC: Memory.closed (Thread.memory e_src))
+        (CLOSED_TGT: Memory.closed (Thread.memory e_tgt))
         (CONSISTENT_TGT: Thread.consistent e_tgt):
     <<CONSISTENT_SRC: Thread.consistent e_src>>.
   Proof.

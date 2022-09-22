@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -334,8 +334,8 @@ Lemma reorder_pf_step_cancel
       (STEP1: @pred_step (promise_free /1\ (fun e => ~ is_cancel e)) lang
                          e1 th0 th1)
       (STEP2: pred_step is_cancel e2 th1 th2)
-      (LOCAL: Local.wf th0.(Thread.local) th0.(Thread.memory))
-      (MEMORY: Memory.closed th0.(Thread.memory)):
+      (LOCAL: Local.wf (Thread.local th0) (Thread.memory th0))
+      (MEMORY: Memory.closed (Thread.memory th0)):
   exists e2' e1' th1',
     (<<STEP1: pred_step is_cancel e2' th0 th1'>>) /\
     (<<STEP2: pred_step (promise_free /1\ (fun e => ~ is_cancel e)) e1' th1' th2>>) /\
@@ -426,8 +426,8 @@ Lemma reorder_pf_step_cancels
       (STEP1: @pred_step (promise_free /1\ (fun e => ~ is_cancel e)) lang
                          e1 th0 th1)
       (STEPS2: rtc (tau (@pred_step is_cancel _)) th1 th2)
-      (LOCAL: Local.wf th0.(Thread.local) th0.(Thread.memory))
-      (MEMORY: Memory.closed th0.(Thread.memory))
+      (LOCAL: Local.wf (Thread.local th0) (Thread.memory th0))
+      (MEMORY: Memory.closed (Thread.memory th0))
       (SC: Memory.closed_timemap (Thread.sc th0) (Thread.memory th0))
   :
     exists e1' th1',
@@ -462,8 +462,8 @@ Qed.
 Lemma pf_steps_cancels_not_cancels
       lang th0 th2
       (STEPS: rtc (tau (@pred_step promise_free lang)) th0 th2)
-      (LOCAL: Local.wf th0.(Thread.local) th0.(Thread.memory))
-      (MEMORY: Memory.closed th0.(Thread.memory))
+      (LOCAL: Local.wf (Thread.local th0) (Thread.memory th0))
+      (MEMORY: Memory.closed (Thread.memory th0))
       (SC: Memory.closed_timemap (Thread.sc th0) (Thread.memory th0))
   :
     exists th1,

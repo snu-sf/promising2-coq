@@ -46,7 +46,7 @@ Lemma covered_disjoint
 Proof.
   ii. exploit COVER; eauto.
   { econs; eauto. }
-  i. inv x0. eapply DISJOINT; eauto.
+  intro x0. inv x0. eapply DISJOINT; eauto.
 Qed.
 
 Lemma get_disjoint_covered_disjoint

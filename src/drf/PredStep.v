@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -43,7 +43,7 @@ Section PredStep.
       th0 th1 th2 hde hdm tl
       (HD: Thread.step_allpf hde th0 th1)
       (TL: traced_step tl th1 th2)
-      (MEM: hdm = th0.(Thread.memory))
+      (MEM: hdm = (Thread.memory th0))
     :
       traced_step ((hde, hdm)::tl) th0 th2
   .
@@ -57,7 +57,7 @@ Section PredStep.
       th0 th1 th2 hds tle tlm
       (HD: traced_step_n1 hds th0 th1)
       (TL: Thread.step_allpf tle th1 th2)
-      (MEM: tlm = th1.(Thread.memory))
+      (MEM: tlm = (Thread.memory th1))
     :
       traced_step_n1 (hds++[(tle, tlm)]) th0 th2
   .
@@ -65,7 +65,7 @@ Section PredStep.
   Lemma traced_step_n1_one lang (th0 th1: Thread.t lang) e
         (STEP: Thread.step_allpf e th0 th1)
     :
-      traced_step_n1 [(e, th0.(Thread.memory))] th0 th1.
+      traced_step_n1 [(e, (Thread.memory th0))] th0 th1.
   Proof.
     erewrite <- List.app_nil_l at 1. econs; eauto. econs 1.
   Qed.
@@ -84,7 +84,7 @@ Section PredStep.
   Lemma traced_step_one lang (th0 th1: Thread.t lang) e
         (STEP: Thread.step_allpf e th0 th1)
     :
-      traced_step [(e, th0.(Thread.memory))] th0 th1.
+      traced_step [(e, (Thread.memory th0))] th0 th1.
   Proof.
     econs 2; eauto. econs 1.
   Qed.
@@ -138,7 +138,7 @@ Section PredStep.
       exists th' th'' tr0 tr1,
         (<<STEPS0: traced_step tr0 th0 th'>>) /\
         (<<STEP: Thread.step_allpf e th' th''>>) /\
-        (<<MEM: m = th'.(Thread.memory)>>) /\
+        (<<MEM: m = (Thread.memory th')>>) /\
         (<<STEPS1: traced_step tr1 th'' th1>>) /\
         (<<TRACES: tr = tr0 ++ [(e, m)] ++ tr1>>) /\
         (<<SAT: P (e, m)>>).
@@ -242,7 +242,7 @@ Section PredStep.
     split; i.
     - ginduction H; i.
       + exists []. splits; eauto. econs 1.
-      + des. inv H. inv TSTEP. exists ((e, x.(Thread.memory))::tr). splits.
+      + des. inv H. inv TSTEP. exists ((e, (Thread.memory x))::tr). splits.
         * econs; eauto.
         * i. ss. des; clarify. eauto.
     - des. ginduction STEPS; i.
@@ -348,6 +348,5 @@ Section PredStep.
       (STEP: pred_step P e t0 t1)
     :
       opt_pred_step P e t0 t1.
-  Hint Constructors opt_pred_step.
 
 End PredStep.

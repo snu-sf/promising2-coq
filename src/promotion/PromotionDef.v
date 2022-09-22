@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -95,7 +95,8 @@ Inductive loc_free_stmt (l: Loc.t): forall (stmt: Stmt.t), Prop :=
     (LOCFREE: List.Forall (loc_free_stmt l) stmts):
     loc_free_stmt l (Stmt.dowhile stmts cond)
 .
-Hint Constructors loc_free_stmt.
+#[export]
+Hint Constructors loc_free_stmt: core.
 
 Definition loc_free_stmts (l: Loc.t) (stmts: list Stmt.t): Prop :=
   List.Forall (loc_free_stmt l) stmts.
@@ -248,9 +249,9 @@ Qed.
 
 Lemma step_loc_free
       l e st1 st2
-      (LOCFREE: loc_free_stmts l st1.(State.stmts))
+      (LOCFREE: loc_free_stmts l (State.stmts st1))
       (STEP: State.step e st1 st2):
-  loc_free_stmts l st2.(State.stmts).
+  loc_free_stmts l (State.stmts st2).
 Proof.
   inv STEP; ss.
   - inv LOCFREE. ss.
@@ -263,7 +264,7 @@ Qed.
 
 Lemma loc_free_step_is_accessing_loc
       l e st1 st2
-      (LOCFREE: loc_free_stmts l st1.(State.stmts))
+      (LOCFREE: loc_free_stmts l (State.stmts st1))
       (STEP: State.step (ThreadEvent.get_program_event e) st1 st2):
   ~ ThreadEvent.is_accessing_loc l e.
 Proof.
@@ -278,9 +279,9 @@ Qed.
 
 Lemma step_reg_free
       r e st1 st2
-      (REGFREE: reg_free_stmts r st1.(State.stmts))
+      (REGFREE: reg_free_stmts r (State.stmts st1))
       (STEP: State.step e st1 st2):
-  reg_free_stmts r st2.(State.stmts).
+  reg_free_stmts r (State.stmts st2).
 Proof.
   inv STEP; ss.
   - inv REGFREE. ss.

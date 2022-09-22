@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -69,7 +69,8 @@ Module Memory.
           Interval.disjoint (from1, to1) (from2, to2) /\
           (to1, to2) <> (Time.bot, Time.bot))
   .
-  Hint Constructors disjoint.
+  #[global]
+  Hint Constructors disjoint: core.
 
   Global Program Instance disjoint_Symmetric: Symmetric disjoint.
   Next Obligation.
@@ -89,11 +90,11 @@ Module Memory.
     inv DISJOINT. exploit DISJOINT0; eauto. i. des.
     destruct (Time.eq_dec to Time.bot).
     - subst. congr.
-    - eapply x.
-      + apply Interval.mem_ub. destruct (lhs loc).(Cell.WF).
-        exploit VOLUME; eauto. i. des; auto. inv x1. congr.
-      + apply Interval.mem_ub. destruct (rhs loc).(Cell.WF).
-        exploit VOLUME; eauto. i. des; auto. inv x1. congr.
+    - eapply x0.
+      + apply Interval.mem_ub. destruct (Cell.WF (lhs loc)).
+        exploit VOLUME; eauto. i. des; auto. inv x2. congr.
+      + apply Interval.mem_ub. destruct (Cell.WF (rhs loc)).
+        exploit VOLUME; eauto. i. des; auto. inv x2. congr.
   Qed.
 
   Lemma disjoint_get_general
@@ -108,17 +109,18 @@ Module Memory.
   Proof.
     inv DISJOINT. exploit DISJOINT0; eauto. i. des.
     destruct (Time.le_lt_dec ts2 ts0).
-    - destruct (lhs loc).(Cell.WF). exploit VOLUME; eauto. i. des.
-      + inv x1. inv TS12.
+    - destruct (Cell.WF (lhs loc)). exploit VOLUME; eauto. i. des.
+      + inv x2. inv TS12.
       + eapply Time.lt_strorder. eapply TimeFacts.le_lt_lt; eauto.
-    - eapply x.
+    - eapply x0.
       + eapply Interval.mem_ub. auto.
       + econs; auto.
   Qed.
 
   Definition bot_none (mem: t): Prop :=
     forall loc, get loc Time.bot mem = None.
-  Hint Unfold bot_none.
+  #[global]
+  Hint Unfold bot_none: core.
 
   Definition bot: t := fun _ => Cell.bot.
 
@@ -166,23 +168,25 @@ Module Memory.
   Inductive message_to: forall (msg:Message.t) (loc:Loc.t) (to:Time.t), Prop :=
   | message_to_full
       val released loc to
-      (TS: Time.le (released.(View.unwrap).(View.rlx) loc) to):
+      (TS: Time.le ((View.rlx (View.unwrap released)) loc) to):
       message_to (Message.full val released) loc to
   | message_to_reserve
       loc to:
       message_to Message.reserve loc to
   .
-  Hint Constructors message_to.
+  #[global]
+  Hint Constructors message_to: core.
 
   Definition closed_timemap (times:TimeMap.t) (mem:t): Prop :=
     forall loc, exists from val released, get loc (times loc) mem = Some (from, Message.full val released).
 
   Inductive closed_view (view:View.t) (mem:t): Prop :=
   | closed_view_intro
-      (PLN: closed_timemap view.(View.pln) mem)
-      (RLX: closed_timemap view.(View.rlx) mem)
+      (PLN: closed_timemap (View.pln view) mem)
+      (RLX: closed_timemap (View.rlx view) mem)
   .
-  Hint Constructors closed_view.
+  #[global]
+  Hint Constructors closed_view: core.
 
   Inductive closed_opt_view: forall (view:option View.t) (mem:t), Prop :=
   | closed_opt_view_some
@@ -193,7 +197,8 @@ Module Memory.
       mem:
       closed_opt_view None mem
   .
-  Hint Constructors closed_opt_view.
+  #[global]
+  Hint Constructors closed_opt_view: core.
 
   Inductive closed_message: forall (msg:Message.t) (mem:t), Prop :=
   | closed_message_full
@@ -204,12 +209,14 @@ Module Memory.
       mem:
       closed_message Message.reserve mem
   .
-  Hint Constructors closed_message.
+  #[global]
+  Hint Constructors closed_message: core.
 
 
   Definition inhabited (mem:t): Prop :=
     forall loc, get loc Time.bot mem = Some (Time.bot, Message.elt).
-  Hint Unfold inhabited.
+  #[global]
+  Hint Unfold inhabited: core.
 
   Inductive closed (mem:t): Prop :=
   | closed_intro
@@ -220,7 +227,8 @@ Module Memory.
           <<MSG_CLOSED: closed_message msg mem>>)
       (INHABITED: inhabited mem)
   .
-  Hint Constructors closed.
+  #[global]
+  Hint Constructors closed: core.
 
   Lemma closed_timemap_bot
         mem
@@ -238,7 +246,7 @@ Module Memory.
         view mem
         (CLOSED: closed_opt_view view mem)
         (INHABITED: inhabited mem):
-    closed_view view.(View.unwrap) mem.
+    closed_view (View.unwrap view) mem.
   Proof.
     inv CLOSED; ss. apply closed_view_bot. ss.
   Qed.
@@ -257,7 +265,8 @@ Module Memory.
       (ADD: Cell.add (mem1 loc) from to msg r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors add.
+  #[global]
+  Hint Constructors add: core.
 
   Inductive split (mem1:t) (loc:Loc.t) (ts1 ts2 ts3:Time.t) (msg2 msg3:Message.t) (mem2:t): Prop :=
   | split_intro
@@ -265,7 +274,8 @@ Module Memory.
       (SPLIT: Cell.split (mem1 loc) ts1 ts2 ts3 msg2 msg3 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors split.
+  #[global]
+  Hint Constructors split: core.
 
   Inductive lower (mem1:t) (loc:Loc.t) (from to:Time.t) (msg1 msg2:Message.t) (mem2:t): Prop :=
   | lower_intro
@@ -273,7 +283,8 @@ Module Memory.
       (LOWER: Cell.lower (mem1 loc) from to msg1 msg2 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors lower.
+  #[global]
+  Hint Constructors lower: core.
 
   Inductive remove (mem1:t) (loc:Loc.t) (from1 to1:Time.t) (msg1:Message.t) (mem2:t): Prop :=
   | remove_intro
@@ -281,7 +292,8 @@ Module Memory.
       (REMOVE: Cell.remove (mem1 loc) from1 to1 msg1 r)
       (MEM2: mem2 = LocFun.add loc r mem1)
   .
-  Hint Constructors remove.
+  #[global]
+  Hint Constructors remove: core.
 
   Inductive op_kind :=
   | op_kind_add
@@ -289,7 +301,8 @@ Module Memory.
   | op_kind_lower (msg1:Message.t)
   | op_kind_cancel
   .
-  Hint Constructors op_kind.
+  #[global]
+  Hint Constructors op_kind: core.
 
   Inductive op_kind_match: forall (k1 k2:op_kind), Prop :=
   | op_kind_match_add:
@@ -347,7 +360,8 @@ Module Memory.
       (REMOVE: remove mem1 loc from to msg mem2):
       op mem1 loc from to msg mem2 op_kind_cancel
   .
-  Hint Constructors op.
+  #[global]
+  Hint Constructors op: core.
 
   Inductive future_imm (mem1 mem2:t): Prop :=
   | future_imm_intro
@@ -356,10 +370,12 @@ Module Memory.
       (CLOSED: closed_message msg mem2)
       (TS: message_to msg loc to)
   .
-  Hint Constructors future_imm.
+  #[global]
+  Hint Constructors future_imm: core.
 
   Definition future := rtc future_imm.
-  Hint Unfold future.
+  #[global]
+  Hint Unfold future: core.
 
   Inductive promise
             (promises1 mem1:t)
@@ -396,7 +412,8 @@ Module Memory.
       (RESERVE: msg = Message.reserve):
       promise promises1 mem1 loc from to msg promises2 mem2 op_kind_cancel
   .
-  Hint Constructors promise.
+  #[global]
+  Hint Constructors promise: core.
 
   Inductive write
             (promises1 mem1:t)
@@ -407,7 +424,8 @@ Module Memory.
       (PROMISE: promise promises1 mem1 loc from1 to1 (Message.full val released) promises2 mem2 kind)
       (REMOVE: remove promises2 loc from1 to1 (Message.full val released) promises3)
   .
-  Hint Constructors write.
+  #[global]
+  Hint Constructors write: core.
 
 
   (* Lemmas on add, split, lower & remove *)
@@ -1328,15 +1346,16 @@ Module Memory.
                      (GET2: get loc to mem2 = Some (from, Message.full val released)),
           View.opt_wf released /\
           closed_opt_view released mem2 /\
-          Time.le (released.(View.unwrap).(View.rlx) loc) to)
+          Time.le ((View.rlx (View.unwrap released)) loc) to)
       (COMPLETE2: forall loc from to val released f
                      (GET1: get loc to mem1 = Some (f, Message.reserve))
                      (GET2: get loc to mem2 = Some (from, Message.full val released)),
           View.opt_wf released /\
           closed_opt_view released mem2 /\
-          Time.le (released.(View.unwrap).(View.rlx) loc) to)
+          Time.le ((View.rlx (View.unwrap released)) loc) to)
   .
-  Hint Constructors future_weak.
+  #[global]
+  Hint Constructors future_weak: core.
 
   Lemma future_weak_closed_timemap
         times mem1 mem2
@@ -1386,12 +1405,12 @@ Module Memory.
       destruct (get loc to mem1) as [[f []]|] eqn:GET1.
       + exploit CLOSED0; eauto. i. des.
         exploit SOUND; eauto. i. des.
-        * rewrite MSG in *. inv x.
+        * rewrite MSG in *. inv x0.
           splits; auto. eapply future_weak_closed_message; eauto.
-        * rewrite MSG in *. inv x. splits; eauto.
+        * rewrite MSG in *. inv x0. splits; eauto.
           { econs. ss. }
           { econs. inv MSG_TS. etrans; eauto.
-            inv x3; ss; try apply LE.
+            inv x4; ss; try apply LE.
             unfold TimeMap.bot. apply Time.bot_spec. }
       + exploit COMPLETE2; eauto. i. des.
         splits; econs; eauto.
@@ -1399,11 +1418,11 @@ Module Memory.
         splits; econs; eauto.
     - ii. specialize (INHABITED loc).
       exploit SOUND; eauto. i. des.
-      + subst. exploit get_ts; try exact x. i. des.
+      + subst. exploit get_ts; try exact x0. i. des.
         * subst. eauto.
         * inv x2.
-      + exploit get_ts; try exact x. i. des.
-        * subst. inv x3. eauto.
+      + exploit get_ts; try exact x0. i. des.
+        * subst. inv x4. eauto.
         * inv x5.
   Qed.
 
@@ -1425,18 +1444,18 @@ Module Memory.
     - destruct (get loc to y) as [[f []]|] eqn:GET; eauto.
       exploit COMPLETE1; eauto. i. des.
       exploit SOUND0; eauto. i. des; subst.
-      + rewrite GET2 in *. inv x3. splits; eauto.
+      + rewrite GET2 in *. inv x4. splits; eauto.
         eapply future_weak_closed_opt_view; eauto.
-      + rewrite GET2 in *. inv x3. splits; eauto.
+      + rewrite GET2 in *. inv x4. splits; eauto.
         etrans; eauto.
         inv x7; ss; try apply LE.
         unfold TimeMap.bot. apply Time.bot_spec.
     - destruct (get loc to y) as [[f' []]|] eqn:GET; eauto.
       exploit COMPLETE2; eauto. i. des.
       exploit SOUND0; eauto. i. des; subst.
-      + rewrite GET2 in *. inv x3. splits; eauto.
+      + rewrite GET2 in *. inv x4. splits; eauto.
         eapply future_weak_closed_opt_view; eauto.
-      + rewrite GET2 in *. inv x3. splits; eauto.
+      + rewrite GET2 in *. inv x4. splits; eauto.
         etrans; eauto.
         inv x7; ss; try apply LE.
         unfold TimeMap.bot. apply Time.bot_spec.
@@ -1717,7 +1736,8 @@ Module Memory.
       (MAX: max_full_timemap mem tm):
       max_full_view mem (View.mk tm tm)
   .
-  Hint Constructors max_full_view.
+  #[global]
+  Hint Constructors max_full_view: core.
 
   Lemma max_full_view_exists
         mem
@@ -1990,8 +2010,8 @@ Module Memory.
         des. subst. exfalso. inv MEM. inv ADD. eapply DISJOINT0; eauto.
         * apply Interval.mem_ub. auto.
         * apply Interval.mem_ub.
-          destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
-          inv x. inv TO.
+          destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. i. des; auto.
+          inv x0. inv TO.
       + ii. exploit RESERVE_CTX; eauto. i. des.
         exploit add_get1; try exact x; eauto.
     - splits.
@@ -2016,19 +2036,19 @@ Module Memory.
       + ii. erewrite split_o; eauto. repeat condtac; ss; eauto.
         * des. subst. exfalso. inv DISJOINT. exploit DISJOINT0; eauto.
           { hexploit split_get0; try exact PROMISES; eauto. i. des. eauto. }
-          i. des. eapply x.
+          i. des. eapply x0.
           { inv MEM. inv SPLIT. econs. eauto. left. auto. }
           { apply Interval.mem_ub.
-            destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
-            inv x1. inv MEM. inv SPLIT. inv TS12.
+            destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. i. des; auto.
+            inv x2. inv MEM. inv SPLIT. inv TS12.
           }
         * guardH o. des. subst. exfalso. inv DISJOINT. exploit DISJOINT0; eauto.
           { hexploit split_get0; try exact PROMISES; eauto. i. des. eauto. }
-          i. des. eapply x.
+          i. des. eapply x0.
           { apply Interval.mem_ub. inv MEM. inv SPLIT. etrans; eauto. }
           { apply Interval.mem_ub.
-            destruct (ctx loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
-            inv x1. inv MEM. inv SPLIT. inv TS23.
+            destruct (Cell.WF (ctx loc)). exploit VOLUME; eauto. i. des; auto.
+            inv x2. inv MEM. inv SPLIT. inv TS23.
           }
       + ii. exploit RESERVE_CTX; eauto. i. des.
         exploit split_get1; try exact x; eauto. i. des. eauto.
@@ -2053,7 +2073,7 @@ Module Memory.
       + ii. exploit RESERVE_CTX; eauto. i. des.
         destruct (get loc0 from0 mem2) as [[]|] eqn:GET2.
         * revert GET2. erewrite remove_o; eauto. condtac; ss. i.
-          rewrite GET2 in *. inv x. eauto.
+          rewrite GET2 in *. inv x0. eauto.
         * exploit remove_get0; try exact MEM. i. des.
           revert GET2. erewrite remove_o; eauto. condtac; ss; try congr.
           des. subst. congr.
@@ -2336,7 +2356,7 @@ Module Memory.
   Proof.
     exploit remove_get0; eauto. i. des.
     exploit LE; eauto. i.
-    exploit remove_exists; try exact x. eauto.
+    exploit remove_exists; try exact x0. eauto.
   Qed.
 
   Definition nonsynch_loc (loc:Loc.t) (mem:t): Prop :=
@@ -2465,17 +2485,17 @@ Module Memory.
       exploit RESERVE1; eauto. i. des.
       cut (from = max_ts loc mem2); try congr.
       exploit get_ts; try exact GET0. i. des.
-      { subst. rewrite x0 in *. congr. }
+      { subst. rewrite x2 in *. congr. }
       destruct (get loc from mem2) as [[]|] eqn:GETF; cycle 1.
       { revert GETF. erewrite remove_o; eauto. condtac; ss.
-        - des. subst. rewrite GET0 in x. inv x.
+        - des. subst. rewrite GET0 in x0. inv x0.
         - congr. }
       exploit max_ts_spec; try exact GETF. i. des.
       inv MAX; eauto.
       revert GET1. erewrite remove_o; eauto. condtac; ss. i.
       clear o0 COND.
       exploit get_ts; try exact GET1. i. des.
-      { subst. rewrite x0 in *. inv H0. }
+      { subst. rewrite x3 in *. inv H0. }
       exploit get_disjoint; [exact GET0|exact GET1|..]. i. des; try congr.
       exfalso.
       apply (x3 (max_ts loc mem2)); econs; ss; try refl.
@@ -2648,7 +2668,8 @@ Module Memory.
           (exists f m, get loc from mem1 = Some (f, m)) /\
           (from = max_ts loc mem1 -> latest_reserve loc promises mem1))
   .
-  Hint Constructors cap.
+  #[global]
+  Hint Constructors cap: core.
 
   Lemma cap_inv
         promises mem1 mem2
@@ -2674,14 +2695,14 @@ Module Memory.
     inv CAP. move GET at bottom.
     destruct (get loc to mem1) as [[]|] eqn:GET1.
     { exploit SOUND; eauto. i.
-      rewrite GET in x. inv x. auto. }
+      rewrite GET in x0. inv x0. auto. }
     right. exploit COMPLETE; eauto. i. des.
     exploit max_ts_spec; eauto. i. des. inv MAX.
-    - left. clear x0.
+    - left. clear x1.
       exploit adjacent_exists; try eapply H; eauto. i. des.
       assert (LT: Time.lt from from2).
       { clear MIDDLE BACK COMPLETE GET0 H.
-        inv x1. rewrite GET0 in x. inv x.
+        inv x1. rewrite GET0 in x0. inv x0.
         exploit get_ts; try exact GET2. i. des.
         { subst. inv TS. }
         destruct (Time.le_lt_dec from2 from); auto.
@@ -2698,7 +2719,7 @@ Module Memory.
           exploit SOUND; try exact GET2. i.
           exploit get_ts; try exact GET. i. des.
           { subst. rewrite GET1 in GET0. inv GET0. }
-          exploit get_disjoint; [exact GET|exact x|..]. i. des.
+          exploit get_disjoint; [exact GET|exact x1|..]. i. des.
           { subst. rewrite GET1 in GET2. inv GET2. }
           destruct (Time.le_lt_dec to to2).
           + apply (x3 to); econs; ss. refl.
@@ -2708,13 +2729,13 @@ Module Memory.
       }
       exploit MIDDLE; try eapply x1; eauto. i.
       destruct (Time.eq_dec to from2).
-      + subst. rewrite GET in x0. inv x0. esplits; eauto.
+      + subst. rewrite GET in x2. inv x2. esplits; eauto.
       + exfalso. inv x1.
         exploit get_ts; try exact GET. i. des.
-        { subst. rewrite GET1 in x. inv x. }
-        exploit get_ts; try exact x0. i. des.
+        { subst. rewrite GET1 in *. congr. }
+        exploit get_ts; try exact x2. i. des.
         { subst. exploit SOUND; try exact GET3. i.
-          exploit get_disjoint; [exact GET|exact x1|..]. i. des.
+          exploit get_disjoint; [exact GET|exact x3|..]. i. des.
           { subst. rewrite GET1 in GET3. inv GET3. }
           destruct (Time.le_lt_dec to to2).
           - apply (x4 to); econs; ss. refl.
@@ -2722,7 +2743,7 @@ Module Memory.
             + econs. auto.
             + refl.
         }
-        exploit get_disjoint; [exact GET|exact x0|..]. i. des; try congr.
+        exploit get_disjoint; [exact GET|exact x2|..]. i. des; try congr.
         destruct (Time.le_lt_dec to from2).
         * apply (x4 to); econs; ss. refl.
         * apply (x4 from2); econs; ss.
@@ -2730,13 +2751,13 @@ Module Memory.
           { refl. }
     - right. inv H. do 3 (split; auto).
       exploit max_full_view_exists; try apply CLOSED. i. des.
-      rewrite GET0 in x. inv x.
+      rewrite GET0 in *. clarify.
       exploit (@latest_val_exists loc mem1); try apply CLOSED. i. des.
       exploit BACK; eauto. i.
       exploit get_ts; try exact GET. i. des; try congr.
-      exploit get_ts; try exact x. i. des.
-      { rewrite x5 in x3. inv x3. }
-      exploit get_disjoint; [exact GET|exact x|..]. i. des.
+      exploit get_ts; try exact x3. i. des.
+      { rewrite x5 in x6. inv x6. }
+      exploit get_disjoint; [exact GET|exact x3|..]. i. des.
       { subst. esplits; eauto. }
       exfalso.
       destruct (Time.le_lt_dec to (Time.incr (max_ts loc mem1))).
@@ -2864,13 +2885,14 @@ Module Memory.
     ii. exploit cap_inv; eauto. i. des; try congr.
     - inv CAP.
       exploit max_ts_spec; try exact x0. i. des.
-      exploit SOUND; try exact GET0. i.
+      exploit SOUND; try exact GET0. intro x.
       exploit max_ts_spec; try exact x. i. des.
       exploit TimeFacts.antisym; eauto. i.
       clear from0 msg GET0 MAX x from1 msg0 GET1 MAX0.
       destruct (get loc (max_ts loc mem2) promises) as [[]|] eqn:PROMISE.
       { exploit LE; eauto. i.
-        rewrite x0 in x. inv x. ss. }
+        rewrite x0 in *. clarify.
+      }
       rewrite <- x2 in *.
       exploit max_full_view_exists; try eapply CLOSED. i. des.
       exploit (@latest_val_exists loc mem1); try apply CLOSED. i. des.
@@ -2883,7 +2905,7 @@ Module Memory.
       exploit get_ts; try exact GET2. i. des.
       { subst. inv TS. }
       exploit SOUND; try exact GET2. i.
-      exploit max_ts_spec; try exact x. i. des. timetac.
+      exploit max_ts_spec; try exact x4. i. des. timetac.
   Qed.
 
   Lemma remove_cap
@@ -2899,7 +2921,7 @@ Module Memory.
       + revert Heq0. erewrite remove_o; eauto. condtac; ss; congr.
       + revert Heq0. erewrite remove_o; eauto. condtac; ss; try congr.
         des. subst. exploit remove_get0; eauto. i. des. congr.
-    - exploit COMPLETE; eauto. i. des. splits; eauto. i.
+    - exploit COMPLETE; eauto. intro x. des. splits; eauto. i.
       exploit x0; eauto. i.
       unfold latest_reserve in *. des_ifs.
       + revert Heq. erewrite remove_o; eauto. condtac; ss; congr.

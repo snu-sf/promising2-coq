@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -265,10 +265,10 @@ Proof.
 Qed.
 
 Lemma write_not_in_unchangable (L: Loc.t -> Time.t -> Prop) lang(th0 th1: Thread.t lang) e
-      (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+      (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
       (STEP: AThread.step_allpf e th0 th1)
       (UNCH: forall loc to (SAT: L loc to),
-          exists from msg, <<UNCH: unchangable th0.(Thread.memory) th0.(Thread.local).(Local.promises) loc to from msg>>)
+          exists from msg, <<UNCH: unchangable (Thread.memory th0) (Local.promises (Thread.local th0)) loc to from msg>>)
   :
     write_not_in L e.
 Proof.
@@ -287,7 +287,7 @@ Lemma step_lifting_raw
       (PRED: ((write_not_in otherspace)
                 /1\ (no_update_on updates)
                 /1\ (no_read_msgs others)
-                /1\ (no_read_msgs prom.(promised))) e_tgt)
+                /1\ (no_read_msgs (promised prom))) e_tgt)
       (OTHERS: forall loc to (SAT: others loc to),
           exists from msg, <<UNCH: unchangable mem_tgt prom loc to from msg>>)
       (TH_SRC: th_src = Thread.mk lang st (Local.mk v Memory.bot) sc mem_src)
@@ -313,12 +313,12 @@ Proof.
                               /1\ (write_not_in others)
                               /1\ (no_update_on updates)
                               /1\ (no_read_msgs others)
-                              /1\ (no_read_msgs prom.(promised))) e_tgt th_tgt th_tgt').
+                              /1\ (no_read_msgs (promised prom))) e_tgt th_tgt th_tgt').
   { econs; eauto. splits; auto.
     eapply write_not_in_unchangable; eauto.
     - inv LCWF. ss.
     - clarify. }
-  hexploit (forget_exists prom.(promised) mem_tgt); eauto. i. des.
+  hexploit (forget_exists (promised prom) mem_tgt); eauto. i. des.
   exploit self_promise_remove; try apply FORGET; try apply PSTEP; eauto.
   { i. ss. des. auto. }
   i. des.
@@ -374,20 +374,20 @@ Lemma step_lifting
                 /1\ (no_read_msgs others)) e_tgt)
       (FORGET: forget_thread others th_src th_tgt)
       (OTHERS: forall loc to (SAT: others loc to),
-          exists from msg, <<UNCH: unchangable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises) loc to from msg>>)
-      (OTHERSPACE: otherspace <2= unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises))
-      (CONSISTENT: Local.promise_consistent th_tgt'.(Thread.local))
-      (NOATTATCH: not_attatched updates th_src.(Thread.memory))
-      (SC: Memory.closed_timemap th_tgt.(Thread.sc) th_tgt.(Thread.memory))
-      (CLOSED: Memory.closed th_tgt.(Thread.memory))
-      (LCWF: Local.wf th_tgt.(Thread.local) th_tgt.(Thread.memory))
+          exists from msg, <<UNCH: unchangable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)) loc to from msg>>)
+      (OTHERSPACE: otherspace <2= unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)))
+      (CONSISTENT: Local.promise_consistent (Thread.local th_tgt'))
+      (NOATTATCH: not_attatched updates (Thread.memory th_src))
+      (SC: Memory.closed_timemap (Thread.sc th_tgt) (Thread.memory th_tgt))
+      (CLOSED: Memory.closed (Thread.memory th_tgt))
+      (LCWF: Local.wf (Thread.local th_tgt) (Thread.memory th_tgt))
   :
     exists th_src' e_src,
       (<<STEP: AThread.opt_step e_src th_src th_src'>>) /\
       (<<FORGET: forget_thread others th_src' th_tgt'>>) /\
       (<<EVT: drf_sim_event e_src e_tgt>>) /\
-      (<<NOATTATCH: not_attatched updates th_src'.(Thread.memory)>>) /\
-      (<<UNCHANGED: unchanged_on otherspace th_src.(Thread.memory) th_src'.(Thread.memory)>>).
+      (<<NOATTATCH: not_attatched updates (Thread.memory th_src')>>) /\
+      (<<UNCHANGED: unchanged_on otherspace (Thread.memory th_src) (Thread.memory th_src')>>).
 Proof.
   destruct th_tgt, th_tgt', th_src. destruct local, local0, local1. ss.
   exploit step_lifting_raw; eauto.
@@ -411,7 +411,7 @@ Proof.
   split; i.
   - ginduction H; i.
     + exists []. splits; eauto. econs 1.
-    + des. inv H. exists ((e, x.(Thread.memory))::tr). splits.
+    + des. inv H. exists ((e, (Thread.memory x))::tr). splits.
       econs; eauto.
   - des. ginduction STEPS; i.
     + refl.
@@ -426,20 +426,20 @@ Lemma traced_step_lifting
                                        /1\ (no_read_msgs others)) (fst em)) tr_tgt)
       (FORGET: forget_thread others th_src th_tgt)
       (OTHERS: forall loc to (SAT: others loc to),
-          exists from msg, <<UNCH: unchangable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises) loc to from msg>>)
-      (OTHERSPACE: otherspace <2= unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises))
-      (CONSISTENT: Local.promise_consistent th_tgt'.(Thread.local))
-      (NOATTATCH: not_attatched updates th_src.(Thread.memory))
-      (SC: Memory.closed_timemap th_tgt.(Thread.sc) th_tgt.(Thread.memory))
-      (CLOSED: Memory.closed th_tgt.(Thread.memory))
-      (LCWF: Local.wf th_tgt.(Thread.local) th_tgt.(Thread.memory))
+          exists from msg, <<UNCH: unchangable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)) loc to from msg>>)
+      (OTHERSPACE: otherspace <2= unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)))
+      (CONSISTENT: Local.promise_consistent (Thread.local th_tgt'))
+      (NOATTATCH: not_attatched updates (Thread.memory th_src))
+      (SC: Memory.closed_timemap (Thread.sc th_tgt) (Thread.memory th_tgt))
+      (CLOSED: Memory.closed (Thread.memory th_tgt))
+      (LCWF: Local.wf (Thread.local th_tgt) (Thread.memory th_tgt))
   :
     exists th_src' tr_src,
       (<<FORGET: forget_thread others th_src' th_tgt'>>) /\
       (<<STEP: traced_step tr_src th_src th_src'>>) /\
       (<<EVT: drf_sim_trace (List.map fst tr_src) (List.map fst tr_tgt)>>) /\
-      (<<NOATTATCH: not_attatched updates th_src'.(Thread.memory)>>) /\
-      (<<UNCHANGED: unchanged_on otherspace th_src.(Thread.memory) th_src'.(Thread.memory)>>).
+      (<<NOATTATCH: not_attatched updates (Thread.memory th_src')>>) /\
+      (<<UNCHANGED: unchanged_on otherspace (Thread.memory th_src) (Thread.memory th_src')>>).
 Proof.
   ginduction STEPS; i.
   - esplits; eauto.
@@ -451,7 +451,7 @@ Proof.
     exploit AThread.step_future; eauto. i. des. ss. clear STEP.
 
     assert (OTHERS': forall loc to (SAT: others loc to),
-               exists from msg, <<UNCH: unchangable th1.(Thread.memory) th1.(Thread.local).(Local.promises) loc to from msg>>).
+               exists from msg, <<UNCH: unchangable (Thread.memory th1) (Local.promises (Thread.local th1)) loc to from msg>>).
     { i. exploit OTHERS; eauto. i. des.
       inv HD. eapply unchangable_increase in STEP; eauto. }
 
@@ -514,19 +514,19 @@ Lemma rtc_tau_step_lifting
                       /1\ (no_read_msgs others)))
       (FORGET: forget_thread others th_src th_tgt)
       (OTHERS: forall loc to (SAT: others loc to),
-          exists from msg, <<UNCH: unchangable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises) loc to from msg>>)
-      (OTHERSPACE: otherspace <2= unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises))
-      (CONSISTENT: Local.promise_consistent th_tgt'.(Thread.local))
-      (NOATTATCH: not_attatched updates th_src.(Thread.memory))
-      (SC: Memory.closed_timemap th_tgt.(Thread.sc) th_tgt.(Thread.memory))
-      (CLOSED: Memory.closed th_tgt.(Thread.memory))
-      (LCWF: Local.wf th_tgt.(Thread.local) th_tgt.(Thread.memory))
+          exists from msg, <<UNCH: unchangable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)) loc to from msg>>)
+      (OTHERSPACE: otherspace <2= unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)))
+      (CONSISTENT: Local.promise_consistent (Thread.local th_tgt'))
+      (NOATTATCH: not_attatched updates (Thread.memory th_src))
+      (SC: Memory.closed_timemap (Thread.sc th_tgt) (Thread.memory th_tgt))
+      (CLOSED: Memory.closed (Thread.memory th_tgt))
+      (LCWF: Local.wf (Thread.local th_tgt) (Thread.memory th_tgt))
   :
     exists th_src',
       (<<FORGET: forget_thread others th_src' th_tgt'>>) /\
       (<<STEP: rtc (tau (@AThread.program_step lang)) th_src th_src'>>) /\
-      (<<NOATTATCH: not_attatched updates th_src'.(Thread.memory)>>) /\
-      (<<UNCHANGED: unchanged_on otherspace th_src.(Thread.memory) th_src'.(Thread.memory)>>).
+      (<<NOATTATCH: not_attatched updates (Thread.memory th_src')>>) /\
+      (<<UNCHANGED: unchanged_on otherspace (Thread.memory th_src) (Thread.memory th_src')>>).
 Proof.
   eapply pred_steps_traced_step in STEPS. des.
   hexploit traced_step_lifting; eauto.
@@ -589,7 +589,7 @@ Proof.
 Qed.
 
 Definition other_promises (c_tgt: Configuration.t) (tid: Ident.t) :=
-  all_promises c_tgt.(Configuration.threads) (fun tid' => tid <> tid').
+  all_promises (Configuration.threads c_tgt) (fun tid' => tid <> tid').
 
 Inductive other_union tid
           (otherlocs: Ident.t -> Loc.t -> Time.t -> Prop)
@@ -616,10 +616,10 @@ Lemma race_lemma c tid0 tid1 lang0 lang1 st0 st1 lc0 lc1 th0 th1 e1 e2
       (WF: Configuration.wf c)
       (FIND0: IdentMap.find tid0 (Configuration.threads c) = Some (existT _ lang0 st0, lc0))
       (FIND1: IdentMap.find tid1 (Configuration.threads c) = Some (existT _ lang1 st1, lc1))
-      (STEP0: rtc (tau (@AThread.program_step _)) (Thread.mk _ st0 lc0 c.(Configuration.sc) c.(Configuration.memory)) th0)
-      (STEP1: rtc (tau (@AThread.program_step _)) (Thread.mk _ st1 lc1 th0.(Thread.sc) th0.(Thread.memory)) th1)
-      (PROEVT0: can_step _ th0.(Thread.state) e1)
-      (PROEVT1: can_step _ th1.(Thread.state) e2)
+      (STEP0: rtc (tau (@AThread.program_step _)) (Thread.mk _ st0 lc0 (Configuration.sc c) (Configuration.memory c)) th0)
+      (STEP1: rtc (tau (@AThread.program_step _)) (Thread.mk _ st1 lc1 (Thread.sc th0) (Thread.memory th0)) th1)
+      (PROEVT0: can_step _ (Thread.state th0) e1)
+      (PROEVT1: can_step _ (Thread.state th1) e2)
       (RACE: __guard__(pf_race_condition e1 e2 \/ pf_race_condition e2 e1))
   :
     False.
@@ -752,16 +752,16 @@ Lemma forget_config_forget_thread
       c_src c_tgt tid
       (FORGET: forget_config c_src c_tgt)
       lang st_tgt lc_tgt
-      (TIDTGT: IdentMap.find tid c_tgt.(Configuration.threads) =
+      (TIDTGT: IdentMap.find tid (Configuration.threads c_tgt) =
                Some (existT _ lang st_tgt, lc_tgt))
   :
     exists st_src lc_src,
-      (<<TIDSRC: IdentMap.find tid c_src.(Configuration.threads) =
+      (<<TIDSRC: IdentMap.find tid (Configuration.threads c_src) =
                  Some (existT _ lang st_src, lc_src)>>) /\
       (<<FORGET: forget_thread
                    (other_promises c_tgt tid)
-                   (Thread.mk _ st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                   (Thread.mk _ st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory))>>).
+                   (Thread.mk _ st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                   (Thread.mk _ st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt))>>).
 Proof.
   inv FORGET. specialize (THS tid).
   unfold option_rel in THS. rewrite TIDTGT in *. des_ifs. inv THS.
@@ -784,15 +784,15 @@ Lemma sim_pf_other_promise
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       tid' st1 lc1
       (NEQ: tid <> tid')
       (TIDTGT':
-         IdentMap.find tid' c_tgt0.(Configuration.threads) =
+         IdentMap.find tid' (Configuration.threads c_tgt0) =
          Some (st1, lc1))
       loc from to msg
-      (GET: Memory.get loc to lc1.(Local.promises) = Some (from, msg))
+      (GET: Memory.get loc to (Local.promises lc1) = Some (from, msg))
   :
     unchangable (Configuration.memory c_tgt0) (Local.promises lc0) loc to from msg.
 Proof.
@@ -811,7 +811,7 @@ Lemma sim_pf_other_promises
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
   :
     forall loc to (SAT: other_promises c_tgt0 tid loc to),
@@ -837,10 +837,10 @@ Qed.
 
 Lemma configuration_wf_promises_le c tid lang st lc
       (WF: Configuration.wf c)
-      (TID: IdentMap.find tid c.(Configuration.threads) =
+      (TID: IdentMap.find tid (Configuration.threads c) =
             Some (existT _ lang st, lc))
   :
-    Memory.le lc.(Local.promises) c.(Configuration.memory).
+    Memory.le (Local.promises lc) (Configuration.memory c).
 Proof.
   inv WF. inv WF0. exploit THREADS; eauto. intros []. auto.
 Qed.
@@ -849,7 +849,7 @@ Lemma sim_pf_other_spaces
       c_src0 c_tgt0 tid mlast spaces updates aupdates
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
   :
@@ -872,11 +872,11 @@ Proof.
 Qed.
 
 Lemma already_updated lang (th0 th1: Thread.t lang) e
-      (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+      (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
       (STEP: AThread.step_allpf e th0 th1)
       loc from to msg
       (TS: Time.lt from to)
-      (UNCH: unchangable th0.(Thread.memory) th0.(Thread.local).(Local.promises) loc to from msg)
+      (UNCH: unchangable (Thread.memory th0) (Local.promises (Thread.local th0)) loc to from msg)
   :
     (match e with
      | ThreadEvent.update loc0 from0 _ _ _ _ _ _ _ => (loc0, from0) <> (loc, from)
@@ -897,12 +897,12 @@ Proof.
 Qed.
 
 Lemma already_updated_locs lang (th0 th1: Thread.t lang) (L: Loc.t -> Time.t -> Prop) e
-      (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+      (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
       (STEP: AThread.step_allpf e th0 th1)
       (UNCH: forall loc from (SAT: L loc from),
           exists to msg,
             (<<TS: Time.lt from to>>) /\
-            (<<UNCH: unchangable th0.(Thread.memory) th0.(Thread.local).(Local.promises) loc to from msg>>))
+            (<<UNCH: unchangable (Thread.memory th0) (Local.promises (Thread.local th0)) loc to from msg>>))
   :
     no_update_on L e.
 Proof.
@@ -925,18 +925,18 @@ Lemma sim_pf_read_promise_race
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       th0'
       (STEPS0': rtc (tau (@pred_step P lang))
-                    (Thread.mk _ st0 lc0 c_tgt0.(Configuration.sc) c_tgt0.(Configuration.memory))
+                    (Thread.mk _ st0 lc0 (Configuration.sc c_tgt0) (Configuration.memory c_tgt0))
                     th0')
       e' th1' th2'
       (STEP': AThread.step_allpf e' th0' th1')
       (RACE': ~ ((no_update_on (other_updates tid updates aupdates))
                    /1\ (no_read_msgs (other_promises c_tgt0 tid))) e')
       (STEPS1': rtc (tau (@pred_step Q lang)) th1' th2')
-      (CONSISTENT': Local.promise_consistent th2'.(Thread.local))
+      (CONSISTENT': Local.promise_consistent (Thread.local th2'))
   :
     False.
 Proof.
@@ -945,7 +945,7 @@ Proof.
   inv WF. inv WF0. exploit THREADS; eauto. intros LOCAL.
   clear DISJOINT THREADS.
 
-  assert (CONSISTENT0: Local.promise_consistent th0'.(Thread.local)).
+  assert (CONSISTENT0: Local.promise_consistent (Thread.local th0')).
   { exploit AThread.rtc_tau_step_future.
     { eapply thread_steps_pred_steps; try apply STEPS0'. } all: ss. i. des.
     dup STEP'. inv STEP'. exploit AThread.step_future; eauto. i. des. clear STEP.
@@ -957,9 +957,9 @@ Proof.
   assert (exists e th1 th2,
              (<<STEPS: rtc (tau (@pred_step ((no_update_on (other_updates tid updates aupdates))
                                                /1\ (no_read_msgs (other_promises c_tgt0 tid))) lang))
-                           (Thread.mk _ st0 lc0 c_tgt0.(Configuration.sc) c_tgt0.(Configuration.memory))
+                           (Thread.mk _ st0 lc0 (Configuration.sc c_tgt0) (Configuration.memory c_tgt0))
                            th1>>) /\
-             (<<CONSISTENT: Local.promise_consistent th1.(Thread.local)>>) /\
+             (<<CONSISTENT: Local.promise_consistent (Thread.local th1)>>) /\
              (<<STEP: AThread.step_allpf e th1 th2>>) /\
              (<<RACE: ~ ((no_update_on (other_updates tid updates aupdates))
                            /1\ (no_read_msgs (other_promises c_tgt0 tid))) e>>)).
@@ -1030,7 +1030,7 @@ Proof.
                   forall loc from (SAT: (aupdates tid') loc from),
                   exists to msg,
                     (<<TS: Time.lt from to>>) /\
-                    (<<UNCH: unchangable c_tgt0.(Configuration.memory) lc0.(Local.promises) loc to from msg>>)).
+                    (<<UNCH: unchangable (Configuration.memory c_tgt0) (Local.promises lc0) loc to from msg>>)).
         { i. exploit AUPDATES; eauto. i. des.
           esplits; eauto.
           hexploit sim_pf_other_promise; eauto. }
@@ -1046,8 +1046,8 @@ Proof.
 
   - assert (exists loc to from val released,
                (<<OPROMS: other_promises c_tgt0 tid loc to>>) /\
-               (<<READING: is_reading _ th1.(Thread.state) loc Ordering.seqcst>>) /\
-               (<<CONCRETE: Memory.get loc to th1.(Thread.memory) = Some (from, Message.full val released)>>)).
+               (<<READING: is_reading _ (Thread.state th1) loc Ordering.seqcst>>) /\
+               (<<CONCRETE: Memory.get loc to (Thread.memory th1) = Some (from, Message.full val released)>>)).
     { unfold no_read_msgs in RACE. des_ifs.
       - apply NNPP in RACE. inv STEP. inv STEP1; inv STEP.
         inv LOCAL0. inv LOCAL1.
@@ -1099,17 +1099,17 @@ Lemma aupates_already_updated_unreserved tid mlast spaces updates aupdates c_src
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       mem
-      (FORGET: forget_memory (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)) mem (Configuration.memory c_tgt0))
+      (FORGET: forget_memory (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)) mem (Configuration.memory c_tgt0))
       loc ts
       (AUPDATES: other_union tid aupdates loc ts)
   :
     (exists to msg,
         (<<TS: Time.lt ts to>>) /\
-        (<<UNCH: unchangable mem lc0.(Local.promises) loc to ts msg>>)) \/
-    ((<<LATSEST: Memory.latest_reserve loc lc0.(Local.promises) (Configuration.memory c_tgt0)>>) /\
+        (<<UNCH: unchangable mem (Local.promises lc0) loc to ts msg>>)) \/
+    ((<<LATSEST: Memory.latest_reserve loc (Local.promises lc0) (Configuration.memory c_tgt0)>>) /\
      (<<MAX: Memory.max_full_ts (Configuration.memory c_tgt0) loc ts>>)).
 Proof.
   dup SIM. inv SIM. inv WFTGT. inv WF.
@@ -1118,7 +1118,7 @@ Proof.
   { exfalso. exploit INVBOT; auto. i. des. eapply AUPDATESBOT; eauto. }
   inv THS. destruct st as [lang' st']. exploit INV; eauto. intros [].
   exploit AUPDATES; eauto. i. des.
-  destruct (classic ((latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)) loc to)).
+  destruct (classic ((latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)) loc to)).
   - right. inv H. unfold Memory.latest_reserve. rewrite NONE. split; auto.
     exploit THREADS0; eauto. intros LCWF. inv LCWF. eapply PROMISES in GET.
     inv MEM. exploit Memory.max_full_ts_exists; eauto.
@@ -1148,8 +1148,8 @@ Lemma sim_pf_step_minus
             sim_pf_one tid' (mlast tid') (spaces tid') (updates tid')
                        (aupdates tid') c_src1 c_tgt1>>)) /\
     __guard__((exists lang st_tgt lc_tgt,
-                  (<<FIND: IdentMap.find tid c_tgt1.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)>>) /\
-                  (<<CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt c_tgt1.(Configuration.sc) c_tgt1.(Configuration.memory))>>)) \/
+                  (<<FIND: IdentMap.find tid (Configuration.threads c_tgt1) = Some (existT _ lang st_tgt, lc_tgt)>>) /\
+                  (<<CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt (Configuration.sc c_tgt1) (Configuration.memory c_tgt1))>>)) \/
               (<<ABORT: e = MachineEvent.failure>>))
 .
 Proof.
@@ -1170,7 +1170,7 @@ Proof.
       inv LOCAL0. inv LOCAL1. auto.
     - hexploit CONSISTENT; eauto. intros CONSISTENT2.
       eapply PromiseConsistent.consistent_promise_consistent in CONSISTENT2; eauto. }
-  assert (CONSISTENT0: Local.promise_consistent e2.(Thread.local)).
+  assert (CONSISTENT0: Local.promise_consistent (Thread.local e2)).
   { inv STEP. eapply step_promise_consistent; eauto. }
 
   split; cycle 1.
@@ -1233,8 +1233,8 @@ Proof.
 
   assert (NEWPROMS: all_promises
                       (IdentMap.add tid (existT _ lang st3, lc3)
-                                    c_tgt0.(Configuration.threads)) (fun _ => True) =
-                    (other_promises c_tgt0 tid \2/ promised lc3.(Local.promises))).
+                                    (Configuration.threads c_tgt0)) (fun _ => True) =
+                    (other_promises c_tgt0 tid \2/ promised (Local.promises lc3))).
   { extensionality loc. extensionality to.
     apply Coq.Logic.PropExtensionality.propositional_extensionality.
     split; i.
@@ -1313,20 +1313,20 @@ Lemma sim_pf_other_promise_unreserved
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       mem
       (FORGET: forget_memory L mem (Configuration.memory c_tgt0))
       tid' st1 lc1
       (NEQ: tid <> tid')
       (TIDTGT':
-         IdentMap.find tid' c_tgt0.(Configuration.threads) =
+         IdentMap.find tid' (Configuration.threads c_tgt0) =
          Some (st1, lc1))
       loc from to msg
-      (GET: Memory.get loc to lc1.(Local.promises) = Some (from, msg))
+      (GET: Memory.get loc to (Local.promises lc1) = Some (from, msg))
       (NOT: ~ L loc to)
   :
-    unchangable mem lc0.(Local.promises) loc to from msg.
+    unchangable mem (Local.promises lc0) loc to from msg.
 Proof.
   inv SIM. exploit THREADS; eauto. i.
   inv WFTGT. inv WF. destruct st1 as [lang1 st1].
@@ -1345,7 +1345,7 @@ Lemma sim_pf_other_promises_unreserved
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       mem
       (FORGET: forget_memory L mem (Configuration.memory c_tgt0))
@@ -1408,10 +1408,10 @@ Lemma latest_other_reserves_promised tid mlast spaces updates aupdates c_src0 c_
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
   :
-    latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)
+    latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)
     <2= other_promises c_tgt0 tid.
 Proof.
   inv SIM. i. inv PR.
@@ -1425,18 +1425,18 @@ Lemma forget_config_forget_thread_unreserved
       c_src c_tgt tid mlast spaces updates aupdates
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src c_tgt)
       lang st_tgt lc_tgt
-      (TIDTGT: IdentMap.find tid c_tgt.(Configuration.threads) =
+      (TIDTGT: IdentMap.find tid (Configuration.threads c_tgt) =
                Some (existT _ lang st_tgt, lc_tgt))
       mem_unreserved
-      (MEMORY: forget_memory (latest_other_reserves lc_tgt.(Local.promises) c_tgt.(Configuration.memory)) mem_unreserved (Configuration.memory c_tgt))
+      (MEMORY: forget_memory (latest_other_reserves (Local.promises lc_tgt) (Configuration.memory c_tgt)) mem_unreserved (Configuration.memory c_tgt))
   :
     exists st_src lc_src,
-      (<<TIDSRC: IdentMap.find tid c_src.(Configuration.threads) =
+      (<<TIDSRC: IdentMap.find tid (Configuration.threads c_src) =
                  Some (existT _ lang st_src, lc_src)>>) /\
       (<<FORGET: forget_thread
-                   ((other_promises c_tgt tid) -2 (latest_other_reserves lc_tgt.(Local.promises) c_tgt.(Configuration.memory)))
-                   (Thread.mk _ st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-                   (Thread.mk _ st_tgt lc_tgt c_tgt.(Configuration.sc) mem_unreserved)>>).
+                   ((other_promises c_tgt tid) -2 (latest_other_reserves (Local.promises lc_tgt) (Configuration.memory c_tgt)))
+                   (Thread.mk _ st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+                   (Thread.mk _ st_tgt lc_tgt (Configuration.sc c_tgt) mem_unreserved)>>).
 Proof.
   dup SIM. inv SIM. exploit forget_config_forget_thread; eauto. i. des. inv FORGET0.
   esplits; eauto. econs; eauto.
@@ -1451,11 +1451,11 @@ Lemma sim_pf_other_spaces_unreserved
       c_src0 c_tgt0 tid mlast spaces updates aupdates
       lang st0 lc0
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       mem_unreserved
-      (MEMORY: forget_memory (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)) mem_unreserved (Configuration.memory c_tgt0))
+      (MEMORY: forget_memory (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)) mem_unreserved (Configuration.memory c_tgt0))
   :
     other_spaces tid spaces <2= unwritable mem_unreserved (Local.promises lc0).
 Proof.
@@ -1491,22 +1491,22 @@ Lemma sim_pf_read_promise_race_unreserved
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st0 lc0 mem_unreserved
       (TIDTGT:
-         IdentMap.find tid c_tgt0.(Configuration.threads) =
+         IdentMap.find tid (Configuration.threads c_tgt0) =
          Some (existT _ lang st0, lc0))
       th0'
-      (FORGETMEM: forget_memory (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)) mem_unreserved (Configuration.memory c_tgt0))
+      (FORGETMEM: forget_memory (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)) mem_unreserved (Configuration.memory c_tgt0))
       (STEPS0': rtc (tau (@pred_step P lang))
-                    (Thread.mk _ st0 lc0 c_tgt0.(Configuration.sc) mem_unreserved)
+                    (Thread.mk _ st0 lc0 (Configuration.sc c_tgt0) mem_unreserved)
                     th0')
       e' th1' th2'
       (STEP': AThread.step_allpf e' th0' th1')
-      (PREDS': P <1= (no_acq_update_on (fun loc to => Memory.latest_reserve loc lc0.(Local.promises) c_tgt0.(Configuration.memory) /\ Memory.max_full_ts c_tgt0.(Configuration.memory) loc to)))
-      (PRED': no_acq_update_on (fun loc to => Memory.latest_reserve loc lc0.(Local.promises) c_tgt0.(Configuration.memory) /\ Memory.max_full_ts c_tgt0.(Configuration.memory) loc to) e')
+      (PREDS': P <1= (no_acq_update_on (fun loc to => Memory.latest_reserve loc (Local.promises lc0) (Configuration.memory c_tgt0) /\ Memory.max_full_ts (Configuration.memory c_tgt0) loc to)))
+      (PRED': no_acq_update_on (fun loc to => Memory.latest_reserve loc (Local.promises lc0) (Configuration.memory c_tgt0) /\ Memory.max_full_ts (Configuration.memory c_tgt0) loc to) e')
       (RACE': ~ ((no_update_on (other_updates tid updates aupdates))
                    (* /1\ (no_acq_update_on (other_union tid aupdates)) *)
-                   /1\ (no_read_msgs (((other_promises c_tgt0 tid) -2 (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory)))))) e')
+                   /1\ (no_read_msgs (((other_promises c_tgt0 tid) -2 (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0)))))) e')
       (STEPS1': rtc (tau (@pred_step Q lang)) th1' th2')
-      (CONSISTENT': Local.promise_consistent th2'.(Thread.local))
+      (CONSISTENT': Local.promise_consistent (Thread.local th2'))
   :
     False.
 Proof.
@@ -1524,10 +1524,10 @@ Proof.
     - eapply memory_concrete_le_reserve_wf; eauto. }
   assert (CLOSEDMEM: Memory.closed mem_unreserved).
   { inv LOCAL. eapply forget_latest_other_reserves_closed; eauto. }
-  assert (CLOSEDSC: Memory.closed_timemap c_tgt0.(Configuration.sc) mem_unreserved).
+  assert (CLOSEDSC: Memory.closed_timemap (Configuration.sc c_tgt0) mem_unreserved).
   { eapply memory_concrete_le_closed_timemap; eauto. }
 
-  assert (CONSISTENT0: Local.promise_consistent th0'.(Thread.local)).
+  assert (CONSISTENT0: Local.promise_consistent (Thread.local th0')).
   { exploit AThread.rtc_tau_step_future.
     { eapply thread_steps_pred_steps; try apply STEPS0'. } all: ss. i. des.
     dup STEP'. inv STEP'. exploit AThread.step_future; eauto. i. des. clear STEP.
@@ -1539,17 +1539,17 @@ Proof.
   assert (exists e th1 th2,
              (<<STEPS: rtc (tau (@pred_step ((no_update_on (other_updates tid updates aupdates))
                                                /1\
-                                               (no_acq_update_on (fun loc to => Memory.latest_reserve loc lc0.(Local.promises) c_tgt0.(Configuration.memory) /\ Memory.max_full_ts c_tgt0.(Configuration.memory) loc to))
-                                               /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory))))) lang))
-                           (Thread.mk _ st0 lc0 c_tgt0.(Configuration.sc) mem_unreserved)
+                                               (no_acq_update_on (fun loc to => Memory.latest_reserve loc (Local.promises lc0) (Configuration.memory c_tgt0) /\ Memory.max_full_ts (Configuration.memory c_tgt0) loc to))
+                                               /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0))))) lang))
+                           (Thread.mk _ st0 lc0 (Configuration.sc c_tgt0) mem_unreserved)
                            th1>>) /\
-             (<<CONSISTENT: Local.promise_consistent th1.(Thread.local)>>) /\
+             (<<CONSISTENT: Local.promise_consistent (Thread.local th1)>>) /\
              (<<STEP: AThread.step_allpf e th1 th2>>) /\
              (<<RACE: ~ ((no_update_on (other_updates tid updates aupdates))
-                           /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory))))) e>>) /\
-             (<<NOACQU: no_acq_update_on (fun loc to => Memory.latest_reserve loc lc0.(Local.promises) c_tgt0.(Configuration.memory) /\ Memory.max_full_ts c_tgt0.(Configuration.memory) loc to) e>>)).
+                           /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0))))) e>>) /\
+             (<<NOACQU: no_acq_update_on (fun loc to => Memory.latest_reserve loc (Local.promises lc0) (Configuration.memory c_tgt0) /\ Memory.max_full_ts (Configuration.memory c_tgt0) loc to) e>>)).
   { hexploit (@hold_or_not P ((no_update_on (other_updates tid updates aupdates))
-                                /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves lc0.(Local.promises) c_tgt0.(Configuration.memory))))));
+                                /1\ (no_read_msgs ((other_promises c_tgt0 tid) -2 (latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0))))));
       try apply STEPS0'; eauto.
     i. des.
     - esplits.
@@ -1652,8 +1652,8 @@ Proof.
   - assert (exists loc to from val released,
                (<<OPROMS: other_promises c_tgt0 tid loc to>>) /\
                (<<NOTLATEST: ~ latest_other_reserves (Local.promises lc0) (Configuration.memory c_tgt0) loc to>>) /\
-               (<<READING: is_reading _ th1.(Thread.state) loc Ordering.seqcst>>) /\
-               (<<CONCRETE: Memory.get loc to th1.(Thread.memory) = Some (from, Message.full val released)>>)).
+               (<<READING: is_reading _ (Thread.state th1) loc Ordering.seqcst>>) /\
+               (<<CONCRETE: Memory.get loc to (Thread.memory th1) = Some (from, Message.full val released)>>)).
     { unfold no_read_msgs in RACE. des_ifs.
       - apply NNPP in RACE. des. inv STEP. inv STEP1; inv STEP.
         inv LOCAL0. inv LOCAL1.
@@ -1714,8 +1714,8 @@ Lemma sim_pf_step_minus_full
       (<<STEP: APFConfiguration.opt_step e tid c_src0 c_src1>>) /\
       (<<SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src1 c_tgt1>>) /\
       (<<CONSISTENT: __guard__((exists lang st_tgt lc_tgt,
-                                   (<<FIND: IdentMap.find tid c_tgt1.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)>>) /\
-                                   (<<CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt c_tgt1.(Configuration.sc) c_tgt1.(Configuration.memory))>>)) \/
+                                   (<<FIND: IdentMap.find tid (Configuration.threads c_tgt1) = Some (existT _ lang st_tgt, lc_tgt)>>) /\
+                                   (<<CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt (Configuration.sc c_tgt1) (Configuration.memory c_tgt1))>>)) \/
                                (<<ABORT: e = MachineEvent.failure>>))>>)
 .
 Proof.
@@ -1777,7 +1777,7 @@ Definition pf_consistent_drf_src lang (e0:Thread.t lang)
   exists (MU: Loc.t -> Prop) e2 tr max',
     (* (<<DISJOINT: forall loc (INU: U loc) (INAU: AU loc), False>>) /\ *)
     (<<STEPS: traced_step tr e0 e2>>) /\
-    (<<MAX: TimeMap.le e0.(Thread.memory).(Memory.max_timemap) max>>) /\
+    (<<MAX: TimeMap.le (Memory.max_timemap (Thread.memory e0)) max>>) /\
     (<<SPACES: spaces <2= earlier_times max>>) /\
 
     (<<TIMEMAP: TimeMap.le max max'>>) /\
@@ -1786,7 +1786,7 @@ Definition pf_consistent_drf_src lang (e0:Thread.t lang)
 
     (<<TRACE: List.Forall (fun em => (no_sc /1\ no_promise /1\ (fun e => ThreadEvent.get_machine_event e = MachineEvent.silent) /1\ __guard__(write_in (later_times max') \1/ write_in (spaces /2\ earlier_times max))) (fst em)) tr>>) /\
 
-    (<<UPDATESMAX: forall loc (UPDATES: (U \1/ AU) loc), max loc = Memory.max_ts loc e0.(Thread.memory)>>) /\
+    (<<UPDATESMAX: forall loc (UPDATES: (U \1/ AU) loc), max loc = Memory.max_ts loc (Thread.memory e0)>>) /\
 
     (<<COMPLETEU:
        forall loc (SAT: U loc),
@@ -1801,7 +1801,7 @@ Definition pf_consistent_drf_src lang (e0:Thread.t lang)
     (<<MYUPDATES: forall loc (SAT: MU loc),
         (<<NOTUPDATES: ~ U loc /\ ~ AU loc>>) /\
         exists to,
-          (<<TS0: Time.le (Memory.max_ts loc e0.(Thread.memory)) to>>) /\
+          (<<TS0: Time.le (Memory.max_ts loc (Thread.memory e0)) to>>) /\
           (<<TS1: Time.lt to (max loc)>>) /\
           (<<BLANK: Interval.mem (to, (max loc)) <1= spaces loc>>)>>) /\
 
@@ -1816,19 +1816,19 @@ Lemma sim_pf_step_pf_consistent
       c_src0 c_tgt0 tid mlast spaces updates aupdates
       (SIM: sim_pf_minus_one tid mlast spaces updates aupdates c_src0 c_tgt0)
       lang st_tgt lc_tgt
-      (FIND: IdentMap.find tid c_tgt0.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt))
-      (CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt c_tgt0.(Configuration.sc) c_tgt0.(Configuration.memory)))
+      (FIND: IdentMap.find tid (Configuration.threads c_tgt0) = Some (existT _ lang st_tgt, lc_tgt))
+      (CONSISTENT: pf_consistent_drf (Thread.mk _ st_tgt lc_tgt (Configuration.sc c_tgt0) (Configuration.memory c_tgt0)))
   :
     (exists st_src lc_src max U AU,
-      (<<FIND: IdentMap.find tid c_src0.(Configuration.threads) = Some (existT _ lang st_src, lc_src)>>) /\
-      (<<MAX: Memory.max_full_timemap c_tgt0.(Configuration.memory) max>>) /\
+      (<<FIND: IdentMap.find tid (Configuration.threads c_src0) = Some (existT _ lang st_src, lc_src)>>) /\
+      (<<MAX: Memory.max_full_timemap (Configuration.memory c_tgt0) max>>) /\
       (<<CONSISTENT: pf_consistent_drf_src
-                       (Thread.mk _ st_src lc_src c_src0.(Configuration.sc) c_src0.(Configuration.memory))
-                       (concrete_covered lc_tgt.(Local.promises) c_tgt0.(Configuration.memory))
-                       (concrete_promised lc_tgt.(Local.promises))
+                       (Thread.mk _ st_src lc_src (Configuration.sc c_src0) (Configuration.memory c_src0))
+                       (concrete_covered (Local.promises lc_tgt) (Configuration.memory c_tgt0))
+                       (concrete_promised (Local.promises lc_tgt))
                        max U AU>>) /\
       (<<AUPDATES: forall loc (SAT: AU loc),
-          ~ Memory.latest_reserve loc lc_tgt.(Local.promises) c_tgt0.(Configuration.memory)>>)) \/
+          ~ Memory.latest_reserve loc (Local.promises lc_tgt) (Configuration.memory c_tgt0)>>)) \/
     (exists c_src1,
         (<<STEP: APFConfiguration.step MachineEvent.failure tid c_src0 c_src1>>))
 .
@@ -1842,7 +1842,7 @@ Proof.
   { inv MEM. eauto. } intros [max MAX].
 
   hexploit (forget_exists
-             (latest_other_reserves lc_tgt.(Local.promises) (Configuration.memory c_tgt0))
+             (latest_other_reserves (Local.promises lc_tgt) (Configuration.memory c_tgt0))
              (Configuration.memory c_tgt0)).
   intros [mem_unreserved FORGETMEM]. red in FORGETMEM.
   exploit CONSISTENT; eauto. i. des. ss.
@@ -1860,10 +1860,10 @@ Proof.
     - eapply memory_concrete_le_reserve_wf; eauto. }
   assert (CLOSEDMEM: Memory.closed mem_unreserved).
   { inv LOCAL. eapply forget_latest_other_reserves_closed; eauto. }
-  assert (CLOSEDSC: Memory.closed_timemap c_tgt0.(Configuration.sc) mem_unreserved).
+  assert (CLOSEDSC: Memory.closed_timemap (Configuration.sc c_tgt0) mem_unreserved).
   { eapply memory_concrete_le_closed_timemap; eauto. }
 
-  assert (CONSISTENT0: Local.promise_consistent e2.(Thread.local)).
+  assert (CONSISTENT0: Local.promise_consistent (Thread.local e2)).
   { unguard. des.
     - inv LOCAL0. auto.
     - ii. rewrite PROMISES in *. rewrite Memory.bot_get in PROMISE. clarify. }
@@ -1879,7 +1879,7 @@ Proof.
     apply NNPP. ii.
     exploit sim_pf_read_promise_race_unreserved; try eassumption; ss.
     - eapply pred_steps_traced_step2; eauto.
-      instantiate (1:=no_acq_update_on (fun loc to => Memory.latest_reserve loc lc_tgt.(Local.promises) c_tgt0.(Configuration.memory) /\ Memory.max_full_ts c_tgt0.(Configuration.memory) loc to)).
+      instantiate (1:=no_acq_update_on (fun loc to => Memory.latest_reserve loc (Local.promises lc_tgt) (Configuration.memory c_tgt0) /\ Memory.max_full_ts (Configuration.memory c_tgt0) loc to)).
       apply List.Forall_forall. i. destruct x.
       eapply List.Forall_forall in TRACE; cycle 1.
       + apply List.in_or_app. left. eauto.

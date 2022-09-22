@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -51,7 +51,8 @@ Module AMemory.
       (RESERVE: msg = Message.reserve):
       promise promises1 mem1 loc from to msg promises2 mem2 Memory.op_kind_cancel
   .
-  Hint Constructors promise.
+  #[global]
+  Hint Constructors promise: core.
 
   Inductive write
             (promises1 mem1:Memory.t)
@@ -62,7 +63,8 @@ Module AMemory.
       (PROMISE: promise promises1 mem1 loc from1 to1 (Message.full val released) promises2 mem2 kind)
       (REMOVE: Memory.remove promises2 loc from1 to1 (Message.full val released) promises3)
   .
-  Hint Constructors write.
+  #[global]
+  Hint Constructors write: core.
 
 
   (* Lemmas on op *)
@@ -309,7 +311,7 @@ Module AMemory.
         des. subst. exfalso. inv MEM. inv ADD. eapply DISJOINT0; eauto.
         * apply Interval.mem_ub. auto.
         * apply Interval.mem_ub.
-          destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+          destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. intro x. des; auto.
           inv x. inv TO.
       + ii. exploit RESERVE_CTX; eauto. i. des.
         exploit Memory.add_get1; try exact x; eauto.
@@ -335,18 +337,18 @@ Module AMemory.
       + ii. erewrite Memory.split_o; eauto. repeat condtac; ss; eauto.
         * des. subst. exfalso. inv DISJOINT. exploit DISJOINT0; eauto.
           { hexploit Memory.split_get0; try exact PROMISES; eauto. i. des. eauto. }
-          i. des. eapply x.
+          intro x. des. eapply x.
           { inv MEM. inv SPLIT. econs. eauto. left. auto. }
           { apply Interval.mem_ub.
-            destruct (mem1 loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+            destruct (Cell.WF (mem1 loc)). exploit VOLUME; eauto. intro x1. des; auto.
             inv x1. inv MEM. inv SPLIT. inv TS12.
           }
         * guardH o. des. subst. exfalso. inv DISJOINT. exploit DISJOINT0; eauto.
           { hexploit Memory.split_get0; try exact PROMISES; eauto. i. des. eauto. }
-          i. des. eapply x.
+          intro x. des. eapply x.
           { apply Interval.mem_ub. inv MEM. inv SPLIT. etrans; eauto. }
           { apply Interval.mem_ub.
-            destruct (ctx loc).(Cell.WF). exploit VOLUME; eauto. i. des; auto.
+            destruct (Cell.WF (ctx loc)). exploit VOLUME; eauto. intro x1. des; auto.
             inv x1. inv MEM. inv SPLIT. inv TS23.
           }
       + ii. exploit RESERVE_CTX; eauto. i. des.
@@ -369,7 +371,7 @@ Module AMemory.
       + ii. erewrite Memory.remove_o; eauto. condtac; ss; eauto.
         des. subst. exfalso. eapply Memory.disjoint_get; eauto.
         hexploit Memory.remove_get0; try exact PROMISES; eauto. i. des. eauto.
-      + ii. exploit RESERVE_CTX; eauto. i. des.
+      + ii. exploit RESERVE_CTX; eauto. intro x. des.
         destruct (Memory.get loc0 from0 mem2) as [[]|] eqn:GET2.
         * revert GET2. erewrite Memory.remove_o; eauto. condtac; ss. i.
           rewrite GET2 in *. inv x. eauto.
@@ -518,17 +520,17 @@ Module AMemory.
       exploit RESERVE1; eauto. i. des.
       cut (from = Memory.max_ts loc mem2); try congr.
       exploit Memory.get_ts; try exact GET0. i. des.
-      { subst. rewrite x0 in *. congr. }
+      { subst. rewrite x2 in *. congr. }
       destruct (Memory.get loc from mem2) as [[]|] eqn:GETF; cycle 1.
       { revert GETF. erewrite Memory.remove_o; eauto. condtac; ss.
-        - des. subst. rewrite GET0 in x. inv x.
+        - des. subst. rewrite GET0 in *. clarify.
         - congr. }
       exploit Memory.max_ts_spec; try exact GETF. i. des.
       inv MAX; eauto.
       revert GET1. erewrite Memory.remove_o; eauto. condtac; ss. i.
       clear o0 COND.
       exploit Memory.get_ts; try exact GET1. i. des.
-      { subst. rewrite x0 in *. inv H0. }
+      { subst. rewrite x3 in *. inv H0. }
       exploit Memory.get_disjoint; [exact GET0|exact GET1|..]. i. des; try congr.
       exfalso.
       apply (x3 (Memory.max_ts loc mem2)); econs; ss; try refl.

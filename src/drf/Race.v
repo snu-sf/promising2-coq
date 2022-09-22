@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -34,7 +34,8 @@ Inductive pf_race_condition e1 e2: Prop :=
     (EVENT2: ProgramEvent.is_updating e2 = Some (loc, val2, ordu2))
     (ORDU: Ordering.le ordu1 Ordering.strong_relaxed)
 .
-Hint Constructors pf_race_condition.
+#[export]
+Hint Constructors pf_race_condition: core.
 
 Definition can_step lang (st : Language.state lang) (e : ProgramEvent.t) : Prop :=
   exists st', Language.step _ e st st'.
@@ -58,14 +59,15 @@ Inductive pf_race (c:Configuration.t): Prop :=
 | race_intro
     tid1 e1 lang1 st1 lc1
     tid2 e2 lang2 st2 lc2
-    (TID1: IdentMap.find tid1 c.(Configuration.threads) = Some (existT _ lang1 st1, lc1))
-    (TID2: IdentMap.find tid2 c.(Configuration.threads) = Some (existT _ lang2 st2, lc2))
+    (TID1: IdentMap.find tid1 (Configuration.threads c) = Some (existT _ lang1 st1, lc1))
+    (TID2: IdentMap.find tid2 (Configuration.threads c) = Some (existT _ lang2 st2, lc2))
     (TIDDIFF: tid1 <> tid2)
     (PROEVT1: can_step _ st1 e1)
     (PROEVT2: can_step _ st2 e2)
     (RACE: pf_race_condition e1 e2)
 .
-Hint Constructors pf_race.
+#[export]
+Hint Constructors pf_race: core.
 
 Inductive step_all A B C D (step: A -> B -> C -> D -> Prop): C -> D -> Prop :=
 | step_all_intro

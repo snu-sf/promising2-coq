@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -85,39 +85,42 @@ Section AssertInsertion.
           RegFile.eval_expr rs c <> 0):
       insert_assertion tid stmts_src ((Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts_tgt)
   .
-  Hint Constructors insert_assertion.
+  #[local]
+  Hint Constructors insert_assertion: core.
 
   Inductive sim_state (tid: Ident.t) (st_src st_tgt: State.t): Prop :=
   | sim_state_intro
-      (STMTS: insert_assertion tid st_src.(State.stmts) st_tgt.(State.stmts))
-      (REGS: st_src.(State.regs) = st_tgt.(State.regs))
+      (STMTS: insert_assertion tid (State.stmts st_src) (State.stmts st_tgt))
+      (REGS: (State.regs st_src) = (State.regs st_tgt))
   .
-  Hint Constructors sim_state.
+  #[local]
+  Hint Constructors sim_state: core.
 
   Inductive sim_thread (tid: Ident.t) (e_src e_tgt: Thread.t lang): Prop :=
   | sim_thread_intro
-      (STATE: sim_state tid e_src.(Thread.state) e_tgt.(Thread.state))
-      (LOCAL: e_src.(Thread.local) = e_tgt.(Thread.local))
-      (SC: e_src.(Thread.sc) = e_tgt.(Thread.sc))
-      (MEMORY: e_src.(Thread.memory) = e_tgt.(Thread.memory))
+      (STATE: sim_state tid (Thread.state e_src) (Thread.state e_tgt))
+      (LOCAL: (Thread.local e_src) = (Thread.local e_tgt))
+      (SC: (Thread.sc e_src) = (Thread.sc e_tgt))
+      (MEMORY: (Thread.memory e_src) = (Thread.memory e_tgt))
   .
-  Hint Constructors sim_thread.
+  #[local]
+  Hint Constructors sim_thread: core.
 
 
   Lemma sim_state_step
         tid st1_src
         e st1_tgt st2_tgt
         (SIM1: sim_state tid st1_src st1_tgt)
-        (STEP: lang.(Language.step) e st1_tgt st2_tgt):
+        (STEP: (Language.step lang) e st1_tgt st2_tgt):
     (exists st2_src,
         <<STEP_SRC: State.opt_step e st1_src st2_src>> /\
         <<SIM2: sim_state tid st2_src st2_tgt>>) \/
     (exists c stmts,
-        <<STMTS: st1_tgt.(State.stmts) =
+        <<STMTS: (State.stmts st1_tgt) =
                  (Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts>> /\
         <<SUCCESS: forall (SOUND: S tid lang st1_src),
-            RegFile.eval_expr st1_src.(State.regs) c <> 0>> /\
-        <<FAIL: RegFile.eval_expr st1_src.(State.regs) c = 0>>).
+            RegFile.eval_expr (State.regs st1_src) c <> 0>> /\
+        <<FAIL: RegFile.eval_expr (State.regs st1_src) c = 0>>).
   Proof.
     destruct st1_src, st1_tgt, st2_tgt.
     inv SIM1. ss. subst.
@@ -166,11 +169,11 @@ Section AssertInsertion.
         <<STEP_SRC: Thread.opt_program_step e e1_src e2_src>> /\
         <<SIM2: sim_thread tid e2_src e2_tgt>>) \/
     (exists c stmts,
-        <<STMTS: e1_tgt.(Thread.state).(State.stmts) =
+        <<STMTS: (State.stmts (Thread.state e1_tgt)) =
                  (Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts>> /\
-        <<SUCCESS: forall (SOUND: S tid lang e1_src.(Thread.state)),
-            RegFile.eval_expr e1_src.(Thread.state).(State.regs) c <> 0>> /\
-        <<FAIL: RegFile.eval_expr e1_src.(Thread.state).(State.regs) c = 0>>).
+        <<SUCCESS: forall (SOUND: S tid lang (Thread.state e1_src)),
+            RegFile.eval_expr (State.regs (Thread.state e1_src)) c <> 0>> /\
+        <<FAIL: RegFile.eval_expr (State.regs (Thread.state e1_src)) c = 0>>).
   Proof.
     destruct e1_src, e1_tgt, e2_tgt. ss.
     inv SIM1. ss. subst.
@@ -213,11 +216,11 @@ Section AssertInsertion.
         <<STEP_SRC: Thread.opt_step e e1_src e2_src>> /\
         <<SIM2: sim_thread tid e2_src e2_tgt>>) \/
     (exists c stmts,
-        <<STMTS: e1_tgt.(Thread.state).(State.stmts) =
+        <<STMTS: (State.stmts (Thread.state e1_tgt)) =
                  (Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts>> /\
-        <<ASSERT: forall (SOUND: S tid lang e1_src.(Thread.state)),
-            RegFile.eval_expr e1_src.(Thread.state).(State.regs) c <> 0>> /\
-        <<FAIL: RegFile.eval_expr e1_src.(Thread.state).(State.regs) c = 0>>).
+        <<ASSERT: forall (SOUND: S tid lang (Thread.state e1_src)),
+            RegFile.eval_expr (State.regs (Thread.state e1_src)) c <> 0>> /\
+        <<FAIL: RegFile.eval_expr (State.regs (Thread.state e1_src)) c = 0>>).
   Proof.
     inv STEP_TGT.
     - left.
@@ -244,11 +247,11 @@ Section AssertInsertion.
         <<STEPS2_TGT: rtc (@Thread.tau_step lang) e_tgt e2_tgt>> /\
         <<STEPS_SRC: rtc (@Thread.tau_step lang) e1_src e_src>> /\
         <<SIM: sim_thread tid e_src e_tgt>> /\
-        <<STMTS: e_tgt.(Thread.state).(State.stmts) =
+        <<STMTS: (State.stmts (Thread.state e_tgt)) =
                  (Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts>> /\
-        <<ASSERT: forall (SOUND: S tid lang e_src.(Thread.state)),
-            RegFile.eval_expr e_src.(Thread.state).(State.regs) c <> 0>> /\
-        <<FAIL: RegFile.eval_expr e_src.(Thread.state).(State.regs) c = 0>>).
+        <<ASSERT: forall (SOUND: S tid lang (Thread.state e_src)),
+            RegFile.eval_expr (State.regs (Thread.state e_src)) c <> 0>> /\
+        <<FAIL: RegFile.eval_expr (State.regs (Thread.state e_src)) c = 0>>).
   Proof.
     revert e1_src SIM1.
     induction STEPS_TGT; eauto; i.
@@ -284,11 +287,11 @@ Section AssertInsertion.
         <<STEPS2_TGT: rtc (tau (@Thread.program_step lang)) e_tgt e2_tgt>> /\
         <<STEPS_SRC: rtc (tau (@Thread.program_step lang)) e1_src e_src>> /\
         <<SIM: sim_thread tid e_src e_tgt>> /\
-        <<STMTS: e_tgt.(Thread.state).(State.stmts) =
+        <<STMTS: (State.stmts (Thread.state e_tgt)) =
                  (Stmt.ite c [Stmt.instr Instr.abort] nil)::stmts>> /\
-        <<ASSERT: forall (SOUND: S tid lang e_src.(Thread.state)),
-            RegFile.eval_expr e_src.(Thread.state).(State.regs) c <> 0>> /\
-        <<FAIL: RegFile.eval_expr e_src.(Thread.state).(State.regs) c = 0>>).
+        <<ASSERT: forall (SOUND: S tid lang (Thread.state e_src)),
+            RegFile.eval_expr (State.regs (Thread.state e_src)) c <> 0>> /\
+        <<FAIL: RegFile.eval_expr (State.regs (Thread.state e_src)) c = 0>>).
   Proof.
     revert e1_src SIM1.
     induction STEPS_TGT; eauto; i.
@@ -310,31 +313,32 @@ Section AssertInsertion.
   Inductive sim_conf (c_src c_tgt: Configuration.t): Prop :=
   | sim_conf_intro
       (SEM: sem S J c_src)
-      (TIDS: Threads.tids c_src.(Configuration.threads) = Threads.tids c_tgt.(Configuration.threads))
+      (TIDS: Threads.tids (Configuration.threads c_src) = Threads.tids (Configuration.threads c_tgt))
       (FIND_SRC: forall tid l st_src lc_src
-                   (FIND: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ l st_src, lc_src)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ l st_src, lc_src)),
           l = lang)
       (FIND_TGT: forall tid l st_tgt lc_tgt
-                   (FIND: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ l st_tgt, lc_tgt)),
+                   (FIND: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ l st_tgt, lc_tgt)),
           l = lang)
       (THREADS: forall tid st_src lc_src st_tgt lc_tgt
-                  (FIND_SRC: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src))
-                  (FIND_TGT: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)),
+                  (FIND_SRC: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src))
+                  (FIND_TGT: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)),
           <<STATE: sim_state tid st_src st_tgt>> /\
           <<LOCAL: lc_src = lc_tgt>>)
-      (SC: c_src.(Configuration.sc) = c_tgt.(Configuration.sc))
-      (MEMORY: c_src.(Configuration.memory) = c_tgt.(Configuration.memory))
+      (SC: (Configuration.sc c_src) = (Configuration.sc c_tgt))
+      (MEMORY: (Configuration.memory c_src) = (Configuration.memory c_tgt))
   .
-  Hint Constructors sim_conf.
+  #[local]
+  Hint Constructors sim_conf: core.
 
 
   Lemma sim_conf_find
         c_src c_tgt tid
         (SIM: sim_conf c_src c_tgt):
     (exists lang_src st_src lc_src,
-        IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang_src st_src, lc_src)) <->
+        IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang_src st_src, lc_src)) <->
     (exists lang_tgt st_tgt lc_tgt,
-        IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang_tgt st_tgt, lc_tgt)).
+        IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang_tgt st_tgt, lc_tgt)).
   Proof.
     inv SIM. destruct c_src, c_tgt. ss.
     eapply Threads.tids_find; eauto.
@@ -344,11 +348,11 @@ Section AssertInsertion.
         c_src c_tgt
         tid st_src lc_src st_tgt lc_tgt
         (SIM: sim_conf c_src c_tgt)
-        (FIND_SRC: IdentMap.find tid c_src.(Configuration.threads) = Some (existT _ lang st_src, lc_src))
-        (FIND_TGT: IdentMap.find tid c_tgt.(Configuration.threads) = Some (existT _ lang st_tgt, lc_tgt)):
+        (FIND_SRC: IdentMap.find tid (Configuration.threads c_src) = Some (existT _ lang st_src, lc_src))
+        (FIND_TGT: IdentMap.find tid (Configuration.threads c_tgt) = Some (existT _ lang st_tgt, lc_tgt)):
     sim_thread tid
-               (Thread.mk lang st_src lc_src c_src.(Configuration.sc) c_src.(Configuration.memory))
-               (Thread.mk lang st_tgt lc_tgt c_tgt.(Configuration.sc) c_tgt.(Configuration.memory)).
+               (Thread.mk lang st_src lc_src (Configuration.sc c_src) (Configuration.memory c_src))
+               (Thread.mk lang st_tgt lc_tgt (Configuration.sc c_tgt) (Configuration.memory c_tgt)).
   Proof.
     inv SIM. exploit THREADS; eauto. i. des.
     econs; eauto.
@@ -394,7 +398,7 @@ Section AssertInsertion.
                          MachineEvent.failure tid
                          (Configuration.mk ths1_src sc1 mem1)
                          (Configuration.mk
-                            (IdentMap.add tid (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                            (IdentMap.add tid (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                             sc memory)).
         { econs 1; eauto. }
         esplits; [econs 2; eauto|].
@@ -403,7 +407,7 @@ Section AssertInsertion.
         + repeat rewrite Threads.tids_add.
           repeat rewrite IdentSet.add_mem; ss.
           * rewrite Threads.tids_o. rewrite TID. ss.
-          * rewrite Threads.tids_o. rewrite x. ss.
+          * rewrite Threads.tids_o. rewrite x2. ss.
         + i. revert FIND. rewrite IdentMap.gsspec. condtac; ss; i.
           * inv FIND. ss.
           * inv SIM. eapply FIND_SRC; eauto.
@@ -507,7 +511,7 @@ Section AssertInsertion.
       hexploit Memory.max_full_timemap_closed; try exact x1; eauto. intro SC_MAX.
       dup SIM0. inv SIM1. ss. subst. ii. ss.
       exploit Memory.cap_inj; [exact CAP|exact CAP0|..]; eauto. i. subst.
-      exploit Memory.max_full_timemap_inj; [exact x1|exact SC_MAX0|..]. i. subst.
+      exploit Memory.max_full_timemap_inj; [exact x0|exact SC_MAX0|..]. i. subst.
       exploit CONSISTENT; eauto. s. i. des.
       - (* failure certification *)
         left. unfold Thread.steps_failure in *. des.
@@ -621,7 +625,7 @@ Section AssertInsertion.
                      (ThreadEvent.get_machine_event e0) tid
                      (Configuration.mk ths1_src sc1 mem1)
                      (Configuration.mk
-                        (IdentMap.add tid (existT (fun (lang: language) => lang.(Language.state)) lang state, local) ths1_src)
+                        (IdentMap.add tid (existT (fun (lang: language) => (Language.state lang)) lang state, local) ths1_src)
                         sc memory)).
     { inv STEP_SRC.
       - generalize (rtc_tail STEPS_SRC). i. des.
@@ -631,7 +635,7 @@ Section AssertInsertion.
         + inv H. ss.
           replace (IdentMap.add
                      tid
-                     (existT (fun lang:language => lang.(Language.state)) lang state, local)
+                     (existT (fun lang:language => (Language.state lang)) lang state, local)
                      ths1_src)
             with ths1_src; eauto.
           apply IdentMap.eq_leibniz. ii.
@@ -646,7 +650,7 @@ Section AssertInsertion.
     - repeat rewrite Threads.tids_add.
       repeat rewrite IdentSet.add_mem; ss.
       + rewrite Threads.tids_o. rewrite TID. ss.
-      + rewrite Threads.tids_o. rewrite x. ss.
+      + rewrite Threads.tids_o. rewrite x2. ss.
     - i. revert FIND. rewrite IdentMap.gsspec. condtac; ss; i.
       + inv FIND. ss.
       + inv SIM. eapply FIND_SRC; eauto.

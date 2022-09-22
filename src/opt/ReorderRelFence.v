@@ -37,10 +37,10 @@ Set Implicit Arguments.
 
 Definition local_relfenced (lc:Local.t) :=
   (Local.mk (TView.mk
-               (fun _ => lc.(Local.tview).(TView.cur))
-               lc.(Local.tview).(TView.cur)
-               lc.(Local.tview).(TView.acq))
-            lc.(Local.promises)).
+               (fun _ => (TView.cur (Local.tview lc)))
+               (TView.cur (Local.tview lc))
+               (TView.acq (Local.tview lc)))
+            (Local.promises lc)).
 
 Lemma local_relfenced_wf
       lc mem
@@ -152,8 +152,8 @@ Proof.
   inv STEP_TGT.
   assert (RELT_LE:
    View.opt_le
-     (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord_src)
-     (TView.write_released lc1_tgt.(Local.tview) sc2_tgt loc to releasedm_tgt ord_tgt)).
+     (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord_src)
+     (TView.write_released (Local.tview lc1_tgt) sc2_tgt loc to releasedm_tgt ord_tgt)).
   { unguardH PVIEW. des.
     - unfold TView.write_released.
       condtac; [|by econs].
@@ -167,7 +167,7 @@ Proof.
     - unfold TView.write_released. repeat (condtac; viewtac).
   }
   assert (RELT_WF:
-   View.opt_wf (TView.write_released lc1_src.(Local.tview) sc1_src loc to releasedm_src ord_src)).
+   View.opt_wf (TView.write_released (Local.tview lc1_src) sc1_src loc to releasedm_src ord_src)).
   { unfold TView.write_released. condtac; econs.
     repeat (try condtac; viewtac; try apply WF1_SRC).
   }
@@ -369,7 +369,7 @@ Lemma sim_local_fence_src_relfenced
       pview
       lc1_src sc1_src mem1_src
       lc1_tgt sc1_tgt mem1_tgt
-      (NONSYNCH: Memory.nonsynch lc1_src.(Local.promises))
+      (NONSYNCH: Memory.nonsynch (Local.promises lc1_src))
       (LOCAL1: sim_local pview lc1_src (local_relfenced lc1_tgt))
       (SC1: TimeMap.le sc1_src sc1_tgt)
       (MEM1: sim_memory mem1_src mem1_tgt)
@@ -427,8 +427,8 @@ Inductive reorder_release_fenceF: forall (i2:Instr.t), Prop :=
     reorder_release_fenceF (Instr.fence Ordering.acqrel Ordering.plain)
 .
 
-Inductive sim_release_fenceF: forall (st_src:lang.(Language.state)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
-                        (st_tgt:lang.(Language.state)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
+Inductive sim_release_fenceF: forall (st_src:(Language.state lang)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
+                        (st_tgt:(Language.state lang)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
 | sim_relese_fenceF_intro
     rs
     pview

@@ -64,10 +64,12 @@ Section Simulation.
     exploit STEP; eauto. i. des; eauto.
     right. esplits; eauto.
   Qed.
+  #[local]
   Hint Resolve _sim_mon: paco.
 
   Definition sim: SIM := paco6 _sim bot6.
 End Simulation.
+#[export]
 Hint Resolve _sim_mon: paco.
 
 

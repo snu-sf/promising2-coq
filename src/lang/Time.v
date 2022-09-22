@@ -4,7 +4,7 @@ From sflib Require Import sflib.
 From Paco Require Import paco.
 
 From PromisingLib Require Import DataStructure.
-From PromisingLib Require Import DenseOrder.
+From PromisingLib Require Export DenseOrder.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
@@ -49,8 +49,8 @@ Module Interval <: UsualOrderedType.
 
   Inductive mem (interval:t) (x:Time.t): Prop :=
   | mem_intro
-      (FROM: Time.lt interval.(fst) x)
-      (TO: Time.le x interval.(snd))
+      (FROM: Time.lt (fst interval) x)
+      (TO: Time.le x (snd interval))
   .
 
   Lemma mem_dec i x: {mem i x} + {~ mem i x}.
@@ -65,8 +65,8 @@ Module Interval <: UsualOrderedType.
 
   Inductive le (lhs rhs:t): Prop :=
   | le_intro
-      (FROM: Time.le rhs.(fst) lhs.(fst))
-      (TO: Time.le lhs.(snd) rhs.(snd))
+      (FROM: Time.le (fst rhs) (fst lhs))
+      (TO: Time.le (snd lhs) (snd rhs))
   .
 
   Lemma le_mem lhs rhs x

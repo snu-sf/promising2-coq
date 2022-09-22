@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -144,14 +144,14 @@ Module MemoryFacts.
   Proof.
     inv LE; cycle 1.
     { inv H. rewrite GET1 in GET2. inv GET2. ss. }
-    destruct (m l).(Cell.WF). exfalso.
+    destruct (Cell.WF (m l)). exfalso.
     assert (t1 <> t2).
     { ii. subst. eapply Time.lt_strorder. eauto. }
     eapply DISJOINT; try exact H0; eauto.
-    - apply Interval.mem_ub. exploit VOLUME; try exact GET1; eauto. i. des; ss.
+    - apply Interval.mem_ub. exploit VOLUME; try exact GET1; eauto. intro x. des; ss.
       inv x. congr.
     - econs; ss.
-      + exploit VOLUME; try exact GET1; eauto. i. des; ss. inv x. congr.
+      + exploit VOLUME; try exact GET1; eauto. intro x. des; ss. inv x. congr.
       + left. ss.
   Qed.
 
@@ -220,7 +220,7 @@ Module MemoryFacts.
         (GET: Memory.get loc to mem = Some (from, Message.full val (Some released))):
     Time.lt from to.
   Proof.
-    destruct (mem loc).(Cell.WF). exploit VOLUME; eauto. i. des; ss. inv x.
+    destruct (Cell.WF (mem loc)). exploit VOLUME; eauto. intro x. des; ss. inv x.
     inv CLOSED. rewrite INHABITED in GET. inv GET.
   Qed.
 End MemoryFacts.

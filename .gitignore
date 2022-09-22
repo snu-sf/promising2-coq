@@ -1,6 +1,7 @@
 _CoqProject
 Makefile.coq
 Makefile.coq.conf
+.Makefile.coq.d
 .build
 .coqdeps.d
 
@@ -8,7 +9,9 @@ Makefile.coq.conf
 *.vio
 *.v.d
 *.glob
+*.vok
+*.vos
+.lia.cache
 
 *~
 *.aux
-

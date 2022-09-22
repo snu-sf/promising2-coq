@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From sflib Require Import sflib.
@@ -27,10 +27,11 @@ Set Implicit Arguments.
 Module PFCommon.
   Inductive sim_local (lc_src lc_tgt: Local.t): Prop :=
   | sim_local_intro
-      (TVIEW: lc_src.(Local.tview) = lc_tgt.(Local.tview))
-      (PROMISES: lc_src.(Local.promises) = Memory.bot)
+      (TVIEW: (Local.tview lc_src) = (Local.tview lc_tgt))
+      (PROMISES: (Local.promises lc_src) = Memory.bot)
   .
-  Hint Constructors sim_local.
+  #[global]
+  Hint Constructors sim_local: core.
 
   Definition vals_incl (mem1 mem2: Memory.t): Prop :=
     forall loc from to val released
@@ -38,6 +39,7 @@ Module PFCommon.
     exists f t r,
       <<GET2: Memory.get loc t mem2 = Some (f, Message.full val r)>>.
 
+  #[global]
   Program Instance vals_incl_PreOrder: PreOrder vals_incl.
   Next Obligation.
     ii. eauto.

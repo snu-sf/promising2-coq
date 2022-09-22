@@ -142,17 +142,17 @@ Proof.
     destruct (IdentMap.find a ths_src) as [[[lang_src st_src] lc_src]|] eqn:ASRC;
       destruct (IdentMap.find a ths_tgt) as [[[lang_tgt st_tgt] lc_tgt]|] eqn:ATGT; cycle 1.
     { exploit tids_find; [apply TIDS_SRC|apply TIDS_TGT|..]. i. des.
-      exploit x0; eauto. i. des. rewrite ATGT in x. inv x. }
+      exploit x0; eauto. intro x. des. rewrite ATGT in x. inv x. }
     { exploit tids_find; [apply TIDS_SRC|apply TIDS_TGT|..]. i. des.
-      exploit x1; eauto. i. des. rewrite ASRC in x. inv x. }
+      exploit x1; eauto. intro x. des. rewrite ASRC in x. inv x. }
     { exploit IHl; [exact TIDS_SRC|exact TIDS_TGT|exact SC1|exact MEMORY1|..]; eauto; i.
       - eapply NOTIN; eauto. ii. inv H; ss. congr.
       - eapply IN; eauto. econs 2; eauto.
       - eapply TIDS_MEM; eauto. econs 2; eauto.
       - inv NODUP. ss.
     }
-    generalize WF_SRC. intro X. inv X. ss. inv WF. exploit THREADS; eauto. i.
-    generalize WF_TGT. intro X. inv X. ss. inv WF. exploit THREADS0; eauto. i.
+    generalize WF_SRC. intro X. inv X. ss. inv WF. exploit THREADS; eauto. intro x.
+    generalize WF_TGT. intro X. inv X. ss. inv WF. exploit THREADS0; eauto. intro x0.
     exploit (IN a); eauto. i. des.
     exploit TERMINAL_TGT; eauto. i. des.
     hexploit Local.terminal_promise_consistent; eauto. i.
@@ -194,14 +194,14 @@ Proof.
         unfold Configuration.steps_failure in *. des.
         rewrite STEPS0 in x3. esplits; try exact x3; eauto.
       * right.
-        rewrite x1 in x3. esplits; try exact x3; eauto.
+        rewrite x4 in x3. esplits; try exact x3; eauto.
   - (* STEP CASE *)
     i. inv STEP_TGT.
     + destruct e2. ss.
       destruct (IdentMap.find tid_tgt ths_src) as [[[lang_src st_src] lc_src]|] eqn:FIND_SRC; cycle 1.
       { remember (Threads.tids ths_src) as tids eqn:TIDS_SRC.
         exploit tids_find; [exact TIDS_SRC|exact TIDS_TGT|..]. i. des.
-        exploit x1; eauto. i. des. rewrite FIND_SRC in x. inv x. }
+        exploit x1; eauto. intro x. des. rewrite FIND_SRC in x. inv x. }
       inv WF_SRC. inv WF_TGT. inv WF. inv WF0. ss.
       exploit SIM; eauto. i. des.
       exploit sim_thread_future; eauto using Memory.future_future_weak. i.
@@ -218,7 +218,7 @@ Proof.
       destruct (IdentMap.find tid_tgt ths_src) as [[[lang_src st_src] lc_src]|] eqn:FIND_SRC; cycle 1.
       { remember (Threads.tids ths_src) as tids eqn:TIDS_SRC.
         exploit tids_find; [exact TIDS_SRC|exact TIDS_TGT|..]. i. des.
-        exploit x1; eauto. i. des. rewrite FIND_SRC in x. inv x. }
+        exploit x1; eauto. intro x. des. rewrite FIND_SRC in x. inv x. }
       inv WF_SRC. inv WF_TGT. inv WF. inv WF0. ss.
       assert (CONS: Local.promise_consistent lc3).
       { exploit Thread.rtc_tau_step_future; eauto. s. i. des.
@@ -254,7 +254,7 @@ Proof.
                 exploit Thread.step_future; try exact STEP0; eauto. s. i. des.
                 exploit SIM; try eapply H; eauto. i. des.
                 eexists.
-                eapply sim_thread_future; try exact x0;
+                eapply sim_thread_future; try exact x2;
                   try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]).
           - ss. inv X. esplits; eauto.
             + destruct e0; ss.
@@ -290,8 +290,8 @@ Proof.
               exploit Thread.step_future; try exact STEP1; eauto. s. i. des.
               exploit SIM; try eapply H; eauto. i. des.
               eexists.
-              eapply sim_thread_future; try exact x0;
+              eapply sim_thread_future; try exact x2;
                 try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
-Grab Existential Variables.
+Unshelve.
   { auto. }
 Qed.

@@ -50,8 +50,8 @@ Inductive reorder_abort: forall (i2:Instr.t), Prop :=
     reorder_abort (Instr.fence or2 ow2)
 .
 
-Inductive sim_abort: forall (st_src:lang.(Language.state)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
-                       (st_tgt:lang.(Language.state)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
+Inductive sim_abort: forall (st_src:(Language.state lang)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
+                       (st_tgt:(Language.state lang)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
 | sim_abort_intro
     rs i2
     lc1_src sc1_src mem1_src
@@ -101,9 +101,9 @@ Lemma read_step_cur_future
       lc1 mem1 loc val released ord lc2
       (WF1: Local.wf lc1 mem1)
       (ORD: Ordering.le ord Ordering.relaxed)
-      (READ: Local.read_step lc1 mem1 loc (lc1.(Local.tview).(TView.cur).(View.rlx) loc) val released ord lc2):
-  <<PROMISES: lc1.(Local.promises) = lc2.(Local.promises)>> /\
-  <<TVIEW: lc1.(Local.tview).(TView.cur).(View.rlx) = lc2.(Local.tview).(TView.cur).(View.rlx)>>.
+      (READ: Local.read_step lc1 mem1 loc ((TView.cur (Local.tview lc1)).(View.rlx) loc) val released ord lc2):
+  <<PROMISES: (Local.promises lc1) = (Local.promises lc2)>> /\
+  <<TVIEW: (TView.cur (Local.tview lc1)).(View.rlx) = (TView.cur (Local.tview lc2)).(View.rlx)>>.
 Proof.
   destruct lc1 as [tview1 promises1]. inv READ. ss.
   esplits; eauto. condtac; ss; try by destruct ord.
@@ -125,8 +125,8 @@ Lemma fence_step_future
       (ORDR: Ordering.le ordr Ordering.relaxed)
       (ORDW: Ordering.le ordw Ordering.acqrel)
       (FENCE: Local.fence_step lc1 sc1 ordr ordw lc2 sc2):
-  <<PROMISES: lc1.(Local.promises) = lc2.(Local.promises)>> /\
-  <<TVIEW: lc1.(Local.tview).(TView.cur) = lc2.(Local.tview).(TView.cur)>>.
+  <<PROMISES: (Local.promises lc1) = (Local.promises lc2)>> /\
+  <<TVIEW: (TView.cur (Local.tview lc1)) = (TView.cur (Local.tview lc2))>>.
 Proof.
   destruct lc1 as [tview1 promises1]. inv FENCE. split; ss.
   condtac; try by destruct ordw.
@@ -139,13 +139,13 @@ Lemma write_step_consistent
       (WF1: Local.wf lc1 mem1)
       (SC1: Memory.closed_timemap sc1 mem1)
       (MEM1: Memory.closed mem1)
-      (PROMISES1: Ordering.le Ordering.strong_relaxed ord -> Memory.nonsynch_loc loc lc1.(Local.promises))
+      (PROMISES1: Ordering.le Ordering.strong_relaxed ord -> Memory.nonsynch_loc loc (Local.promises lc1))
       (CONS1: Local.promise_consistent lc1):
   exists from to released lc2 sc2 mem2 kind,
     <<STEP: Local.write_step lc1 sc1 mem1 loc from to val None released ord lc2 sc2 mem2 kind>> /\
     <<CONS2: Local.promise_consistent lc2>>.
 Proof.
-  destruct (classic (exists f t v r, Memory.get loc t lc1.(Local.promises) =
+  destruct (classic (exists f t v r, Memory.get loc t (Local.promises lc1) =
                                 Some (f, Message.full v r))).
   { des.
     exploit Memory.min_full_ts_exists; eauto. i. des.

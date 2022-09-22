@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -102,7 +102,8 @@ Section CELL.
     :
       times_sorted (hd :: tl)
   .
-  Hint Constructors times_sorted.
+  #[local]
+  Hint Constructors times_sorted: core.
 
   Fixpoint insert (to: Time.t) (l: list Time.t): list Time.t :=
     match l with
@@ -789,10 +790,10 @@ Section MEMORYLEMMAS.
   Qed.
 
   Lemma step_promises_le lang (th0 th1: Thread.t lang) e
-        (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
         (STEP: AThread.step_allpf e th0 th1)
   :
-    Memory.le th1.(Thread.local).(Local.promises) th1.(Thread.memory).
+    Memory.le (Local.promises (Thread.local th1)) (Thread.memory th1).
   Proof.
     inv STEP. inv STEP0.
     - inv STEP. inv LOCAL. ss.
@@ -812,20 +813,20 @@ Section MEMORYLEMMAS.
   Qed.
 
   Lemma traced_step_promises_le lang tr (th0 th1: Thread.t lang)
-        (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
         (STEP: traced_step tr th0 th1)
   :
-    Memory.le th1.(Thread.local).(Local.promises) th1.(Thread.memory).
+    Memory.le (Local.promises (Thread.local th1)) (Thread.memory th1).
   Proof.
     ginduction STEP; ss.
     i. eapply IHSTEP. eapply step_promises_le; eauto.
   Qed.
 
   Lemma steps_promises_le P lang (th0 th1: Thread.t lang)
-        (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
   :
-    Memory.le th1.(Thread.local).(Local.promises) th1.(Thread.memory).
+    Memory.le (Local.promises (Thread.local th1)) (Thread.memory th1).
   Proof.
     ginduction STEP; ss.
     i. eapply IHSTEP.
@@ -833,10 +834,10 @@ Section MEMORYLEMMAS.
   Qed.
 
   Lemma traced_steps_promises_le lang (th0 th1: Thread.t lang) events
-        (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
         (STEP: traced_step events th0 th1)
   :
-    Memory.le th1.(Thread.local).(Local.promises) th1.(Thread.memory).
+    Memory.le (Local.promises (Thread.local th1)) (Thread.memory th1).
   Proof.
     ginduction STEP; ss.
     i. eapply IHSTEP. eapply step_promises_le; eauto.
@@ -1000,9 +1001,9 @@ Section MEMORYLEMMAS.
   Lemma promise_bot_no_promise P lang (th0 th1: Thread.t lang) e
         (STEP: (@pred_step P lang) e th0 th1)
         (NOPROMISE: P <1= no_promise)
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
     :
-      th1.(Thread.local).(Local.promises) = Memory.bot.
+      (Local.promises (Thread.local th1)) = Memory.bot.
   Proof.
     inv STEP. eapply NOPROMISE in SAT. inv STEP0. inv STEP.
     - inv STEP0; des; clarify.
@@ -1025,9 +1026,9 @@ Section MEMORYLEMMAS.
   Lemma promise_bot_no_promise_rtc P lang (th0 th1: Thread.t lang)
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
         (NOPROMISE: P <1= no_promise)
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
     :
-      th1.(Thread.local).(Local.promises) = Memory.bot.
+      (Local.promises (Thread.local th1)) = Memory.bot.
   Proof.
     induction STEP; auto. erewrite IHSTEP; auto.
     inv H. eapply promise_bot_no_promise; eauto.
@@ -1088,7 +1089,7 @@ Section MEMORYLEMMAS.
         MSGS lang (th0 th1: Thread.t lang) pf e
         (STEP: AThread.step pf e th0 th1)
         (WRITENOTIN: write_not_in MSGS e)
-        (LCWF0: Local.wf th0.(Thread.local) th0.(Thread.memory))
+        (LCWF0: Local.wf (Thread.local th0) (Thread.memory th0))
     :
       write_not_to MSGS e.
   Proof.
@@ -1127,7 +1128,7 @@ Section MEMORYLEMMAS.
   Qed.
 
   Lemma step_wf_event lang P (th0 th1: Thread.t lang) e
-        (INHABITED: Memory.inhabited th0.(Thread.memory))
+        (INHABITED: Memory.inhabited (Thread.memory th0))
         (STEP: pred_step P e th0 th1)
     :
       wf_event e.
@@ -1141,7 +1142,7 @@ Section MEMORYLEMMAS.
   Qed.
 
   Lemma steps_wf_event lang P (th0 th1: Thread.t lang)
-        (INHABITED: Memory.inhabited th0.(Thread.memory))
+        (INHABITED: Memory.inhabited (Thread.memory th0))
         (STEP: rtc (tau (@pred_step P lang)) th0 th1)
     :
       rtc (tau (@pred_step (P /1\ wf_event) lang)) th0 th1.
@@ -1464,7 +1465,7 @@ Section PROMISED.
   Lemma concrete_promised_increase lang (th0 th1: Thread.t lang) pf e
         (STEP: AThread.step pf e th0 th1)
     :
-      concrete_promised th0.(Thread.memory) <2= concrete_promised th1.(Thread.memory).
+      concrete_promised (Thread.memory th0) <2= concrete_promised (Thread.memory th1).
   Proof.
     i. inv STEP.
     - inv STEP0. ss. inv LOCAL.
@@ -1486,7 +1487,8 @@ Inductive opt_pred_step P lang
     (STEP: pred_step P e t0 t1)
   :
     opt_pred_step P e t0 t1.
-Hint Constructors opt_pred_step.
+#[export]
+Hint Constructors opt_pred_step: core.
 
 
 Section UNCHANGABLES.
@@ -1564,8 +1566,8 @@ Section UNCHANGABLES.
   Lemma unchangable_increase pf e lang (th0 th1: Thread.t lang)
         (STEP: AThread.step pf e th0 th1)
     :
-      unchangable th0.(Thread.memory) th0.(Thread.local).(Local.promises) <4=
-      unchangable th1.(Thread.memory) th1.(Thread.local).(Local.promises).
+      unchangable (Thread.memory th0) (Local.promises (Thread.local th0)) <4=
+      unchangable (Thread.memory th1) (Local.promises (Thread.local th1)).
   Proof.
     inv STEP.
     - inv STEP0; ss. inv LOCAL. i.
@@ -1581,8 +1583,8 @@ Section UNCHANGABLES.
   Lemma unchangable_rtc_increase P lang (th0 th1: Thread.t lang)
         (STEPS: rtc (tau (@pred_step P lang))th0 th1)
     :
-      unchangable th0.(Thread.memory) th0.(Thread.local).(Local.promises) <4=
-      unchangable th1.(Thread.memory) th1.(Thread.local).(Local.promises).
+      unchangable (Thread.memory th0) (Local.promises (Thread.local th0)) <4=
+      unchangable (Thread.memory th1) (Local.promises (Thread.local th1)).
   Proof.
     ginduction STEPS; ss. i.
     eapply IHSTEPS.
@@ -1591,19 +1593,19 @@ Section UNCHANGABLES.
 
   Lemma other_promise_unchangable c tid1 tid2 st1 st2 lc1 lc2
         (CWF: Configuration.wf c)
-        (TID1: IdentMap.find tid1 c.(Configuration.threads) = Some (st1, lc1))
-        (TID2: IdentMap.find tid2 c.(Configuration.threads) = Some (st2, lc2))
+        (TID1: IdentMap.find tid1 (Configuration.threads c) = Some (st1, lc1))
+        (TID2: IdentMap.find tid2 (Configuration.threads c) = Some (st2, lc2))
         (DIFF: tid1 <> tid2)
         l t from msg
-        (GET: Memory.get l t lc2.(Local.promises) = Some (from, msg))
+        (GET: Memory.get l t (Local.promises lc2) = Some (from, msg))
     :
-      unchangable c.(Configuration.memory) lc1.(Local.promises) l t from msg.
+      unchangable (Configuration.memory c) (Local.promises lc1) l t from msg.
   Proof.
     inv CWF. inv WF. destruct st1, st2. econs; eauto.
     - exploit THREADS; try apply TID2; eauto. intros LCWF. inv LCWF. eauto.
     - destruct (Memory.get l t (Local.promises lc1)) eqn:GET0; eauto. exfalso.
       exploit DISJOINT; eauto. intros LCDISJ. inv LCDISJ. destruct p.
-      inv DISJOINT0. exploit DISJOINT1; eauto. i. des.
+      inv DISJOINT0. exploit DISJOINT1; eauto. intro x1. des.
       eapply Memory.get_ts in GET. eapply Memory.get_ts in GET0. des; clarify.
       eapply x1; eauto.
       + instantiate (1:=t). econs; ss; eauto. refl.
@@ -1696,10 +1698,10 @@ Section UNCHANGABLES.
   Qed.
 
   Lemma step_write_not_in lang (th_tgt th_tgt': Thread.t lang) e_tgt pf
-        (MLE: Memory.le th_tgt.(Thread.local).(Local.promises) th_tgt.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th_tgt)) (Thread.memory th_tgt))
         (STEP: AThread.step pf e_tgt th_tgt th_tgt')
     :
-      write_not_in (unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises))
+      write_not_in (unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)))
                    e_tgt.
   Proof.
     inv STEP.
@@ -1713,8 +1715,8 @@ Section UNCHANGABLES.
   Lemma unwritable_increase pf e lang (th0 th1: Thread.t lang)
         (STEP: AThread.step pf e th0 th1)
     :
-      unwritable th0.(Thread.memory) th0.(Thread.local).(Local.promises) <2=
-      unwritable th1.(Thread.memory) th1.(Thread.local).(Local.promises).
+      unwritable (Thread.memory th0) (Local.promises (Thread.local th0)) <2=
+      unwritable (Thread.memory th1) (Local.promises (Thread.local th1)).
   Proof.
     ii. inv PR.
     eapply unchangable_increase in UNCH; eauto.
@@ -1724,18 +1726,18 @@ Section UNCHANGABLES.
   Lemma rtc_unwritable_increase lang (th0 th1: Thread.t lang)
         (STEP: rtc (AThread.tau_step (lang:=lang)) th0 th1)
     :
-      unwritable th0.(Thread.memory) th0.(Thread.local).(Local.promises) <2=
-      unwritable th1.(Thread.memory) th1.(Thread.local).(Local.promises).
+      unwritable (Thread.memory th0) (Local.promises (Thread.local th0)) <2=
+      unwritable (Thread.memory th1) (Local.promises (Thread.local th1)).
   Proof.
     induction STEP; eauto.
     i. inv H. inv TSTEP. eapply IHSTEP. eapply unwritable_increase; eauto.
   Qed.
 
   Lemma steps_write_not_in P lang (th_tgt th_tgt': Thread.t lang)
-        (MLE: Memory.le th_tgt.(Thread.local).(Local.promises) th_tgt.(Thread.memory))
+        (MLE: Memory.le (Local.promises (Thread.local th_tgt)) (Thread.memory th_tgt))
         (STEP: rtc (tau (@pred_step P lang)) th_tgt th_tgt')
     :
-      rtc (tau (@pred_step (P /1\ write_not_in (unwritable th_tgt.(Thread.memory) th_tgt.(Thread.local).(Local.promises))) lang)) th_tgt th_tgt'.
+      rtc (tau (@pred_step (P /1\ write_not_in (unwritable (Thread.memory th_tgt) (Local.promises (Thread.local th_tgt)))) lang)) th_tgt th_tgt'.
   Proof.
     ginduction STEP.
     - i. refl.
@@ -1751,22 +1753,22 @@ Section UNCHANGABLES.
 
   Lemma other_promise_unwritable c tid1 tid2 st1 st2 lc1 lc2
         (CWF: Configuration.wf c)
-        (TID1: IdentMap.find tid1 c.(Configuration.threads) = Some (st1, lc1))
-        (TID2: IdentMap.find tid2 c.(Configuration.threads) = Some (st2, lc2))
+        (TID1: IdentMap.find tid1 (Configuration.threads c) = Some (st1, lc1))
+        (TID2: IdentMap.find tid2 (Configuration.threads c) = Some (st2, lc2))
         (DIFF: tid1 <> tid2)
         l t
-        (COV: covered l t lc2.(Local.promises))
+        (COV: covered l t (Local.promises lc2))
     :
-      unwritable c.(Configuration.memory) lc1.(Local.promises) l t.
+      unwritable (Configuration.memory c) (Local.promises lc1) l t.
   Proof.
     inv CWF. inv WF. inv COV. destruct st1, st2.
     rewrite unwritable_eq; cycle 1.
-    { exploit THREADS; try apply TID1. i. inv x1. auto. }
+    { exploit THREADS; try apply TID1. intro x1. inv x1. auto. }
     unfold unwritable2. esplits; eauto.
     - exploit THREADS; try apply TID2; eauto. intros LCWF. inv LCWF.
       econs; eauto.
     - ii. inv H. exploit DISJOINT; eauto. intros LCDISJ. inv LCDISJ.
-      inv DISJOINT0. exploit DISJOINT1; eauto. i. des.
+      inv DISJOINT0. exploit DISJOINT1; eauto. intro x1. des.
       eapply x1; eauto.
   Qed.
 
@@ -1829,7 +1831,7 @@ Section UNCHANGEDON.
       + ss. des. clarify. econs; eauto.
       + exploit NCOV; eauto.
         * econs; eauto.
-        * i. inv x. econs; eauto. eapply Memory.add_get1; eauto.
+        * intro x. inv x. econs; eauto. eapply Memory.add_get1; eauto.
     - ii. erewrite Memory.add_o; eauto.
       erewrite Memory.add_o in LHS; cycle 1; eauto. des_ifs.
       eapply FUTURE; eauto.
@@ -1896,9 +1898,9 @@ Section UNCHANGEDON.
   Lemma write_not_in_unchanged_on P L e lang (th0 th1: Thread.t lang)
         (STEP: pred_step P e th0 th1)
         (PRED: P <1= (write_not_in L /1\ no_promise))
-        (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
+        (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
     :
-      unchanged_on L th0.(Thread.memory) th1.(Thread.memory).
+      unchanged_on L (Thread.memory th0) (Thread.memory th1).
   Proof.
     inv STEP. eapply PRED in SAT. des. inv STEP0. inv STEP.
     - inv STEP0; ss; des; clarify.
@@ -1940,9 +1942,9 @@ Qed.
 
 Lemma step_memory_le lang (th0 th1: Thread.t lang) pf e
       (STEP: AThread.step pf e th0 th1)
-      (MLE: Memory.le th0.(Thread.local).(Local.promises) th0.(Thread.memory))
+      (MLE: Memory.le (Local.promises (Thread.local th0)) (Thread.memory th0))
   :
-    Memory.le th1.(Thread.local).(Local.promises) th1.(Thread.memory).
+    Memory.le (Local.promises (Thread.local th1)) (Thread.memory th1).
 Proof.
   inv STEP.
   - inv STEP0. ss. inv LOCAL.
@@ -1955,9 +1957,9 @@ Qed.
 
 Lemma pf_step_memory_le lang (th0 th1: Thread.t lang) e
       (STEP: pred_step no_promise e th0 th1)
-      (BOT: th0.(Thread.local).(Local.promises) = Memory.bot)
+      (BOT: (Local.promises (Thread.local th0)) = Memory.bot)
   :
-    Memory.le th0.(Thread.memory) th1.(Thread.memory).
+    Memory.le (Thread.memory th0) (Thread.memory th1).
 Proof.
   exploit write_not_in_unchanged_on; eauto.
   - i. instantiate (1:=fun _ _ => False).
@@ -1968,13 +1970,13 @@ Qed.
 Inductive configuration_step: forall (e:MachineEvent.t) (tid:Ident.t) (c1 c2:Configuration.t), Prop :=
 | configuration_step_intro
     pf e tid c1 lang st1 lc1 e2 st3 lc3 sc3 memory3
-    (TID: IdentMap.find tid c1.(Configuration.threads) = Some (existT _ lang st1, lc1))
-    (STEPS: rtc (@Thread.tau_step _) (Thread.mk _ st1 lc1 c1.(Configuration.sc) c1.(Configuration.memory)) e2)
+    (TID: IdentMap.find tid (Configuration.threads c1) = Some (existT _ lang st1, lc1))
+    (STEPS: rtc (@Thread.tau_step _) (Thread.mk _ st1 lc1 (Configuration.sc c1) (Configuration.memory c1)) e2)
     (STEP: Thread.step pf e e2 (Thread.mk _ st3 lc3 sc3 memory3))
     (CONSISTENT: forall (EVENT: e <> ThreadEvent.failure),
         Thread.consistent (Thread.mk _ st3 lc3 sc3 memory3))
   :
-    configuration_step (ThreadEvent.get_machine_event e) tid c1 (Configuration.mk (IdentMap.add tid (existT _ _ st3, lc3) c1.(Configuration.threads)) sc3 memory3)
+    configuration_step (ThreadEvent.get_machine_event e) tid c1 (Configuration.mk (IdentMap.add tid (existT _ _ st3, lc3) (Configuration.threads c1)) sc3 memory3)
 .
 
 Lemma configuration_step_equivalent e tid c1 c2
@@ -2010,7 +2012,8 @@ Lemma memory_concrete_le_le
 Proof.
   ii. eauto.
 Qed.
-Hint Resolve memory_concrete_le_le.
+#[export]
+Hint Resolve memory_concrete_le_le: core.
 
 Lemma memory_concrete_le_closed_timemap tm mem0 mem1
       (MLE: memory_concrete_le mem0 mem1)

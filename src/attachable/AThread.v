@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import Bool.
 Require Import RelationClasses.
 
@@ -47,11 +47,12 @@ Module AThread.
     | program_step_intro
         st1 lc1 sc1 mem1
         st2 lc2 sc2 mem2
-        (STATE: lang.(Language.step) (ThreadEvent.get_program_event e) st1 st2)
+        (STATE: (Language.step lang) (ThreadEvent.get_program_event e) st1 st2)
         (LOCAL: ALocal.program_step e lc1 sc1 mem1 lc2 sc2 mem2):
         program_step e (Thread.mk lang st1 lc1 sc1 mem1) (Thread.mk lang st2 lc2 sc2 mem2)
     .
-    Hint Constructors program_step.
+    #[local]
+    Hint Constructors program_step: core.
 
     Inductive step: forall (pf:bool) (e:ThreadEvent.t) (e1 e2:Thread.t lang), Prop :=
     | step_promise
@@ -63,14 +64,16 @@ Module AThread.
         (STEP: program_step e e1 e2):
         step true e e1 e2
     .
-    Hint Constructors step.
+    #[local]
+    Hint Constructors step: core.
 
     Inductive step_allpf (e:ThreadEvent.t) (e1 e2:Thread.t lang): Prop :=
     | step_nopf_intro
         pf
         (STEP: step pf e e1 e2)
     .
-    Hint Constructors step_allpf.
+    #[local]
+    Hint Constructors step_allpf: core.
 
     Lemma allpf pf: step pf <3= step_allpf.
     Proof.
@@ -78,13 +81,16 @@ Module AThread.
     Qed.
 
     Definition pf_tau_step := tau (step true).
-    Hint Unfold pf_tau_step.
+    #[local]
+    Hint Unfold pf_tau_step: core.
 
     Definition tau_step := tau step_allpf.
-    Hint Unfold tau_step.
+    #[local]
+    Hint Unfold tau_step: core.
 
     Definition all_step := union step_allpf.
-    Hint Unfold all_step.
+    #[local]
+    Hint Unfold all_step: core.
 
     Inductive opt_step: forall (e:ThreadEvent.t) (e1 e2:Thread.t lang), Prop :=
     | step_none
@@ -95,22 +101,24 @@ Module AThread.
         (STEP: step pf e e1 e2):
         opt_step e e1 e2
     .
-    Hint Constructors opt_step.
+    #[local]
+    Hint Constructors opt_step: core.
 
     Definition steps_failure (e1: Thread.t lang): Prop :=
       exists e2 e3,
         <<STEPS: rtc tau_step e1 e2>> /\
         <<FAILURE: step true ThreadEvent.failure e2 e3>>.
-    Hint Unfold steps_failure.
+    #[local]
+    Hint Unfold steps_failure: core.
 
     Definition consistent (e:Thread.t lang): Prop :=
       forall mem1 sc1
-        (CAP: Memory.cap e.(Thread.local).(Local.promises) e.(Thread.memory) mem1)
+        (CAP: Memory.cap (Local.promises (Thread.local e)) (Thread.memory e) mem1)
         (SC_MAX: Memory.max_full_timemap mem1 sc1),
-        <<FAILURE: steps_failure (Thread.mk lang e.(Thread.state) e.(Thread.local) sc1 mem1)>> \/
+        <<FAILURE: steps_failure (Thread.mk lang (Thread.state e) (Thread.local e) sc1 mem1)>> \/
         exists e2,
-          <<STEPS: rtc tau_step (Thread.mk lang e.(Thread.state) e.(Thread.local) sc1 mem1) e2>> /\
-          <<PROMISES: e2.(Thread.local).(Local.promises) = Memory.bot>>.
+          <<STEPS: rtc tau_step (Thread.mk lang (Thread.state e) (Thread.local e) sc1 mem1) e2>> /\
+          <<PROMISES: (Local.promises (Thread.local e2)) = Memory.bot>>.
 
 
     (* step_future *)
@@ -118,15 +126,15 @@ Module AThread.
     Lemma promise_step_future
           pf e e1 e2
           (STEP: promise_step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       inv STEP. ss.
       exploit ALocal.promise_step_future; eauto. i. des.
@@ -136,15 +144,15 @@ Module AThread.
     Lemma program_step_future
           e e1 e2
           (STEP: program_step e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       inv STEP. ss. eapply ALocal.program_step_future; eauto.
     Qed.
@@ -152,15 +160,15 @@ Module AThread.
     Lemma step_future
           pf e e1 e2
           (STEP: step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       inv STEP.
       - eapply promise_step_future; eauto.
@@ -170,15 +178,15 @@ Module AThread.
     Lemma opt_step_future
           e e1 e2
           (STEP: opt_step e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       inv STEP.
       - esplits; eauto; refl.
@@ -188,15 +196,15 @@ Module AThread.
     Lemma rtc_all_step_future
           e1 e2
           (STEP: rtc all_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       revert WF1. induction STEP.
       - i. splits; ss; refl.
@@ -209,15 +217,15 @@ Module AThread.
     Lemma rtc_tau_step_future
           e1 e2
           (STEP: rtc tau_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory)):
-      <<WF2: Local.wf e2.(Thread.local) e2.(Thread.memory)>> /\
-      <<SC2: Memory.closed_timemap e2.(Thread.sc) e2.(Thread.memory)>> /\
-      <<CLOSED2: Memory.closed e2.(Thread.memory)>> /\
-      <<TVIEW_FUTURE: TView.le e1.(Thread.local).(Local.tview) e2.(Thread.local).(Local.tview)>> /\
-      <<SC_FUTURE: TimeMap.le e1.(Thread.sc) e2.(Thread.sc)>> /\
-      <<MEM_FUTURE: Memory.future e1.(Thread.memory) e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1)):
+      <<WF2: Local.wf (Thread.local e2) (Thread.memory e2)>> /\
+      <<SC2: Memory.closed_timemap (Thread.sc e2) (Thread.memory e2)>> /\
+      <<CLOSED2: Memory.closed (Thread.memory e2)>> /\
+      <<TVIEW_FUTURE: TView.le (Local.tview (Thread.local e1)) (Local.tview (Thread.local e2))>> /\
+      <<SC_FUTURE: TimeMap.le (Thread.sc e1) (Thread.sc e2)>> /\
+      <<MEM_FUTURE: Memory.future (Thread.memory e1) (Thread.memory e2)>>.
     Proof.
       apply rtc_all_step_future; auto.
       eapply rtc_implies; [|eauto].
@@ -227,8 +235,8 @@ Module AThread.
     Lemma promise_step_inhabited
           pf e e1 e2
           (STEP: promise_step pf e e1 e2)
-          (INHABITED1: Memory.inhabited e1.(Thread.memory)):
-      <<INHABITED2: Memory.inhabited e2.(Thread.memory)>>.
+          (INHABITED1: Memory.inhabited (Thread.memory e1)):
+      <<INHABITED2: Memory.inhabited (Thread.memory e2)>>.
     Proof.
       inv STEP. ss.
       eapply ALocal.promise_step_inhabited; eauto.
@@ -237,8 +245,8 @@ Module AThread.
     Lemma program_step_inhabited
           e e1 e2
           (STEP: program_step e e1 e2)
-          (INHABITED1: Memory.inhabited e1.(Thread.memory)):
-      <<INHABITED2: Memory.inhabited e2.(Thread.memory)>>.
+          (INHABITED1: Memory.inhabited (Thread.memory e1)):
+      <<INHABITED2: Memory.inhabited (Thread.memory e2)>>.
     Proof.
       inv STEP. ss.
       eapply ALocal.program_step_inhabited; eauto.
@@ -247,8 +255,8 @@ Module AThread.
     Lemma step_inhabited
           pf e e1 e2
           (STEP: step pf e e1 e2)
-          (INHABITED1: Memory.inhabited e1.(Thread.memory)):
-      <<INHABITED2: Memory.inhabited e2.(Thread.memory)>>.
+          (INHABITED1: Memory.inhabited (Thread.memory e1)):
+      <<INHABITED2: Memory.inhabited (Thread.memory e2)>>.
     Proof.
       inv STEP.
       - eapply promise_step_inhabited; eauto.
@@ -261,13 +269,13 @@ Module AThread.
     Lemma promise_step_disjoint
           pf e e1 e2 lc
           (STEP: promise_step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       inv STEP.
       exploit ALocal.promise_step_future; eauto. i. des.
@@ -277,13 +285,13 @@ Module AThread.
     Lemma program_step_disjoint
           e e1 e2 lc
           (STEP: program_step e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       inv STEP. ss. eapply ALocal.program_step_disjoint; eauto.
     Qed.
@@ -291,13 +299,13 @@ Module AThread.
     Lemma step_disjoint
           pf e e1 e2 lc
           (STEP: step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       inv STEP.
       - eapply promise_step_disjoint; eauto.
@@ -307,13 +315,13 @@ Module AThread.
     Lemma opt_step_disjoint
           e e1 e2 lc
           (STEP: opt_step e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       inv STEP.
       - esplits; eauto.
@@ -323,13 +331,13 @@ Module AThread.
     Lemma rtc_all_step_disjoint
           e1 e2 lc
           (STEP: rtc all_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       revert WF1 DISJOINT1 WF. induction STEP; eauto. i.
       inv H. inv USTEP.
@@ -341,13 +349,13 @@ Module AThread.
     Lemma rtc_tau_step_disjoint
           e1 e2 lc
           (STEP: rtc tau_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (DISJOINT1: Local.disjoint e1.(Thread.local) lc)
-          (WF: Local.wf lc e1.(Thread.memory)):
-      <<DISJOINT2: Local.disjoint e2.(Thread.local) lc>> /\
-      <<WF: Local.wf lc e2.(Thread.memory)>>.
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (DISJOINT1: Local.disjoint (Thread.local e1) lc)
+          (WF: Local.wf lc (Thread.memory e1)):
+      <<DISJOINT2: Local.disjoint (Thread.local e2) lc>> /\
+      <<WF: Local.wf lc (Thread.memory e2)>>.
     Proof.
       eapply rtc_all_step_disjoint; cycle 1; eauto.
       eapply rtc_implies; [|eauto].
@@ -360,7 +368,7 @@ Module AThread.
     Lemma step_no_reserve_except
           pf e e1 e2
           (STEP: step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
           (NORESERVE1: Thread.no_reserve_except e1):
       Thread.no_reserve_except e2.
     Proof.
@@ -372,9 +380,9 @@ Module AThread.
     Lemma rtc_tau_step_no_reserve_except
           e1 e2
           (STEP: rtc tau_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
           (NORESERVE1: Thread.no_reserve_except e1):
       Thread.no_reserve_except e2.
     Proof.
@@ -387,12 +395,12 @@ Module AThread.
     Lemma step_bot_no_reserve
           pf e e1 e2
           (STEP: step pf e e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (NORESERVE1: Memory.no_reserve e1.(Thread.memory))
-          (PROMISES2: e2.(Thread.local).(Local.promises) = Memory.bot):
-      Memory.no_reserve e2.(Thread.memory).
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (NORESERVE1: Memory.no_reserve (Thread.memory e1))
+          (PROMISES2: (Local.promises (Thread.local e2)) = Memory.bot):
+      Memory.no_reserve (Thread.memory e2).
     Proof.
       exploit step_future; eauto. i. des.
       hexploit step_no_reserve_except; eauto; i.
@@ -405,12 +413,12 @@ Module AThread.
     Lemma rtc_tau_step_bot_no_reserve
           e1 e2
           (STEP: rtc tau_step e1 e2)
-          (WF1: Local.wf e1.(Thread.local) e1.(Thread.memory))
-          (SC1: Memory.closed_timemap e1.(Thread.sc) e1.(Thread.memory))
-          (CLOSED1: Memory.closed e1.(Thread.memory))
-          (NORESERVE1: Memory.no_reserve e1.(Thread.memory))
-          (PROMISES2: e2.(Thread.local).(Local.promises) = Memory.bot):
-      Memory.no_reserve e2.(Thread.memory).
+          (WF1: Local.wf (Thread.local e1) (Thread.memory e1))
+          (SC1: Memory.closed_timemap (Thread.sc e1) (Thread.memory e1))
+          (CLOSED1: Memory.closed (Thread.memory e1))
+          (NORESERVE1: Memory.no_reserve (Thread.memory e1))
+          (PROMISES2: (Local.promises (Thread.local e2)) = Memory.bot):
+      Memory.no_reserve (Thread.memory e2).
     Proof.
       exploit rtc_tau_step_future; eauto. i. des.
       hexploit rtc_tau_step_no_reserve_except; eauto; i.
@@ -424,8 +432,8 @@ Module AThread.
     Lemma bot_program_step_bot
           e e1 e2
           (STEP: program_step e e1 e2)
-          (PROMISES: e1.(Thread.local).(Local.promises) = Memory.bot):
-      e2.(Thread.local).(Local.promises) = Memory.bot.
+          (PROMISES: (Local.promises (Thread.local e1)) = Memory.bot):
+      (Local.promises (Thread.local e2)) = Memory.bot.
     Proof.
       inv STEP. eapply ALocal.bot_program_step_bot; eauto.
     Qed.

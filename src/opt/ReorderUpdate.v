@@ -61,8 +61,8 @@ Inductive reorder_update r1 l1 rmw1 or1 ow1: forall (i2:Instr.t), Prop :=
     reorder_update r1 l1 rmw1 or1 ow1 (Instr.update r2 l2 rmw2 or2 ow2)
 .
 
-Inductive sim_update: forall (st_src:lang.(Language.state)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
-                        (st_tgt:lang.(Language.state)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
+Inductive sim_update: forall (st_src:(Language.state lang)) (lc_src:Local.t) (sc1_src:TimeMap.t) (mem1_src:Memory.t)
+                        (st_tgt:(Language.state lang)) (lc_tgt:Local.t) (sc1_tgt:TimeMap.t) (mem1_tgt:Memory.t), Prop :=
 | sim_update_intro
     r1 l1 from1 to1 vr1 vret1 vw1 releasedr1 releasedw1 rmw1 or1 ow1 i2 rs
     lc1_src sc1_src mem1_src
@@ -131,9 +131,9 @@ Proof.
   }
   i. des.
   econs; [eauto|..]; s; eauto; etrans; eauto.
-Grab Existential Variables.
-{ econs 2. }
+Unshelve.
 { econs. econs 3. }
+{ econs 2. }
 Qed.
 
 Lemma sim_update_cap
@@ -143,10 +143,10 @@ Lemma sim_update_cap
       (MEM1: sim_memory mem1_src mem1_tgt)
       (SIM1: sim_update st_src lc_src sc1_src mem1_src
                         st_tgt lc_tgt sc1_tgt mem1_tgt)
-      (CAP_SRC: Memory.cap lc_src.(Local.promises) mem1_src mem2_src):
+      (CAP_SRC: Memory.cap (Local.promises lc_src) mem1_src mem2_src):
   exists lc'_src mem2_tgt,
     <<MEM2: sim_memory mem2_src mem2_tgt>> /\
-    <<CAP_TGT: Memory.cap lc_tgt.(Local.promises) mem1_tgt mem2_tgt>> /\
+    <<CAP_TGT: Memory.cap (Local.promises lc_tgt) mem1_tgt mem2_tgt>> /\
     <<SIM2: sim_update st_src lc'_src sc1_src mem2_src
                        st_tgt lc_tgt sc1_tgt mem2_tgt>>.
 Proof.
@@ -204,7 +204,7 @@ Proof.
   esplits; eauto.
   econs; [eauto|..]; s; eauto using Memory.future_closed_timemap.
   etrans; eauto.
-Grab Existential Variables.
+Unshelve.
   { auto. }
   { auto. }
 Qed.
@@ -461,9 +461,9 @@ Proof.
     + left. eapply paco9_mon; [apply sim_stmts_nil|]; ss.
       * apply RegFun.add_add. ii. subst. apply REGS. apply RegSet.add_spec. auto.
       * etrans; eauto.
-Grab Existential Variables.
-{ econs 2. }
+Unshelve.
 { econs. econs 3. }
+{ econs 2. }
 Qed.
 
 Lemma sim_update_sim_thread:

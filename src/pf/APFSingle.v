@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Lia.
 Require Import RelationClasses.
 
 From Paco Require Import paco.
@@ -34,10 +34,10 @@ Module APFSingle.
   Inductive step: forall (e:MachineEvent.t) (tid:Ident.t) (c1 c2: Configuration.t), Prop :=
   | step_intro
       e tid c1 lang st1 lc1 st3 lc3 sc3 memory3
-      (TID: IdentMap.find tid c1.(Configuration.threads) = Some (existT _ lang st1, lc1))
-      (STEP: AThread.program_step e (Thread.mk _ st1 lc1 c1.(Configuration.sc) c1.(Configuration.memory)) (Thread.mk _ st3 lc3 sc3 memory3))
+      (TID: IdentMap.find tid (Configuration.threads c1) = Some (existT _ lang st1, lc1))
+      (STEP: AThread.program_step e (Thread.mk _ st1 lc1 (Configuration.sc c1) (Configuration.memory c1)) (Thread.mk _ st3 lc3 sc3 memory3))
       c2
-      (CONFIG: c2 = Configuration.mk (IdentMap.add tid (existT _ _ st3, lc3) c1.(Configuration.threads)) sc3 memory3)
+      (CONFIG: c2 = Configuration.mk (IdentMap.add tid (existT _ _ st3, lc3) (Configuration.threads c1)) sc3 memory3)
     :
       step (ThreadEvent.get_machine_event e) tid c1 c2
   .
@@ -49,7 +49,8 @@ Module APFSingle.
 
   Definition step_all (c0 c1: Configuration.t) :=
     union (fun e => union (step e)) c0 c1.
-  Hint Unfold step_all.
+  #[export]
+  Hint Unfold step_all: core.
 
   Lemma step_long_step
     :
@@ -59,13 +60,13 @@ Module APFSingle.
   Qed.
 
   Lemma tau_steps_single_steps c tid lang st1 lc1 st2 lc2 sc2 mem2
-        (TID: IdentMap.find tid c.(Configuration.threads) = Some (existT _ lang st1, lc1))
-        (STEPS: Relation_Operators.clos_refl_trans_n1 _ (tau (@AThread.program_step _)) (Thread.mk _ st1 lc1 c.(Configuration.sc) c.(Configuration.memory)) (Thread.mk _ st2 lc2 sc2 mem2))
+        (TID: IdentMap.find tid (Configuration.threads c) = Some (existT _ lang st1, lc1))
+        (STEPS: Relation_Operators.clos_refl_trans_n1 _ (tau (@AThread.program_step _)) (Thread.mk _ st1 lc1 (Configuration.sc c) (Configuration.memory c)) (Thread.mk _ st2 lc2 sc2 mem2))
     :
       exists ths',
         (<<STEPS: Relation_Operators.clos_refl_trans_n1 _ (tau_step tid) c (Configuration.mk ths' sc2 mem2)>>) /\
-        ((ths' = IdentMap.add tid (existT _ lang st2, lc2) c.(Configuration.threads)) \/
-         (ths' = c.(Configuration.threads) /\ st1 = st2 /\ lc1 = lc2)).
+        ((ths' = IdentMap.add tid (existT _ lang st2, lc2) (Configuration.threads c)) \/
+         (ths' = (Configuration.threads c) /\ st1 = st2 /\ lc1 = lc2)).
   Proof.
     remember (Thread.mk _ st1 lc1 (Configuration.sc c) (Configuration.memory c)) as th1.
     remember (Thread.mk _ st2 lc2 sc2 mem2) as th2. ginduction STEPS.
