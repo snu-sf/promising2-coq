@@ -254,7 +254,7 @@ Proof.
     exploit sim_store_cap; try apply x0; eauto. i. des.
     esplits; eauto.
   - exploit sim_store_mon; eauto. i.
-    inversion x0. subst. i.
+    inversion x8. subst. i.
     exploit (progress_program_step rs i2 nil); eauto. i. des.
     destruct th2. exploit sim_store_step; eauto.
     { econs 2. eauto. }
