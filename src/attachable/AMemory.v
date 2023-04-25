@@ -184,7 +184,7 @@ Module AMemory.
       condtac; ss. des; congr.
     - erewrite (Memory.split_o _ _ PROMISES).
       erewrite (Memory.split_o _ _ MEM).
-      repeat condtac; ss; des; intuition.
+      repeat condtac; ss; des; intuition auto with *.
     - erewrite (Memory.lower_o _ _ PROMISES).
       erewrite (Memory.lower_o _ _ MEM).
       condtac; ss. des; congr.

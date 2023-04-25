@@ -1867,7 +1867,7 @@ Module Memory.
       condtac; ss. des; congr.
     - erewrite (split_o _ _ PROMISES).
       erewrite (split_o _ _ MEM).
-      repeat condtac; ss; des; intuition.
+      repeat condtac; ss; des; intuition auto with *.
     - erewrite (lower_o _ _ PROMISES).
       erewrite (lower_o _ _ MEM).
       condtac; ss. des; congr.
