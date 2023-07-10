@@ -475,7 +475,10 @@ Proof.
     exploit sim_update_cap; try apply x0; eauto. i. des.
     esplits; eauto.
   - exploit sim_update_mon; eauto. i.
-    inversion x0. subst. i.
+    match goal with
+    | H : sim_update _ _ _ _ _ _ _ _ |- _ => inversion H
+    end.
+    subst. i.
     exploit (progress_program_step (RegFun.add r1 (fst (RegFile.eval_rmw rs rmw1 vr1)) rs) i2 nil); eauto. i. des.
     destruct th2. exploit sim_update_step; eauto.
     { rewrite RMW in *. ss. econs 2. eauto. }
