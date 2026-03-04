@@ -1,6 +1,6 @@
-Require Import Lia.
-Require Import Bool.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,14 +11,14 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
 
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
 
 Set Implicit Arguments.
 
@@ -388,7 +388,7 @@ Module Local.
       + inv PROMISES0. inv SPLIT. auto.
       + inv PROMISES0. inv LOWER. auto.
       + econs.
-    - by inv PROMISE.
+    - sfby inv PROMISE.
   Qed.
 
   Lemma read_step_future
@@ -433,7 +433,7 @@ Module Local.
     { inv WRITE. eapply Memory.promise_op. eauto. }
     s. i. des.
     exploit Memory.write_future; try apply WRITE; eauto. i. des.
-    exploit Memory.write_get2; try apply WRITE; eauto; try by viewtac. i. des.
+    exploit Memory.write_get2; try apply WRITE; eauto; try sfby viewtac. i. des.
     splits; eauto.
     - apply TViewFacts.write_tview_incr. auto.
     - refl.
@@ -502,10 +502,10 @@ Module Local.
     - esplits; eauto; try refl.
     - exploit read_step_future; eauto. i. des.
       esplits; eauto; try refl.
-    - exploit write_step_future; eauto; try by econs. i. des.
+    - exploit write_step_future; eauto; try sfby econs. i. des.
       esplits; eauto; try refl.
     - exploit read_step_future; eauto. i. des.
-      exploit write_step_future; eauto; try by econs. i. des.
+      exploit write_step_future; eauto; try sfby econs. i. des.
       esplits; eauto. etrans; eauto.
     - exploit fence_step_future; eauto. i. des. esplits; eauto; try refl.
     - exploit fence_step_future; eauto. i. des. esplits; eauto; try refl.

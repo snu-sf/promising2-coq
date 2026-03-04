@@ -1,0 +1,32 @@
+opam-version: "2.0"
+synopsis: "Rocq formalization of Promising 2.0: Global Optimizations in Relaxed Memory Concurrency"
+maintainer: ["yeji.han@sf.snu.ac.kr"]
+authors: [
+  "Sung-Hwan Lee"
+  "Minki Cho"
+  "Anton Podkopaev"
+  "Soham Chakraborty"
+  "Chung-Kil Hur"
+  "Ori Lahav"
+  "Viktor Vafeiadis"
+]
+license: "MIT"
+homepage: "https://github.com/snu-sf/promising2-coq"
+bug-reports: "https://github.com/snu-sf/promising2-coq/issues"
+dev-repo: "git+https://github.com/snu-sf/promising2-coq.git"
+depends: [
+  "coq-core" {>= "9.0"}
+  "rocq-stdlib"
+  "coq-sflib" {>= "2.1.0"}
+  "coq-paco" {>= "4.2.3"}
+  "coq-promising-lib" {>= "2.1.0"}
+  "dune" {>= "3.21"}
+]
+pin-depends: [
+  ["coq-promising-lib.2.1.0"
+   "git+https://github.com/snu-sf/promising-lib.git#2.1.0"]
+]
+build: [
+  ["dune" "subst"] {dev}
+  ["dune" "build" "-p" name "-j" jobs "@install"]
+]

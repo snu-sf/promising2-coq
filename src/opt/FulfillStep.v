@@ -1,5 +1,5 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -8,24 +8,24 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
 
-Require Import MemorySplit.
-Require Import MemoryMerge.
+Require Import prop.MemorySplit.
+Require Import prop.MemoryMerge.
 
-Require Import SimMemory.
+Require Import opt.SimMemory.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -116,11 +116,11 @@ Lemma fulfill_write
 Proof.
   inv FULFILL.
   exploit TViewFacts.write_future_fulfill;
-    try exact REL_CLOSED; try exact SC1; eauto; try by apply WF1.
+    try exact REL_CLOSED; try exact SC1; eauto; try sfby apply WF1.
   { apply WF1. eapply Memory.remove_get0. eauto. }
   i. des.
   exploit MemorySplit.remove_promise_remove;
-    try exact REMOVE; eauto; try apply WF1; try by econs; eauto.
+    try exact REMOVE; eauto; try apply WF1; try sfby econs; eauto.
   { econs. inv REL_LE; try apply Time.bot_spec.
     cut (Time.le (View.rlx (View.unwrap (Some lhs)) loc)
                  (View.rlx (View.unwrap (Some rhs)) loc)).
@@ -154,12 +154,12 @@ Lemma promise_fulfill_write
 Proof.
   exploit Local.promise_step_future; eauto. i. des.
   inv PROMISE. inv FULFILL. ss.
-  exploit TViewFacts.write_future_fulfill; try exact REL_WF; eauto; try by apply WF2.
+  exploit TViewFacts.write_future_fulfill; try exact REL_WF; eauto; try sfby apply WF2.
   { eapply Memory.future_closed_opt_view; eauto. }
   { eapply Memory.promise_get2; eauto. inv PROMISE0; ss. }
   s. i. des.
   exploit MemorySplit.remove_promise_remove;
-    try exact REMOVE; eauto; try apply WF2; try by econs; eauto.
+    try exact REMOVE; eauto; try apply WF2; try sfby econs; eauto.
   { econs. inv REL_LE; try apply Time.bot_spec.
     cut (Time.le (View.rlx (View.unwrap (Some lhs)) loc)
                  (View.rlx (View.unwrap (Some rhs)) loc)).

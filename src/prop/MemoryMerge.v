@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -10,11 +10,11 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
 
 Set Implicit Arguments.
 

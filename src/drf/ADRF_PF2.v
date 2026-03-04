@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From Paco Require Import paco.
 From sflib Require Import sflib.
@@ -7,39 +7,39 @@ From sflib Require Import sflib.
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import DataStructure.
-Require Import Time.
-Require Import Event.
+Require Import lang.Time.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import Cover.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Progress.
-Require Import PromiseConsistent.
-Require Import APromiseConsistent.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import prop.Cover.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Progress.
+Require Import prop.PromiseConsistent.
+Require Import attachable.APromiseConsistent.
 From PromisingLib Require Import Loc.
 
-Require Import APF.
-Require Import Race.
-Require Import Behavior.
-Require Import SimMemory.
-Require Import yjtac.
-Require Import Program.
-Require Import Cell.
-Require Import Time.
+Require Import pf.APF.
+Require Import drf.Race.
+Require Import lang.Behavior.
+Require Import opt.SimMemory.
+Require Import drf.yjtac.
+From Stdlib Require Import Program.
+Require Import lang.Cell.
+Require Import lang.Time.
 
-Require Import Pred.
-Require Import AMemory.
-Require Import ALocal.
-Require Import AThread.
-Require Import APredStep.
-Require Import ADRF_PF0.
-Require Import ADRF_PF1.
-Require Import ADRF_PF4.
+Require Import drf.Pred.
+Require Import attachable.AMemory.
+Require Import attachable.ALocal.
+Require Import attachable.AThread.
+Require Import drf.APredStep.
+Require Import drf.ADRF_PF0.
+Require Import drf.ADRF_PF1.
+Require Import drf.ADRF_PF4.
 
 Set Implicit Arguments.
 
@@ -1133,7 +1133,7 @@ Qed.
 
 
 
-Require Import APFPF.
+Require Import attachable.APFPF.
 
 
 Lemma sim_pf_step_minus

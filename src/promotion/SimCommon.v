@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,24 +11,24 @@ From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
-Require Import PromiseConsistent.
-Require Import MemoryMerge.
-Require Import MemoryReorder.
+Require Import prop.PromiseConsistent.
+Require Import prop.MemoryMerge.
+Require Import prop.MemoryReorder.
 
-Require Import FulfillStep.
+Require Import opt.FulfillStep.
 
 Set Implicit Arguments.
 
@@ -686,7 +686,7 @@ Module SimCommon.
     exists released_tgt, msg_tgt = Message.full val released_tgt.
   Proof.
     destruct msg_tgt; ss.
-    destruct released0; try by inv MSG; eauto.
+    destruct released0; try sfby inv MSG; eauto.
     destruct (Memory.get loc from mem_src) as [[? [? []|]]|]; inv MSG; eauto.
   Qed.
 
@@ -1615,7 +1615,7 @@ Module SimCommon.
     esplits.
     - econs; eauto; ss. econs 3; eauto.
       econs. unfold TView.write_released.
-      repeat (condtac; ss); try by (destruct ord; ss).
+      repeat (condtac; ss); try sfby (destruct ord; ss).
       + unfold TimeMap.join.
         unfold LocFun.add. condtac; ss.
         unfold TimeMap.join.
@@ -1693,7 +1693,7 @@ Module SimCommon.
       eapply TViewFacts.write_future0; try eapply WF1_SRC; eauto. }
     { econs.
       revert REL_LE. unfold TView.write_released.
-      condtac; try by (destruct ord; ss). ss.
+      condtac; try sfby (destruct ord; ss). ss.
       repeat condtac; ss. i.
       inv REL_LE. econs.
       exploit View.join_l. i. erewrite LE in x0.
@@ -1747,7 +1747,7 @@ Module SimCommon.
     esplits.
     - econs; eauto; ss. econs 3; eauto.
       econs. unfold TView.write_released.
-      repeat (condtac; ss; try by (destruct ord; ss)).
+      repeat (condtac; ss; try sfby (destruct ord; ss)).
       unfold TimeMap.join.
       unfold LocFun.add. condtac; ss.
       unfold TimeMap.join.
@@ -1853,14 +1853,14 @@ Module SimCommon.
           inv RELEASED1. ss.
       - inv STEP_TGT. econs; ss.
         eapply sim_write_tview; eauto. apply LC1.
-      - by inv STEP_TGT.
+      - sfby inv STEP_TGT.
       - ss.
       - s. ii. inv WRITE_SRC. inv PROMISE0. revert GETP.
         erewrite Memory.remove_o; eauto. condtac; ss.
         erewrite Memory.lower_o; eauto. condtac; ss. i.
         guardH o. guardH o0.
         exploit FULFILLABLE2; eauto. i. des. split.
-        + unfold TView.write_tview. condtac; try by destruct ord; ss.
+        + unfold TView.write_tview. condtac; try sfby destruct ord; ss.
           inv TVIEW. econs; ss.
           * unfold LocFun.add. condtac; ss.
             subst. unfold TimeMap.join, TimeMap.singleton, LocFun.add. condtac; subst; ss.
@@ -1892,10 +1892,10 @@ Module SimCommon.
         destruct ord; ss. }
       exploit write_promise_fulfill; eauto. i. des.
       exploit promise_step_release; try exact STEP1; eauto.
-      { exploit Local.write_step_strong_relaxed; eauto; try by destruct ord. i.
+      { exploit Local.write_step_strong_relaxed; eauto; try sfby destruct ord. i.
         exploit Local.write_step_non_cancel; eauto. }
       { i. destruct kind_tgt; ss. inv STEP_TGT.
-        hexploit RELEASE; try by destruct ord. i.
+        hexploit RELEASE; try sfby destruct ord. i.
         destruct msg3 as [? []|]; eauto.
         inv WRITE. inv PROMISE.
         exploit Memory.split_get0; try exact PROMISES. i. des.
@@ -1904,7 +1904,7 @@ Module SimCommon.
       exploit Local.promise_step_future; try exact STEP_SRC; eauto. i. des.
       exploit Local.promise_step_future; try exact STEP1; eauto. i. des.
       dup STEP_SRC. inv STEP_SRC0. clear CLOSED.
-      exploit Memory.promise_get2; try exact PROMISE; try by inv PROMISE. i. des.
+      exploit Memory.promise_get2; try exact PROMISE; try sfby inv PROMISE. i. des.
       exploit fulfill_step_release; try exact STEP2; eauto.
       { unguard. des; eauto. split; auto. right.
         inv STEP_SRC. inv PROMISE.
@@ -1935,14 +1935,14 @@ Module SimCommon.
           inv RELEASED1. ss.
       - inv STEP_TGT. econs; ss.
         eapply sim_write_tview; eauto. apply LC1.
-      - by inv STEP_TGT.
+      - sfby inv STEP_TGT.
       - ss.
       - s. ii. inv WRITE_SRC. inv PROMISE0. revert GETP.
         erewrite Memory.remove_o; eauto. condtac; ss.
         erewrite Memory.lower_o; eauto. condtac; ss. i.
         guardH o. guardH o0.
         exploit FULFILLABLE2; eauto. i. des. split.
-        + unfold TView.write_tview. condtac; try by destruct ord; ss.
+        + unfold TView.write_tview. condtac; try sfby destruct ord; ss.
           inv TVIEW. econs; ss.
           * unfold LocFun.add. condtac; ss.
             subst. unfold TimeMap.join, TimeMap.singleton, LocFun.add. condtac; subst; ss.
@@ -2122,10 +2122,10 @@ Module SimCommon.
         inv CLOSED1_SRC. exploit CLOSED; eauto. i. des.
         inv MSG_TS. etrans; eauto. econs.
         inv LOCAL2. inv WRITE. inv PROMISE; inv MEM.
-        - by inv ADD.
-        - by inv SPLIT.
-        - by inv LOWER.
-        - by inv REMOVE. }
+        - sfby inv ADD.
+        - sfby inv SPLIT.
+        - sfby inv LOWER.
+        - sfby inv REMOVE. }
       i. des.
       esplits; [econs 4|..]; eauto.
     - exploit fence_step; eauto. i. des.
@@ -2144,7 +2144,7 @@ Module SimCommon.
     forall to, Memory.get l to (Local.promises lc1) = Memory.get l to (Local.promises lc2).
   Proof.
     unfold ThreadEvent.is_accessing_loc in *.
-    inv STEP; ss; try by inv LOCAL.
+    inv STEP; ss; try sfby inv LOCAL.
     - i. inv LOCAL. inv WRITE. ss.
       erewrite (@Memory.remove_o promises2); eauto. condtac; ss.
       + des. subst. ss.
@@ -2173,7 +2173,7 @@ Module SimCommon.
     forall to, Memory.get l to mem1 = Memory.get l to mem2.
   Proof.
     unfold ThreadEvent.is_accessing_loc in *.
-    inv STEP; ss; try by inv LOCAL.
+    inv STEP; ss; try sfby inv LOCAL.
     - i. inv LOCAL. inv WRITE. ss.
       inv PROMISE.
       + erewrite (@Memory.add_o mem2); eauto. condtac; ss.

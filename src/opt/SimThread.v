@@ -3,21 +3,21 @@ From Paco Require Import paco.
 
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
 
 Set Implicit Arguments.
 
@@ -352,7 +352,7 @@ Lemma sim_thread_future
   sim_thread sim_terminal st_src lc_src sc2_src mem2_src st_tgt lc_tgt sc2_tgt mem2_tgt.
 Proof.
   pfold. ii.
-  punfold SIM. exploit SIM; (try by etrans; eauto); eauto.
+  punfold SIM. exploit SIM; (try sfby etrans; eauto); eauto.
 Qed.
 
 

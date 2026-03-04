@@ -1,6 +1,7 @@
-Require Import Lia.
-Require Import RelationClasses.
-Require Import Coq.Lists.ListDec Decidable.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
+From Stdlib.Lists Require Import ListDec.
+From Stdlib Require Import Decidable.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,16 +12,16 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
 
 Set Implicit Arguments.
 
@@ -213,7 +214,7 @@ Module LowerPromises.
     <<STATE: (Thread.state e1) = (Thread.state e2)>> /\
     <<TVIEW: (Local.tview (Thread.local e1)) = (Local.tview (Thread.local e2))>>.
   Proof.
-    induction STEPS; try by (splits; eauto). des.
+    induction STEPS; try sfby (splits; eauto). des.
     inv H. inv USTEP; eauto. splits.
     - econs 2; [|eauto].
       econs; [econs; econs; eauto|].

@@ -1,6 +1,6 @@
-Require Import Lia.
-Require Import RelationClasses.
-Require Import Bool.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import Bool.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,23 +11,23 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
 
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import FulfillStep.
-Require Import MemoryReorder.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.FulfillStep.
+Require Import prop.MemoryReorder.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
 Set Implicit Arguments.
 
@@ -607,7 +607,7 @@ Lemma reorder_promise_write
 Proof.
   guardH NONPF.
   exploit Local.promise_step_future; eauto. i. des.
-  exploit write_promise_fulfill; eauto; try by viewtac. i. des.
+  exploit write_promise_fulfill; eauto; try sfby viewtac. i. des.
   exploit reorder_promise_promise; try exact STEP1; eauto.
   { i. subst.
     exploit Memory.promise_op; eauto. i.
@@ -627,8 +627,8 @@ Proof.
     exploit reorder_promise_fulfill; try exact STEP6; eauto.
     { i. eapply STEP6; eauto. }
     i. des.
-    exploit fulfill_step_future; try exact STEP7; try exact WF0; eauto; try by viewtac. i. des.
-    exploit promise_fulfill_write_exact; try exact STEP4; eauto; try by viewtac.
+    exploit fulfill_step_future; try exact STEP7; try exact WF0; eauto; try sfby viewtac. i. des.
+    exploit promise_fulfill_write_exact; try exact STEP4; eauto; try sfby viewtac.
     { i. hexploit ORD; eauto. i.
       eapply promise_step_nonsynch_loc_inv; try exact STEP1; eauto.
     }
@@ -704,7 +704,7 @@ Proof.
     esplits; eauto.
     right. esplits. econs; eauto.
   - (* read *)
-    exploit reorder_promise_read; try exact LOCAL0; eauto; try by viewtac.
+    exploit reorder_promise_read; try exact LOCAL0; eauto; try sfby viewtac.
     { ii. inv H.
       inv LOCAL0. exploit Memory.promise_get2; eauto.
       { destruct kind, msg; ss. }
@@ -717,7 +717,7 @@ Proof.
     + econs; eauto.
     + right. esplits. econs; eauto.
   - (* write *)
-    exploit reorder_promise_write; try exact LOCAL0; eauto; try by viewtac.
+    exploit reorder_promise_write; try exact LOCAL0; eauto; try sfby viewtac.
     { destruct kind, msg; ss; eauto. repeat condtac; ss; eauto. }
     { destruct kind, msg; ss. }
     { i. subst. split.
@@ -749,7 +749,7 @@ Proof.
       * inv STEP2. left. auto.
       * right. esplits. econs; eauto.
   - (* update *)
-    exploit reorder_promise_read; try exact LOCAL1; eauto; try by viewtac.
+    exploit reorder_promise_read; try exact LOCAL1; eauto; try sfby viewtac.
     { ii. inv H.
       inv LOCAL0. exploit Memory.promise_get2; eauto.
       { destruct kind, msg; ss. }
@@ -762,7 +762,7 @@ Proof.
     }
     i. des.
     exploit Local.read_step_future; eauto. i. des.
-    exploit reorder_promise_write; try exact LOCAL2; eauto; try by viewtac.
+    exploit reorder_promise_write; try exact LOCAL2; eauto; try sfby viewtac.
     { destruct kind, msg; ss; eauto. repeat condtac; ss; eauto. }
     { destruct kind, msg; ss. }
     { i. subst. split.

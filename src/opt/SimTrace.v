@@ -1,31 +1,31 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
 
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import FulfillStep.
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import SimThread.
-Require Import Compatibility.
+Require Import opt.FulfillStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.SimThread.
+Require Import opt.Compatibility.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -129,13 +129,13 @@ Proof.
         inv SIM0; [|done].
         inv EVT. inv STEP_SRC.
         { esplits;
-            (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+            (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
             (try exact SC);
             eauto; ss.
           econs 1.
         }
         { esplits;
-            (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+            (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
             (try exact SC);
             eauto; ss.
           econs 2. econs 2. econs; [|econs 1]; eauto.
@@ -152,7 +152,7 @@ Proof.
       inv EVT. inv STEP_SRC.
       exploit sim_local_read; eauto. i. des.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
         (try exact SC).
       * ss.
       * econs 2. econs 2. econs; [|econs 2]; eauto.
@@ -172,9 +172,9 @@ Proof.
       hexploit sim_local_write_bot;
         (try exact LOCAL);
         (try exact SC);
-        eauto; try refl; try by viewtac. i. des.
+        eauto; try refl; try sfby viewtac. i. des.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
         (try exact SC).
       * ss.
       * econs 2. econs 2. econs; [|econs 3]; eauto.
@@ -198,9 +198,9 @@ Proof.
       hexploit sim_local_write_bot;
         (try exact LOCAL0);
         (try exact SC);
-        eauto; try refl; try by viewtac. i. des.
+        eauto; try refl; try sfby viewtac. i. des.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
         (try exact SC).
       * ss.
       * econs 2. econs 2. econs; [|econs 4]; eauto.
@@ -223,7 +223,7 @@ Proof.
         (try exact SC);
         eauto; try refl. i. des.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
         (try exact SC).
       * ss.
       * econs 2. econs 2. econs; [|econs 5]; eauto.
@@ -246,7 +246,7 @@ Proof.
         (try exact SC);
         eauto; try refl. i. des.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto);
         (try exact SC).
       * ss.
       * econs 2. econs 2. econs; [|econs 6]; eauto.
@@ -269,7 +269,7 @@ Proof.
         eauto. i. des.
       unfold Thread.steps_failure.
       esplits;
-        (try by apply rtc_lang_tau_step_rtc_thread_tau_step; eauto).
+        (try sfby apply rtc_lang_tau_step_rtc_thread_tau_step; eauto).
       econs 2. econs; [|econs 7]; eauto.
 Qed.
 

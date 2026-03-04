@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,23 +11,23 @@ From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Progress.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Progress.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
-Require Import SimCommon.
+Require Import promotion.SimCommon.
 
 Set Implicit Arguments.
 

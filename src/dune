@@ -1,0 +1,6 @@
+(include_subdirs qualified)
+
+(coq.theory
+ (name Promising2)
+ (package rocq-promising2)
+ (theories Stdlib sflib PromisingLib Paco))

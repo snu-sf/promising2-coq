@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From Paco Require Import paco.
 From sflib Require Import sflib.
@@ -7,26 +7,26 @@ From sflib Require Import sflib.
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import DataStructure.
-Require Import Time.
-Require Import Event.
+Require Import lang.Time.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Progress.
-Require Import Behavior.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Progress.
+Require Import lang.Behavior.
 
-Require Import AMemory.
-Require Import ALocal.
-Require Import AThread.
+Require Import attachable.AMemory.
+Require Import attachable.ALocal.
+Require Import attachable.AThread.
 
-Require Import APF.
-Require Import PF.
+Require Import pf.APF.
+Require Import pf.PF.
 
 
 Lemma promise_apromise

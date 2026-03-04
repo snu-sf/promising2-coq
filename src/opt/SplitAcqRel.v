@@ -1,5 +1,5 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -7,27 +7,27 @@ From Paco Require Import paco.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import FulfillStep.
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import Compatibility.
-Require Import SimThread.
+Require Import opt.FulfillStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.Compatibility.
+Require Import opt.SimThread.
 
-Require Import Syntax.
-Require Import Semantics.
-Require Import SplitAcq.
+Require Import while.Syntax.
+Require Import while.Semantics.
+Require Import opt.SplitAcq.
 
 Set Implicit Arguments.
 
@@ -135,8 +135,8 @@ Proof.
   - econs; eauto. s.
     unfold TView.write_tview, TView.write_fence_tview, TView.read_fence_tview. ss.
     econs; ss; repeat (condtac; aggrtac).
-    all: try by destruct ord_src, ord_tgt.
-    all: try by apply WF1_TGT.
+    all: try sfby destruct ord_src, ord_tgt.
+    all: try sfby apply WF1_TGT.
     + etrans; [apply LOCAL1|]. repeat (try condtac; aggrtac).
     + etrans; [apply LOCAL1|]. aggrtac.
       etrans; [apply WF1_TGT|]. etrans; [apply WF1_TGT|]. aggrtac.
@@ -278,7 +278,7 @@ Proof.
     right.
     exploit Local.fence_step_future; eauto. i. des.
     inv STATE. inv INSTR. inv LOCAL1. ss.
-    esplits; (try by econs 1); eauto; ss.
+    esplits; (try sfby econs 1); eauto; ss.
     left. eapply paco9_mon; [apply sim_stmts_nil|]; ss.
 Qed.
 
