@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 
@@ -8,15 +8,15 @@ From PromisingLib Require Import Basic.
 From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import Loc.
 
-Require Import Time.
-Require Import Event.
+Require Import lang.Time.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
 
 Set Implicit Arguments.
 
@@ -277,7 +277,7 @@ Module Configuration.
     - exploit THREADS; ss; eauto. i.
       exploit Thread.rtc_tau_step_future; eauto. s. i. des.
       exploit Thread.step_future; eauto. s. i. des.
-      splits; [|by etrans; eauto|by etrans; eauto].
+      splits; [| sfby etrans; eauto| sfby etrans; eauto].
       econs; ss. econs.
       + i. simplify.
         * exploit THREADS; try apply TH1; eauto. i. des.
@@ -297,7 +297,7 @@ Module Configuration.
     - exploit THREADS; ss; eauto. i.
       exploit Thread.rtc_tau_step_future; eauto. s. i. des.
       exploit Thread.step_future; eauto. s. i. des.
-      splits; [|by etrans; eauto|by etrans; eauto].
+      splits; [| sfby etrans; eauto| sfby etrans; eauto].
       econs; ss. econs.
       + i. simplify.
         * exploit THREADS; try apply TH1; eauto. i. des.

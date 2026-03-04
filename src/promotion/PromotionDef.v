@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,20 +11,20 @@ From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
 Set Implicit Arguments.
 
@@ -147,7 +147,7 @@ Lemma promote_stmt_loc_free l r stmt:
   loc_free_stmts l (promote_stmt l r stmt).
 Proof.
   revert stmt. apply Stmt.ind; i.
-  - destruct i; ss; try by repeat (econs; ss).
+  - destruct i; ss; try sfby repeat (econs; ss).
     + condtac; ss; repeat econs; ss.
     + condtac; ss; repeat econs; ss.
     + destruct rmw; ss.
@@ -268,7 +268,7 @@ Lemma loc_free_step_is_accessing_loc
       (STEP: State.step (ThreadEvent.get_program_event e) st1 st2):
   ~ ThreadEvent.is_accessing_loc l e.
 Proof.
-  inv STEP; try (by destruct e); ss.
+  inv STEP; try (sfby destruct e); ss.
   inv INSTR; destruct e; ss.
   - inv H2. inv LOCFREE. inv H1. ss.
   - inv H2. inv LOCFREE. inv H1. ss.

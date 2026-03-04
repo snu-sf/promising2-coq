@@ -1,6 +1,6 @@
-Require Import RelationClasses.
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -9,24 +9,24 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import DenseOrder.
-Require Import Time.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import MemoryDomain.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.MemoryDomain.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import MemorySplit.
-Require Import MemoryMerge.
-Require Import Cover.
-Require Import SimMemory.
+Require Import prop.MemorySplit.
+Require Import prop.MemoryMerge.
+Require Import prop.Cover.
+Require Import opt.SimMemory.
 
 Set Implicit Arguments.
 
@@ -115,7 +115,7 @@ Module SimPromises.
   Proof.
     inv PROMISE_TGT.
     - exploit (@Memory.add_exists mem1_src loc from to msg);
-        try by inv MEM; inv ADD.
+        try sfby inv MEM; inv ADD.
       { eapply covered_disjoint.
         - apply SIM1.
         - inv MEM. inv ADD. auto. }
@@ -172,7 +172,7 @@ Module SimPromises.
           condtac; ss. inv INV1. eapply COMPLETE; eauto.
     - exploit Memory.split_get0; try exact PROMISES; eauto. i. des.
       exploit (@Memory.split_exists promises1_src loc from to ts3 msg (none_if loc ts3 pview msg3));
-        try by inv PROMISES; inv SPLIT.
+        try sfby inv PROMISES; inv SPLIT.
       { apply INV1. eauto. }
       i. des.
       exploit Memory.split_exists_le; try apply LE1_SRC; eauto. i. des.
@@ -207,7 +207,7 @@ Module SimPromises.
           repeat condtac; ss. inv INV1. eapply COMPLETE; eauto.
     - exploit Memory.lower_get0; try exact PROMISES; eauto. i. des.
       exploit (@Memory.lower_exists promises1_src loc from to (none_if loc to pview msg0) (none_if loc to pview msg));
-        try by inv MEM; inv LOWER.
+        try sfby inv MEM; inv LOWER.
       { apply INV1. eauto. }
       { none_if_tac; econs; ss.
         inv MEM. inv LOWER. inv MSG_WF. ss. }

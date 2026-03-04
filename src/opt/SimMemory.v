@@ -1,6 +1,6 @@
-Require Import RelationClasses.
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -9,20 +9,20 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import DenseOrder.
-Require Import Time.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import Cover.
+Require Import prop.Cover.
 
 Set Implicit Arguments.
 
@@ -126,7 +126,7 @@ Lemma sim_memory_get_message_same_kind
       (ITV_TGT: Interval.mem (from_tgt, to_tgt) ts):
   message_same_kind msg_src msg_tgt.
 Proof.
-  destruct msg_src, msg_tgt; try by econs.
+  destruct msg_src, msg_tgt; try sfby econs.
   - inv SIM. rewrite <- RESERVE in GET_TGT.
     exploit Memory.get_disjoint; [exact GET_SRC|exact GET_TGT|..]. i. des; try congr.
     exfalso. apply (x0 ts); auto.
@@ -340,7 +340,7 @@ Lemma sim_memory_add
 Proof.
   inv SIM. econs; i.
   - rewrite add_covered; [|eauto]. rewrite (@add_covered mem2_tgt); [|eauto].
-    econs; i; des; (try by right).
+    econs; i; des; (try sfby right).
     + left. eapply COVER. eauto.
     + left. eapply COVER. eauto.
   - revert GET. erewrite Memory.add_o; eauto. condtac; ss.

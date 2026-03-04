@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,32 +11,32 @@ From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Behavior.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Behavior.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
-Require Import PromiseConsistent.
-Require Import SimpleSimulation.
+Require Import prop.PromiseConsistent.
+Require Import prop.SimpleSimulation.
 
-Require Import AMemory.
-Require Import ALocal.
-Require Import ATView.
-Require Import AThread.
+Require Import attachable.AMemory.
+Require Import attachable.ALocal.
+Require Import attachable.ATView.
+Require Import attachable.AThread.
 
-Require Import PFCommon.
-Require Import PFStep.
-Require Import PFCertify.
-Require Import Invariant.
+Require Import invariant.PFCommon.
+Require Import invariant.PFStep.
+Require Import invariant.PFCertify.
+Require Import invariant.Invariant.
 
 Set Implicit Arguments.
 
@@ -402,7 +402,7 @@ Section AssertInsertion.
                             sc memory)).
         { econs 1; eauto. }
         esplits; [econs 2; eauto|].
-        right. apply CIH. econs; ss; try by (inv SIM0; ss).
+        right. apply CIH. econs; ss; try sfby (inv SIM0; ss).
         + eapply configuration_step_sem; try exact CSTEP; eauto.
         + repeat rewrite Threads.tids_add.
           repeat rewrite IdentSet.add_mem; ss.
@@ -581,7 +581,7 @@ Section AssertInsertion.
           inv SIM6. rewrite STATE0 in *.
           eapply ASSERT; eauto.
         }
-        inv STEP_SRC0. destruct pf0; try by (inv STEP0; inv STEP1).
+        inv STEP_SRC0. destruct pf0; try sfby (inv STEP0; inv STEP1).
         esplits; eauto.
       - (* normal certification *)
         right.
@@ -643,7 +643,7 @@ Section AssertInsertion.
       - econs 2. econs 2; try exact x; try exact H; eauto.
     }
     esplits; eauto.
-    right. apply CIH. econs; ss; try by (inv SIM0; ss).
+    right. apply CIH. econs; ss; try sfby (inv SIM0; ss).
     - inv CSTEP; ss.
       + repeat rewrite <- H. ss.
       + eapply configuration_step_sem; try exact STEP0; eauto.

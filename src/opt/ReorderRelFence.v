@@ -1,5 +1,5 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -8,29 +8,29 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Progress.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Progress.
 
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import Compatibility.
-Require Import SimThread.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.Compatibility.
+Require Import opt.SimThread.
 
-Require Import FulfillStep.
-Require Import ReorderStep.
+Require Import opt.FulfillStep.
+Require Import opt.ReorderStep.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -110,7 +110,7 @@ Proof.
   esplits; eauto.
   - econs; eauto. eapply TViewFacts.readable_mon; eauto. apply TVIEW.
   - econs; eauto. inv TVIEW. ss. econs; s.
-    + i. unfold LocFun.find. etrans; [by apply WF1_SRC|].
+    + i. unfold LocFun.find. etrans; [sfby apply WF1_SRC|].
       eauto using View.join_l.
     + repeat apply View.join_le; ss.
       * unfold View.singleton_ur_if. repeat condtac; viewtac.
@@ -156,11 +156,11 @@ Proof.
      (TView.write_released (Local.tview lc1_tgt) sc2_tgt loc to releasedm_tgt ord_tgt)).
   { unguardH PVIEW. des.
     - unfold TView.write_released.
-      condtac; [|by econs].
+      condtac; [|sfby econs].
       condtac; cycle 1.
-      { by destruct ord_src, ord_tgt; inv PVIEW; inv COND0. }
+      { sfby destruct ord_src, ord_tgt; inv PVIEW; inv COND0. }
       econs. unfold TView.write_tview. s.
-      repeat (condtac; aggrtac); try by apply WF1_TGT.
+      repeat (condtac; aggrtac); try sfby apply WF1_TGT.
       + rewrite <- View.join_r. rewrite <- ? View.join_l. apply LOCAL1.
       + rewrite <- View.join_r. rewrite <- ? View.join_l.
         etrans; [|apply LOCAL1]. apply WF1_SRC.
@@ -190,7 +190,7 @@ Proof.
       { subst. unfold LocFun.find. condtac; apply View.join_le; viewtac.
         etrans; eauto. refl.
       }
-      unfold LocFun.find. etrans; [by apply WF1_SRC|].
+      unfold LocFun.find. etrans; [sfby apply WF1_SRC|].
       eauto using View.join_l.
     + apply View.join_le; viewtac.
     + apply View.join_le; viewtac.
@@ -254,11 +254,11 @@ Proof.
   { destruct (Ordering.le ord_tgt Ordering.strong_relaxed) eqn:X.
     - right. unguardH ORD_TGT. destruct ord_tgt; des; ss.
     - left. splits.
-      { by destruct ord_tgt; inv X. }
+      { sfby destruct ord_tgt; inv X. }
       hexploit ORD0.
-      { by destruct ord_tgt; inv X. }
+      { sfby destruct ord_tgt; inv X. }
       exploit Local.write_step_strong_relaxed; eauto.
-      { by destruct ord_tgt. }
+      { sfby destruct ord_tgt. }
       i. eapply sim_local_promise_not_lower; try exact STEP1; eauto.
   }
   exploit sim_local_fulfill_relfenced; try apply STEP2;
@@ -272,7 +272,7 @@ Proof.
   i. des. esplits; eauto.
   - unguardH PVIEW. des.
     + unfold SimPromises.none_if_released in *. rewrite PVIEW0 in *. ss.
-    + subst. unfold TView.write_released at 1. condtac; [|by econs].
+    + subst. unfold TView.write_released at 1. condtac; [|sfby econs].
       destruct ord_src, ord_tgt; inv ORD; inv PVIEW; inv COND.
   - etrans; eauto.
 Qed.
@@ -403,7 +403,7 @@ Proof.
   econs; s.
   - unfold TView.read_fence_tview. condtac; ss.
     unfold TView.write_fence_tview. econs; repeat (condtac; aggrtac).
-  - econs; try by apply PROMISES.
+  - econs; try sfby apply PROMISES.
     + inv PROMISES. ii. exploit LE; eauto.
       SimPromises.none_if_tac.
       exploit RELEASE; eauto. s. i. subst. ss.
@@ -494,7 +494,7 @@ Proof.
   pcofix CIH. i. pfold. ii. ss. splits; ss; ii.
   - right. inv TERMINAL_TGT. inv PR; ss.
   - inv PR.
-    exploit SimPromises.cap; (try by apply LOCALF); eauto using local_relfenced_wf.
+    exploit SimPromises.cap; (try sfby apply LOCALF); eauto using local_relfenced_wf.
   - right. inv PR.
     esplits; eauto.
     eapply sim_local_memory_bot; eauto.
@@ -560,7 +560,7 @@ Proof.
   - (* write *)
     guardH ORD2.
     hexploit sim_local_write_relfenced; try exact SC; eauto;
-      (try refl); (try by econs). i. des.
+      (try refl); (try sfby econs). i. des.
     esplits.
     + ss.
     + etrans; [eauto|]. econs 2; [|refl]. econs.
@@ -579,7 +579,7 @@ Proof.
     exploit sim_local_read_relfenced; eauto; try refl. i. des.
     exploit Local.read_step_future; eauto. i. des.
     hexploit sim_local_write_relfenced; try exact SC; eauto;
-      (try refl); (try by econs). i. des.
+      (try refl); (try sfby econs). i. des.
     esplits.
     + ss.
     + etrans; [eauto|]. econs 2; [|refl]. econs.

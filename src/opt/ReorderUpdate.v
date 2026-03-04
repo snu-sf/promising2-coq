@@ -1,34 +1,34 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
 
 From PromisingLib Require Import Basic.
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
-Require Import Progress.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
+Require Import lang.Progress.
 
-Require Import FulfillStep.
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import Compatibility.
-Require Import SimThread.
+Require Import opt.FulfillStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.Compatibility.
+Require Import opt.SimThread.
 
-Require Import ReorderStep.
-Require Import ProgressStep.
+Require Import opt.ReorderStep.
+Require Import opt.ProgressStep.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -120,7 +120,7 @@ Proof.
   { ss; des; subst. econs; [eauto|..]; s; eauto; etrans; eauto. }
   exploit future_fulfill_step; try exact FULFILL; eauto. i. des.
   exploit sim_local_fulfill_bot; try apply x0; try exact LOCAL0; try refl;
-    try exact WF0; try by viewtac.
+    try exact WF0; try sfby viewtac.
   { econs.
     - apply WF2.
     - eapply TView.future_weak_closed; eauto. apply WF2.
@@ -167,11 +167,11 @@ Proof.
     etrans; eauto.
   }
   exploit Local.read_step_future; eauto. i. des.
-  exploit fulfill_step_future; eauto; try by viewtac. i. des.
+  exploit fulfill_step_future; eauto; try sfby viewtac. i. des.
   exploit future_read_step; try exact READ; eauto. i. des.
   exploit Local.read_step_future; eauto. i. des.
-  exploit future_fulfill_step; try exact FULFILL; eauto; try refl; try by viewtac. i. des.
-  exploit fulfill_step_future; try apply x1; try exact WF1; eauto; try by viewtac.
+  exploit future_fulfill_step; try exact FULFILL; eauto; try refl; try sfby viewtac. i. des.
+  exploit fulfill_step_future; try apply x1; try exact WF1; eauto; try sfby viewtac.
   { econs.
     - apply WF2.
     - eapply TView.future_weak_closed; eauto. apply WF2.
@@ -235,8 +235,8 @@ Proof.
       + eauto.
       + right. econs; [eauto|..]; s; eauto. etrans; eauto.
     - (* load *)
-      exploit sim_local_read; (try by etrans; eauto); eauto; try refl. i. des.
-      exploit reorder_read_read; try exact READ; try exact STEP_SRC; try by eauto. i. des.
+      exploit sim_local_read; (try sfby etrans; eauto); eauto; try refl. i. des.
+      exploit reorder_read_read; try exact READ; try exact STEP_SRC; try sfby eauto. i. des.
       esplits.
       + ss.
       + econs 2; [|econs 1]. econs.
@@ -256,8 +256,8 @@ Proof.
         * apply RegSet.add_spec. auto.
     - (* update-load *)
       guardH ORDW2.
-      exploit sim_local_read; (try by etrans; eauto); eauto; try refl. i. des.
-      exploit reorder_read_read; try exact READ; try exact STEP_SRC; try by eauto. i. des.
+      exploit sim_local_read; (try sfby etrans; eauto); eauto; try refl. i. des.
+      exploit reorder_read_read; try exact READ; try exact STEP_SRC; try sfby eauto. i. des.
       esplits.
       + ss.
       + econs 2; [|econs 1]. econs.
@@ -283,8 +283,8 @@ Proof.
     - (* store *)
       guardH ORD2.
       hexploit sim_local_write_bot; try exact LOCAL1; try exact SC;
-        try exact WF2; try refl; eauto; try by viewtac. i. des.
-      exploit reorder_read_write; try exact READ; try exact STEP_SRC; eauto; try by viewtac. i. des.
+        try exact WF2; try refl; eauto; try sfby viewtac. i. des.
+      exploit reorder_read_write; try exact READ; try exact STEP_SRC; eauto; try sfby viewtac. i. des.
       esplits.
       + ss.
       + econs 2; [|econs 1]. econs.
@@ -339,7 +339,7 @@ Proof.
     try (inv STATE; inv INSTR; inv REORDER); ss.
   - (* promise *)
     exploit Local.promise_step_future; eauto. i. des.
-    exploit sim_local_promise; try apply LOCAL0; (try by etrans; eauto); eauto. i. des.
+    exploit sim_local_promise; try apply LOCAL0; (try sfby etrans; eauto); eauto. i. des.
     exploit reorder_update_promise; try exact READ; try exact FULFILL; try exact STEP_SRC; eauto. i. des.
     exploit Local.promise_step_future; eauto. i. des.
     esplits.
@@ -354,7 +354,7 @@ Proof.
       * eapply Memory.future_closed_timemap; eauto.
   - (* load *)
     apply RegSet.disjoint_add in REGS. des.
-    exploit sim_local_read; try apply LOCAL0; (try by etrans; eauto); eauto; try refl. i. des.
+    exploit sim_local_read; try apply LOCAL0; (try sfby etrans; eauto); eauto; try refl. i. des.
     exploit reorder_update_read; try exact FULFILL; try exact READ; try exact STEP_SRC; eauto. i. des.
     exploit Local.read_step_future; try exact STEP1; eauto. i. des.
     exploit Local.read_step_future; try exact STEP2; eauto. i. des.
@@ -377,7 +377,7 @@ Proof.
   - (* update-load *)
     guardH ORDW2.
     apply RegSet.disjoint_add in REGS. des.
-    exploit sim_local_read; try apply LOCAL0; (try by etrans; eauto); eauto; try refl. i. des.
+    exploit sim_local_read; try apply LOCAL0; (try sfby etrans; eauto); eauto; try refl. i. des.
     exploit reorder_update_read; try exact FULFILL; try exact READ; try exact STEP_SRC; eauto. i. des.
     exploit Local.read_step_future; try exact STEP1; eauto. i. des.
     exploit Local.read_step_future; try exact STEP2; eauto. i. des.
@@ -404,12 +404,12 @@ Proof.
   - (* store *)
     guardH ORD2.
     apply RegSet.disjoint_add in REGS. des.
-    hexploit sim_local_write_bot; try exact LOCAL1; try exact LOCAL; try exact SC; try exact WF0; try refl; eauto; try by viewtac. i. des.
-    hexploit reorder_update_write; try exact READ; try exact FULFILL; try exact STEP_SRC; eauto; try by viewtac.
+    hexploit sim_local_write_bot; try exact LOCAL1; try exact LOCAL; try exact SC; try exact WF0; try refl; eauto; try sfby viewtac. i. des.
+    hexploit reorder_update_write; try exact READ; try exact FULFILL; try exact STEP_SRC; eauto; try sfby viewtac.
     { ii. subst. inv FULFILL. eapply Time.lt_strorder. eauto. }
     i. des.
-    exploit Local.write_step_future; try exact STEP1; eauto; try by viewtac. i. des.
-    exploit Local.read_step_future; try exact STEP2; eauto; try by viewtac. i. des.
+    exploit Local.write_step_future; try exact STEP1; eauto; try sfby viewtac. i. des.
+    exploit Local.read_step_future; try exact STEP2; eauto; try sfby viewtac. i. des.
     exploit fulfill_write; eauto. i. des.
     esplits.
     + ss.
@@ -430,11 +430,11 @@ Proof.
     guardH ORDW2.
     apply RegSet.disjoint_add in REGS. des.
     symmetry in REGS0. apply RegSet.disjoint_add in REGS0. des.
-    exploit fulfill_step_future; try exact FULFILL; eauto; try by viewtac. i. des.
-    exploit Local.read_step_future; try exact LOCAL1; eauto; try by viewtac. i. des.
-    exploit sim_local_read; try exact LOCAL1; (try by etrans; eauto); eauto; try refl. i. des.
+    exploit fulfill_step_future; try exact FULFILL; eauto; try sfby viewtac. i. des.
+    exploit Local.read_step_future; try exact LOCAL1; eauto; try sfby viewtac. i. des.
+    exploit sim_local_read; try exact LOCAL1; (try sfby etrans; eauto); eauto; try refl. i. des.
     exploit Local.read_step_future; try exact STEP_SRC; eauto. i. des.
-    hexploit sim_local_write_bot; try exact LOCAL2; eauto; try refl; try by viewtac. i. des.
+    hexploit sim_local_write_bot; try exact LOCAL2; eauto; try refl; try sfby viewtac. i. des.
     hexploit ReorderStep.reorder_update_update; try exact FULFILL; try exact READ; try exact STEP_SRC0; eauto.
     { ii. subst. inv FULFILL. eapply Time.lt_strorder. eauto. }
     i. des.
@@ -472,10 +472,10 @@ Proof.
   pcofix CIH. i. pfold. ii. ss. splits; ss; ii.
   - inv TERMINAL_TGT. inv PR; ss.
   - exploit sim_update_mon; eauto. i. des.
-    exploit sim_update_cap; try apply x0; eauto. i. des.
+    exploit sim_update_cap; try apply x8; eauto. i. des.
     esplits; eauto.
   - exploit sim_update_mon; eauto. i.
-    inversion x0. subst. i.
+    inversion x8. subst. i.
     exploit (progress_program_step (RegFun.add r1 (fst (RegFile.eval_rmw rs rmw1 vr1)) rs) i2 nil); eauto. i. des.
     destruct th2. exploit sim_update_step; eauto.
     { rewrite RMW in *. ss. econs 2. eauto. }
@@ -497,13 +497,13 @@ Proof.
         inv STEP_SRC; eauto. econs 2; eauto. econs.
         { econs. eauto. }
         { etrans; eauto.
-          destruct e; by inv STEP; inv STATE; inv INSTR; inv REORDER. }
+          destruct e; sfby inv STEP; inv STATE; inv INSTR; inv REORDER. }
       * right. esplits; [|eauto].
         etrans; eauto. etrans; [|eauto].
         inv STEP_SRC; eauto. econs 2; eauto. econs.
         { econs. eauto. }
         { etrans; eauto.
-          destruct e; by inv STEP; inv STATE; inv INSTR; inv REORDER. }
+          destruct e; sfby inv STEP; inv STATE; inv INSTR; inv REORDER. }
     + inv SIM. inv STEP; inv STATE.
   - exploit sim_update_mon; eauto. i. des.
     exploit sim_update_step; eauto. i. des; eauto.

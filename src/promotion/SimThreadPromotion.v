@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -11,24 +11,24 @@ From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
-Require Import PromotionDef.
-Require Import SimCommon.
-Require Import PromotionProgress.
+Require Import promotion.PromotionDef.
+Require Import promotion.SimCommon.
+Require Import promotion.PromotionProgress.
 
 Set Implicit Arguments.
 
@@ -192,7 +192,7 @@ Module SimThreadPromotion.
     { exploit Memory.add_get0; try exact x0. i. des.
       exploit Memory.max_ts_spec; try exact GET0. i. des.
       inv MAX; ss.
-      revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try by des; ss.
+      revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try sfby des; ss.
       guardH o. i.
       exploit Memory.max_ts_spec; try exact GET1. i. des.
       specialize (Time.incr_spec (Memory.max_ts l mem1_src)). i.
@@ -276,12 +276,12 @@ Module SimThreadPromotion.
         etrans; eauto. econs; i.
         * revert GET_SRC. erewrite Memory.remove_o; eauto. condtac; ss. i.
           esplits; eauto. refl.
-        * erewrite Memory.remove_o; eauto. condtac; ss; try by des; ss.
+        * erewrite Memory.remove_o; eauto. condtac; ss; try sfby des; ss.
           esplits; eauto. refl.
       + etrans; eauto. econs; i.
         * revert GET_SRC. erewrite Memory.remove_o; eauto. condtac; ss. i.
           esplits; eauto. refl.
-        * erewrite Memory.remove_o; eauto. condtac; ss; try by des; ss.
+        * erewrite Memory.remove_o; eauto. condtac; ss; try sfby des; ss.
           esplits; eauto. refl.
       + ii. revert GETP.
         erewrite Memory.remove_o; eauto. condtac; ss. i. guardH o.
@@ -411,7 +411,7 @@ Module SimThreadPromotion.
     { (* fa *)
       inv STATE. ss. subst.
       inv STEP_TGT. inv STATE. inv INSTR.
-      destruct e_tgt; ss; try by inv LOCAL0.
+      destruct e_tgt; ss; try sfby inv LOCAL0.
       exploit PromotionProgress.progress_read; try eapply LATEST; eauto.
       { destruct released; eauto using View.bot_spec. }
       i. des.
@@ -438,7 +438,7 @@ Module SimThreadPromotion.
           erewrite Memory.remove_o; eauto. condtac; ss.
           erewrite Memory.add_o; eauto. condtac; ss. i.
           guardH o. guardH o0.
-          destruct (Loc.eq_dec loc l); try by subst; congr.
+          destruct (Loc.eq_dec loc l); try sfby subst; congr.
           exploit FULFILLABLE; eauto. i. des. split.
           * unfold tview_released_le_loc in *.
             unfold TView.write_tview. ss.
@@ -457,7 +457,7 @@ Module SimThreadPromotion.
           exploit Memory.add_get0; try exact MEM0. i. des.
           replace (Memory.max_ts l mem0) with (Time.incr (Memory.max_ts l mem1_src)); eauto.
           exploit Memory.max_ts_spec; try exact GET0. i. des. inv MAX; ss.
-          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try by des.
+          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try sfby des.
           guardH o. i.
           exploit Memory.max_ts_spec; try exact GET1. i. des.
           exploit TimeFacts.lt_le_lt; try exact H; try exact MAX. i.
@@ -492,7 +492,7 @@ Module SimThreadPromotion.
     { (* cas_success2 *)
       inv STATE. ss. subst.
       inv STEP_TGT. inv STATE. inv INSTR.
-      destruct e_tgt; ss; try by inv LOCAL0.
+      destruct e_tgt; ss; try sfby inv LOCAL0.
       exploit PromotionProgress.progress_read; try eapply LATEST; eauto.
       { destruct released; eauto using View.bot_spec. }
       i. des.
@@ -518,7 +518,7 @@ Module SimThreadPromotion.
           erewrite Memory.remove_o; eauto. condtac; ss.
           erewrite Memory.add_o; eauto. condtac; ss. i.
           guardH o. guardH o0.
-          destruct (Loc.eq_dec loc l); try by subst; congr.
+          destruct (Loc.eq_dec loc l); try sfby subst; congr.
           exploit FULFILLABLE; eauto. i. des. split.
           * unfold tview_released_le_loc in *.
             unfold TView.write_tview. ss.
@@ -537,7 +537,7 @@ Module SimThreadPromotion.
           exploit Memory.add_get0; try exact MEM0. i. des.
           replace (Memory.max_ts l mem0) with (Time.incr (Memory.max_ts l mem1_src)); eauto.
           exploit Memory.max_ts_spec; try exact GET0. i. des. inv MAX; ss.
-          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try by des.
+          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try sfby des.
           guardH o. i.
           exploit Memory.max_ts_spec; try exact GET1. i. des.
           exploit TimeFacts.lt_le_lt; try exact H; try exact MAX. i.
@@ -554,7 +554,7 @@ Module SimThreadPromotion.
     { (* cas_fail *)
       inv STATE. ss. subst.
       inv STEP_TGT. inv STATE. inv INSTR.
-      destruct e_tgt; ss; try by inv LOCAL0.
+      destruct e_tgt; ss; try sfby inv LOCAL0.
       exploit PromotionProgress.progress_read; try eapply LATEST; eauto.
       { destruct released; eauto using View.bot_spec. }
       i. des. esplits.
@@ -591,7 +591,7 @@ Module SimThreadPromotion.
     { (* load *)
       rewrite STMTS_TGT in *.
       inv STEP_TGT. inv STATE. inv INSTR.
-      destruct e_tgt; ss; try by inv LOCAL0.
+      destruct e_tgt; ss; try sfby inv LOCAL0.
       exploit PromotionProgress.progress_read; try eapply LATEST; eauto.
       { destruct released; eauto using View.bot_spec. }
       i. des. esplits.
@@ -615,7 +615,7 @@ Module SimThreadPromotion.
     { (* store *)
       rewrite STMTS_TGT in *.
       inv STEP_TGT. inv STATE. inv INSTR.
-      destruct e_tgt; ss; try by inv LOCAL0.
+      destruct e_tgt; ss; try sfby inv LOCAL0.
       exploit PromotionProgress.progress_write; try exact WF1_SRC; try exact SC1_SRC; eauto.
       { ss. apply View.bot_spec. }
       i. des. esplits.
@@ -635,7 +635,7 @@ Module SimThreadPromotion.
           erewrite Memory.remove_o; eauto. condtac; ss.
           erewrite Memory.add_o; eauto. condtac; ss. i.
           guardH o. guardH o0.
-          destruct (Loc.eq_dec loc l); try by subst; congr.
+          destruct (Loc.eq_dec loc l); try sfby subst; congr.
           exploit FULFILLABLE; eauto. i. des. split.
           * unfold tview_released_le_loc in *.
             unfold TView.write_tview. ss.
@@ -650,7 +650,7 @@ Module SimThreadPromotion.
           { inv REGFREE. inv H1. ss. }
           replace (Memory.max_ts l mem0) with (Time.incr (Memory.max_ts l mem1_src)); eauto.
           exploit Memory.max_ts_spec; try exact GET0. i. des. inv MAX; ss.
-          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try by des.
+          revert GET1. erewrite Memory.add_o; eauto. condtac; ss; try sfby des.
           guardH o. i.
           exploit Memory.max_ts_spec; try exact GET1. i. des.
           exploit TimeFacts.lt_le_lt; try exact H; try exact MAX. i.
@@ -747,7 +747,7 @@ Module SimThreadPromotion.
       exploit List.app_inv_tail; try exact STMTS_TGT. i.
       rewrite promote_stmts_cons in STATE.
       rewrite x0 in STATE. ss.
-      exploit promote_stmts_step; try eapply STATE; eauto; try by inv REGFREE. i. des.
+      exploit promote_stmts_step; try eapply STATE; eauto; try sfby inv REGFREE. i. des.
       esplits.
       - econs 2. econs; try exact STEP_SRC.
         rewrite EVENT2. exact STEP_SRC0.
@@ -796,7 +796,7 @@ Module SimThreadPromotion.
           * inv LOCAL2. inv WRITE. eapply promise_eq_mem; eauto.
         + i. rewrite <- ThreadEvent.eq_program_event_eq_loc in *; eauto.
           unfold ThreadEvent.is_accessing_loc in *.
-          inv STEP_SRC; ss; try by inv LOCAL1; ss.
+          inv STEP_SRC; ss; try sfby inv LOCAL1; ss.
           * inv LOCAL1. inv WRITE. ss.
             erewrite Memory.remove_o; eauto. condtac; ss.
             erewrite <- promise_eq_promises; eauto.
@@ -808,7 +808,7 @@ Module SimThreadPromotion.
           inv SIM1. ss. revert GET.
           rewrite <- ThreadEvent.eq_program_event_eq_loc in *; eauto.
           unfold ThreadEvent.is_accessing_loc in *.
-          inv STEP_SRC; ss; eauto; try by inv LOCAL1; ss; eauto.
+          inv STEP_SRC; ss; eauto; try sfby inv LOCAL1; ss; eauto.
           * inv LOCAL2. inv WRITE. ss.
             erewrite <- promise_eq_mem; eauto.
           * inv LOCAL2. inv LOCAL3. inv WRITE. ss.
@@ -1010,7 +1010,7 @@ Module SimThreadPromotion.
       + econs 2; eauto.
       + ss.
       + ss.
-    - inv STEP_SRC; try by (ss; congr).
+    - inv STEP_SRC; try sfby (ss; congr).
       rewrite <- EVENT in H.
       destruct pf0; cycle 1.
       { inv STEP1. inv STEP2. ss. }
@@ -1189,7 +1189,7 @@ Module SimThreadPromotion.
     - left. unfold Thread.steps_failure in *. des.
       exploit sim_thread_reserve_plus_step; eauto. s. i. des.
       destruct e_src0; ss. inv STEP_SRC.
-      destruct pf; try by (inv STEP; inv STEP0).
+      destruct pf; try sfby (inv STEP; inv STEP0).
       esplits; eauto.
     - right.
       exploit sim_thread_reserve_rtc_tau_step; try exact STEPS; eauto. i. des.

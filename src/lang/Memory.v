@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 
@@ -9,10 +9,10 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
 
 Set Implicit Arguments.
 
@@ -1401,7 +1401,7 @@ Module Memory.
     closed mem2.
   Proof.
     inv FUTURE. inv CLOSED. econs; i.
-    - destruct msg; try by (splits; econs).
+    - destruct msg; try sfby (splits; econs).
       destruct (get loc to mem1) as [[f []]|] eqn:GET1.
       + exploit CLOSED0; eauto. i. des.
         exploit SOUND; eauto. i. des.
@@ -1978,7 +1978,7 @@ Module Memory.
     { eapply promise_op_promise. eauto. }
     hexploit op_future; eauto.
     { eapply promise_op. eauto. }
-    { by inv PROMISE. }
+    { sfby inv PROMISE. }
     i. des.
     hexploit promise_reserve_wf; eauto. i. des.
     splits; auto.

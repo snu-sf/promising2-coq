@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -10,27 +10,27 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
-Require Import AMemory.
-Require Import ALocal.
-Require Import ATView.
-Require Import AThread.
+Require Import attachable.AMemory.
+Require Import attachable.ALocal.
+Require Import attachable.ATView.
+Require Import attachable.AThread.
 
-Require Import PFCommon.
-Require Import PFStep.
-Require Import PFCertify.
+Require Import invariant.PFCommon.
+Require Import invariant.PFStep.
+Require Import invariant.PFCertify.
 
 Set Implicit Arguments.
 
@@ -518,7 +518,7 @@ Section Invariant.
     exploit CONSISTENT; eauto. i. des.
     - unfold Thread.steps_failure in *. des.
       exploit Thread.rtc_tau_step_future; try exact STEPS; eauto. s. i. des.
-      inv FAILURE0; try by inv STEP.
+      inv FAILURE0; try sfby inv STEP.
       exploit PFCertify.thread_rtc_tau_step; eauto.
       { inv STEP. inv LOCAL. inv LOCAL0. ss. }
       i. des.
@@ -548,8 +548,8 @@ Section Invariant.
         (STEP: Configuration.step MachineEvent.failure tid c1 c2):
     sem c2.
   Proof.
-    inv SEM. inv STEP; try by (destruct e; ss).
-    inv STEP0; try by inv STEP.
+    inv SEM. inv STEP; try sfby (destruct e; ss).
+    inv STEP0; try sfby inv STEP.
     exploit TH; eauto. intro TH1.
     inv WF. inv WF0. clear DISJOINT.
     exploit THREADS; eauto. intro WF. clear THREADS.
@@ -583,7 +583,7 @@ Section Invariant.
     sem c2.
   Proof.
     inv SEM. inv STEP; ss.
-    eapply rtc_implies in STEPS; [|by apply tau_union].
+    eapply rtc_implies in STEPS; [|sfby apply tau_union].
     exploit rtc_n1; eauto.
     { econs. econs. eauto. }
     clear EVENT EVENT0 STEPS STEP0. intro STEPS.
@@ -604,7 +604,7 @@ Section Invariant.
     i. des.
     econs; s.
     - ii. revert FIND.
-      rewrite IdentMap.gsspec. condtac; ss; [|by apply TH]. subst.
+      rewrite IdentMap.gsspec. condtac; ss; [|sfby apply TH]. subst.
       i. inv FIND. apply inj_pair2 in H3. subst.
       inv SIM2. ss. rewrite <- STATE. ss.
     - hexploit consistent_sem; eauto.
@@ -638,7 +638,7 @@ Section Invariant.
                   (@sigT _ (@Language.syntax ProgramEvent.t)) tid program) eqn:X; inv FIND.
       apply inj_pair2 in H1. subst. destruct s. ss.
       eapply ST_INIT; eauto.
-    - ii. cut (x0 = LocFun.init 0); [by i; subst|].
+    - ii. cut (x0 = LocFun.init 0); [sfby i; subst|].
       apply LocFun.ext. i. rewrite LocFun.init_spec.
       specialize (PR i). des. ss.
       unfold Memory.get, Memory.init in PR. unfold Cell.get, Cell.init in PR. ss.

@@ -1,32 +1,32 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
 
 From PromisingLib Require Import Basic.
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import MemoryFacts.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.MemoryFacts.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import Compatibility.
-Require Import SimThread.
-Require Import MergeStep.
-Require Import ReorderStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.Compatibility.
+Require Import opt.SimThread.
+Require Import opt.MergeStep.
+Require Import opt.ReorderStep.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -128,7 +128,7 @@ Proof.
     + econs 2. econs 1. econs; eauto.
     + auto.
   - (* store *)
-    hexploit sim_local_write_bot; try exact LOCAL1; try exact SC; eauto; try refl; try by viewtac. i. des.
+    hexploit sim_local_write_bot; try exact LOCAL1; try exact SC; eauto; try refl; try sfby viewtac. i. des.
     exploit merge_write_read; try exact STEP_SRC; eauto using View.bot_spec. i. des.
     esplits.
     + ss.
@@ -170,8 +170,8 @@ Proof.
     exploit Time.middle_spec; eauto.
     { inv LOCAL1. eapply MemoryFacts.write_time_lt. eauto. }
     i. des.
-    hexploit sim_local_write_bot; try exact LOCAL0; try exact SC; eauto; try refl; try by viewtac. i. des.
-    exploit merge_write_write_None; try exact STEP_SRC; eauto; try by viewtac. i. des.
+    hexploit sim_local_write_bot; try exact LOCAL0; try exact SC; eauto; try refl; try sfby viewtac. i. des.
+    exploit merge_write_write_None; try exact STEP_SRC; eauto; try sfby viewtac. i. des.
     + esplits.
       * ss.
       * econs 2; [|econs 2; eauto].
@@ -233,10 +233,10 @@ Proof.
     exploit Time.middle_spec; eauto.
     { inv LOCAL1. eapply MemoryFacts.write_time_lt. eauto. }
     i. des.
-    hexploit sim_local_write_bot; try exact LOCAL0; try exact SC; eauto; try refl; try by viewtac. i. des.
-    exploit merge_write_write; try exact STEP_SRC; eauto; try by viewtac. i. des.
+    hexploit sim_local_write_bot; try exact LOCAL0; try exact SC; eauto; try refl; try sfby viewtac. i. des.
+    exploit merge_write_write; try exact STEP_SRC; eauto; try sfby viewtac. i. des.
     exploit Local.promise_step_future; eauto. i. des.
-    exploit Local.write_step_future; try apply STEP2; eauto; try by viewtac. i. des.
+    exploit Local.write_step_future; try apply STEP2; eauto; try sfby viewtac. i. des.
     + esplits.
       * ss.
       * econs 2; [|econs 2; eauto].
@@ -312,10 +312,10 @@ Proof.
     exploit sim_local_read; try exact LOCAL1;
       try match goal with
           | [|- is_true (Ordering.le _ _)] => refl
-          end; eauto; try refl; try by viewtac. i. des.
-    exploit Local.read_step_future; eauto; try by viewtac. i. des.
+          end; eauto; try refl; try sfby viewtac. i. des.
+    exploit Local.read_step_future; eauto; try sfby viewtac. i. des.
     hexploit sim_local_write_bot; try apply SC; try apply LOCAL2; eauto; try refl. i. des.
-    exploit Local.write_step_future; try apply STEP_SRC; eauto; try by viewtac. i. des.
+    exploit Local.write_step_future; try apply STEP_SRC; eauto; try sfby viewtac. i. des.
     exploit sim_local_read; try exact x0; eauto; try refl. i. des.
     esplits.
     + ss.
@@ -363,7 +363,7 @@ Proof.
     exploit sim_local_read; try exact LOCAL1;
       try match goal with
           | [|- is_true (Ordering.le _ _)] => refl
-          end; eauto; try refl; try by viewtac. i. des.
+          end; eauto; try refl; try sfby viewtac. i. des.
     exploit Local.read_step_future; eauto. i. des.
     hexploit sim_local_write_bot; try exact LOCAL2; try exact SC; eauto; try refl. i. des.
     exploit merge_write_write; try exact STEP_SRC0; eauto.
@@ -371,7 +371,7 @@ Proof.
       inv MSG_TS. ss. }
     i. des.
     + exploit Local.promise_step_future; eauto. i. des.
-      exploit Local.write_step_future; try apply STEP2; eauto; try by viewtac. i. des.
+      exploit Local.write_step_future; try apply STEP2; eauto; try sfby viewtac. i. des.
       exploit reorder_read_promise_diff; try exact STEP_SRC; try exact STEP1; eauto.
       { inv LOCAL2. exploit MemoryFacts.write_time_lt; eauto. ii. inv H.
         eapply Time.lt_strorder. eauto.
@@ -406,7 +406,7 @@ Proof.
         }
         { i. inv PR. }
     + inv STEP1.
-      exploit Local.write_step_future; try apply STEP2; eauto; try by viewtac. i. des.
+      exploit Local.write_step_future; try apply STEP2; eauto; try sfby viewtac. i. des.
       esplits.
       * ss.
       * econs 2; eauto.

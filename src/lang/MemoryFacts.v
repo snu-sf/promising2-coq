@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 
@@ -7,11 +7,11 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
 
 Set Implicit Arguments.
 
@@ -165,7 +165,7 @@ Module MemoryFacts.
   Proof.
     destruct (Time.le_lt_dec t1 t2).
     - eapply get_same_from_aux; eauto.
-    - exploit get_same_from_aux; (try by left; eauto); eauto. i. des. ss.
+    - exploit get_same_from_aux; (try sfby left; eauto); eauto. i. des. ss.
   Qed.
 
   Lemma write_not_bot
@@ -208,9 +208,9 @@ Module MemoryFacts.
     exists promises2 mem2,
       Memory.promise promises1 mem1 loc from to (Message.full val None) promises2 mem2 (Memory.op_kind_lower (Message.full val released)).
   Proof.
-    exploit Memory.lower_exists; eauto; try by econs. i. des.
+    exploit Memory.lower_exists; eauto; try sfby econs. i. des.
     exploit LE; eauto. i.
-    exploit Memory.lower_exists; eauto; try by econs. i. des.
+    exploit Memory.lower_exists; eauto; try sfby econs. i. des.
     esplits. econs; eauto. econs. apply Time.bot_spec.
   Qed.
 

@@ -9,31 +9,33 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
 
 ## Build
 
-- Requirement: [Coq 8.15.0](https://coq.inria.fr/download), opam.
+Requirements: opam (>=2.0.0), OCaml 5.x, Rocq 9.0+, dune (>=3.21)
 
-- Installing dependencies with opam
+1. Create a local opam switch and install dependencies
+```
+opam switch create . ocaml-base-compiler.5.4.0 --no-install
+eval $(opam env)
+opam repo add rocq-released https://rocq-prover.org/opam/released
+opam pin add -y rocq-promising2 . --no-action
+opam install -y --deps-only rocq-promising2
+```
 
-        opam repo add coq-released https://coq.inria.fr/opam/released
-        opam repo add coq-sflib -k git https://github.com/snu-sf/sf-opam-coq-archive.git
-        opam repo add coq-promising -k git https://github.com/snu-sf/promising-opam-coq-archive.git#8.15
-        opam install coq-paco.4.1.12 coq-sflib coq-promising-lib
+2. Build the project
+```
+dune build
+```
 
-- Building the project
+### IDE Setup
 
-        git clone https://github.com/snu-sf/promising2-coq.git
-        cd promising2-coq
-        make -j build
-
-- Interactive Theorem Proving: use [ProofGeneral](https://proofgeneral.github.io/) or [CoqIDE](https://coq.inria.fr/download).
-  Note that `make` creates `_CoqProject`, which is then used by ProofGeneral and CoqIDE. To use it:
-    + ProofGeneral: use a recent version.
-    + CoqIDE: configure it to use `_CoqProject`: `Edit` > `Preferences` > `Project`: change `ignored` to `appended to arguments`.
+- **VsCoq (VS Code)**: Install the VsCoq extension and open the project folder. Dune generates the `_CoqProject` file automatically.
+- **ProofGeneral (Emacs)**: Use a recent version. Run `dune build` first to generate the build artifacts.
+- **CoqIDE**: Run `dune build` first, then open `.v` files from the `src/` directory.
 
 ## References
 
 ### Model
 
-- `promising2/src/lang`: The model
+- `src/lang`: The model
     + `Memory.v`: memory model (`MEMORY: *` rules in Figure 2 and 4)
     + `Local.v`, `Thread.v`: thread and its execution
       (`PROMISE`, `RESERVE`, `CANCEL`, `READ`, `WRITE`, `UPDATE`, `FENCE`, `SYSTEM CALL`, `SILENT`, `FAILURE` rules in Figure 2 and 4,
@@ -41,18 +43,18 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
     + `Configuration.v`: configuration (machine state) and its execution (`MACHINE STEP` rule in Figure 2 and 4)
     + `Behavior.v`: the behaviors of a configuration
 
-- `promising2/src/pf`: Definition of promise-free machine
+- `src/pf`: Definition of promise-free machine
 
-- `promising2/src/attachable`: Definition of a machine where attaching a new concrete message in front of another message is allowed, which in particular,
+- `src/attachable`: Definition of a machine where attaching a new concrete message in front of another message is allowed, which in particular,
   is (syntactically) equivalent to the promise-free fragment of PS (promising 1.0) when executed in promise-free manner.
 
-- `promising2/src/while`: Toy "while" language that provides the basis for the optimization & compilation results.
+- `src/while`: Toy "while" language that provides the basis for the optimization & compilation results.
 
-- `promising2/src/prop`: General properties on the memory model
+- `src/prop`: General properties on the memory model
 
 ### Results
 
-- `promising2/src/opt`: Compiler transformations (Section 6.1)
+- `src/opt`: Compiler transformations (Section 6.1)
     + Trace-preserving transformations: `sim_trace_sim_stmts` (`SimTrace.v`)
     + Strengthening: `sim_stmts_instr` (`SimTrace.v`)
     + Optimizing `abort`: `sim_stmts_replace_abort`, `sim_stmts_elim_after_abort` (`SimTrace.v`)
@@ -69,19 +71,19 @@ Please visit the [project website](https://sf.snu.ac.kr/promising2.0/) for more 
         * Adequacy (Thread): `sim_thread_sim` (`AdequacyThread.v`).  From the thread simulation to the configuration simulation.
         * Compatibility: `sim_stmts_*` (`Compatibility.v`).
 
-- `promising2/src/invariant`: An invariant-based program logic (a value-range analysis, Section 6.2)
+- `src/invariant`: An invariant-based program logic (a value-range analysis, Section 6.2)
     + Soundness of value-range analysis (Theorem 6.1): `sound` (`Invariant.v`)
 
-- `promising2/src/gopt`: Global optimization (Section 6.2)
+- `src/gopt`: Global optimization (Section 6.2)
     + Definition of global optimization: `insert_assertion`, `insert_assertion_program` (`AssertInsertion.v`)
     + Soundness of value-range analysis (Theorem 6.2): `insert_assertion_behavior` (`AssertInsertion.v`)
 
-- `promising2/src/promotion`: Register promotion (Section 6.3)
+- `src/promotion`: Register promotion (Section 6.3)
     + Definition of register promotion: `promote_stmts` (`PromotionDef.v`), `promote_program` (`Promotion.v`)
     + Soundness of register promotion (Theorem 6.3): `promote_behavior` (`Promotion.v`)
 
-- `promising2/src/attachable`
+- `src/attachable`
     + Equivalence between PF and promise-free fragment of PS (Theorem 6.4): `apf_pf_equiv`, `apf_pf_equiv2` (`APFPF.v`)
 
-- `promising2/src/drf`: DRF theorems (Section 6.4)
+- `src/drf`: DRF theorems (Section 6.4)
     + DRF-Promise (Theorem 6.5): `drf_pf` (`DRF_PF.v`)

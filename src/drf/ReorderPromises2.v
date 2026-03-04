@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -10,24 +10,24 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import PromiseConsistent.
-Require Import ReorderPromise.
-Require Import ReorderPromises.
-Require Import PredStep.
-Require Import MemoryReorder.
-Require Import MemoryFacts.
-Require Import Pred.
-Require Import DRF_PF0.
+Require Import prop.PromiseConsistent.
+Require Import prop.ReorderPromise.
+Require Import prop.ReorderPromises.
+Require Import drf.PredStep.
+Require Import prop.MemoryReorder.
+Require Import lang.MemoryFacts.
+Require Import drf.Pred.
+Require Import drf.DRF_PF0.
 
 Set Implicit Arguments.
 

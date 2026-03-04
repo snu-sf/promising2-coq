@@ -3,23 +3,23 @@ From Paco Require Import paco.
 
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import PromiseConsistent.
+Require Import prop.PromiseConsistent.
 
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import SimThread.
-Require Import Simulation.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.SimThread.
+Require Import opt.Simulation.
 
 Set Implicit Arguments.
 
@@ -255,7 +255,7 @@ Proof.
                 exploit SIM; try eapply H; eauto. i. des.
                 eexists.
                 eapply sim_thread_future; try exact x2;
-                  try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]).
+                  try sfby (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]).
           - ss. inv X. esplits; eauto.
             + destruct e0; ss.
             + right. eapply CIH; ss.
@@ -270,7 +270,7 @@ Proof.
                   exploit SIM; try eapply H; eauto. i. des.
                   eexists.
                   eapply sim_thread_future; try exact x0; eauto;
-                    try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
+                    try sfby (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
         }
         { esplits; eauto.
           - rewrite <- EVENT0.
@@ -291,7 +291,7 @@ Proof.
               exploit SIM; try eapply H; eauto. i. des.
               eexists.
               eapply sim_thread_future; try exact x2;
-                try by (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
+                try sfby (etrans; [eauto using Memory.future_future_weak|etrans; eauto using Memory.future_future_weak]). }
 Unshelve.
   { auto. }
 Qed.

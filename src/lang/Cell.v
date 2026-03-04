@@ -1,7 +1,7 @@
-Require Import Lia.
-Require Import RelationClasses.
-Require Import Decidable.
-Require Import Coq.Lists.ListDec.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import Decidable.
+From Stdlib.Lists Require Import ListDec.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -12,9 +12,9 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
 
 Set Implicit Arguments.
 
@@ -256,21 +256,21 @@ Module Cell.
         + inv GET1.
           inv SPLIT. hexploit DISJOINT; try exact n0; eauto. i.
           symmetry in H. eapply Interval.le_disjoint; eauto.
-          econs; [refl|by left].
+          econs; [refl|sfby left].
         + inv GET1. inv GET2.
           symmetry. eapply Interval.disjoint_imm.
         + inv GET1.
           inv SPLIT. hexploit DISJOINT; try exact NEQ; eauto. i.
           eapply Interval.le_disjoint; eauto.
-          econs; [by left|refl].
+          econs; [sfby left|refl].
         + inv GET2.
           inv SPLIT. hexploit DISJOINT; try exact n0; eauto. i.
           symmetry in H. symmetry. eapply Interval.le_disjoint; eauto.
-          econs; [refl|by left].
+          econs; [refl|sfby left].
         + inv GET2.
           inv SPLIT. hexploit DISJOINT; try exact n0; eauto. i.
           symmetry in H. symmetry. eapply Interval.le_disjoint; eauto.
-          econs; [by left|refl].
+          econs; [sfby left|refl].
         + eapply DISJOINT; eauto.
     Qed.
 
@@ -805,7 +805,7 @@ Module Cell.
     destruct p as [t1 a1]. ss. des.
     - inv INHABITED2. destruct l.
       + esplits; eauto. i. des; inv IN. refl.
-      + exploit (IHn t0 a ((t0, a)::l)); auto; try by econs.
+      + exploit (IHn t0 a ((t0, a)::l)); auto; try sfby econs.
         i. des. destruct p as [new_t new_a]. ss.
         destruct (f new_a) eqn:FNEW; cycle 1.
         { esplits; try exact x0.
@@ -921,7 +921,7 @@ Module Cell.
     destruct p as [t1 a1]. ss. des.
     - inv INHABITED2. destruct l.
       + esplits; eauto. i. des; inv IN. refl.
-      + exploit (IHn t0 a ((t0, a)::l)); auto; try by econs.
+      + exploit (IHn t0 a ((t0, a)::l)); auto; try sfby econs.
         i. des. destruct p as [new_t new_a]. ss.
         destruct (f new_a) eqn:FNEW; cycle 1.
         { esplits; try exact x0.
@@ -1384,10 +1384,10 @@ Module Cell.
               etrans; try exact TO. econs. ss.
             * econs. ss.
         - exploit COMPLETE; try exact GET2; eauto. i. des.
-          cut (from1 = a); try by (i; subst; ss).
+          cut (from1 = a); try sfby (i; subst; ss).
           clear COMPLETE.
           destruct (Time.le_lt_dec from1 a).
-          + inv l; try by (inv H2; ss).
+          + inv l; try sfby (inv H2; ss).
             exploit SOUND; try exact GET0. i.
             exploit get_ts; try exact x4. i. des.
             { subst. inv H2. }
@@ -1440,9 +1440,9 @@ Module Cell.
         exploit TimeFacts.le_lt_lt; try exact FROM; try exact MAX. i.
         timetac. }
       exploit COMPLETE; eauto. i. des.
-      cut (from2 = max_ts cell1); try by (i; subst; ss).
+      cut (from2 = max_ts cell1); try sfby (i; subst; ss).
       destruct (Time.le_lt_dec from2 (max_ts cell1)).
-      - inv l; try by (inv H1; ss).
+      - inv l; try sfby (inv H1; ss).
         exploit SOUND; try exact GET1. i.
         exploit get_ts; try exact x5. i. des.
         { subst. rewrite x4 in *. inv H1. }

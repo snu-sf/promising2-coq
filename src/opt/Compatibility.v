@@ -1,30 +1,30 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
 
 From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import FulfillStep.
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import SimThread.
+Require Import opt.FulfillStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.SimThread.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -312,7 +312,7 @@ Proof.
     { right. inv TERMINAL_TGT. ss. esplits; eauto; ss. }
     { exploit SimPromises.cap; try eapply LOCAL; eauto. }
     { right. subst. esplits; eauto. }
-    inv STEP_TGT; try by inv STEP; inv STATE.
+    inv STEP_TGT; try sfby inv STEP; inv STATE.
     inv STEP; ss.
     exploit sim_local_promise; eauto. i. des.
     right. esplits.
@@ -328,7 +328,7 @@ Proof.
     exploit SIM1; try apply SC; eauto. i. des.
     splits; s; ii.
     { inv TERMINAL_TGT. destruct stmts1_tgt, stmts2_tgt; inv H0.
-      exploit TERMINAL; try by econs. i. des.
+      exploit TERMINAL; try sfby econs. i. des.
       - left.
         unfold Thread.steps_failure in *. des.
         destruct e2, e3, state, state0.
@@ -343,7 +343,7 @@ Proof.
         exploit SIM2; try apply SC0; eauto. s. i. des.
         eauto using Memory.future_future_weak.
         s. i. des.
-        exploit TERMINAL0; try by econs. i. des.
+        exploit TERMINAL0; try sfby econs. i. des.
         + left.
           unfold Thread.steps_failure in *. des.
           destruct e2, state.
@@ -372,7 +372,7 @@ Proof.
         + ss.
     }
     destruct stmts1_tgt.
-    + exploit TERMINAL; try by econs. i. des.
+    + exploit TERMINAL; try sfby econs. i. des.
       * left.
         unfold Thread.steps_failure in *. des.
         destruct e2, e3, state, state0. ss.

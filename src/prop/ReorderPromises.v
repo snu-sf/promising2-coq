@@ -1,5 +1,5 @@
-Require Import Lia.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -10,18 +10,18 @@ From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
 From PromisingLib Require Import Language.
 
-Require Import Event.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Event.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import PromiseConsistent.
-Require Import ReorderPromise.
+Require Import prop.PromiseConsistent.
+Require Import prop.ReorderPromise.
 
 Set Implicit Arguments.
 
@@ -171,7 +171,7 @@ Proof.
   - subst. esplits; cycle 1; eauto. lia.
   - assert (STEPS: rtcn (@Thread.tau_step lang) (S n) e1 e2).
     { econs 2.
-      - econs. econs; eauto. unguardH EVENT1. by destruct e2', e0; des.
+      - econs. econs; eauto. unguardH EVENT1. sfby destruct e2', e0; des.
       - eapply rtcn_imply; [|exact A0]. apply tau_mon. apply Thread.allpf.
     }
     exploit IH; try exact STEPS; eauto.
@@ -190,7 +190,7 @@ Proof.
     exploit IH; try exact STEPS; eauto.
     { lia. }
     i. des. esplits; cycle 1.
-    + econs 2; eauto. econs; eauto. unguardH EVENT1. by destruct e2', e0; des.
+    + econs 2; eauto. econs; eauto. unguardH EVENT1. sfby destruct e2', e0; des.
     + etrans; eauto.
     + lia.
 Qed.

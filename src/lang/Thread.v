@@ -1,6 +1,6 @@
-Require Import Lia.
-Require Import Bool.
-Require Import RelationClasses.
+From Stdlib Require Import Lia.
+From Stdlib Require Import Bool.
+From Stdlib Require Import RelationClasses.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -9,15 +9,15 @@ From PromisingLib Require Import Axioms.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import DataStructure.
 From PromisingLib Require Import DenseOrder.
-Require Import Event.
-Require Import Time.
+Require Import lang.Event.
+Require Import lang.Time.
 From PromisingLib Require Import Language.
 
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
 
 Set Implicit Arguments.
 
@@ -540,7 +540,7 @@ Module Thread.
       <<PREV: Memory.prev_None (memory e1) (memory e2)>>.
     Proof.
       inv STEP; inv STEP0; inv LOCAL; ss;
-        try by ii; eapply GET_PREV; eauto.
+        try sfby ii; eapply GET_PREV; eauto.
       - eapply Memory.promise_prev_None; eauto.
       - inv LOCAL0. inv WRITE. ss.
         eapply Memory.promise_prev_None; eauto.

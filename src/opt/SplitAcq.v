@@ -1,5 +1,5 @@
-Require Import Bool.
-Require Import List.
+From Stdlib Require Import Bool.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 From Paco Require Import paco.
@@ -7,26 +7,26 @@ From Paco Require Import paco.
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 From PromisingLib Require Import Language.
-Require Import Time.
-Require Import View.
-Require Import Cell.
-Require Import Memory.
-Require Import TView.
-Require Import Local.
-Require Import Thread.
-Require Import Configuration.
+Require Import lang.Time.
+Require Import lang.View.
+Require Import lang.Cell.
+Require Import lang.Memory.
+Require Import lang.TView.
+Require Import lang.Local.
+Require Import lang.Thread.
+Require Import lang.Configuration.
 
-Require Import FulfillStep.
-Require Import SimMemory.
-Require Import SimPromises.
-Require Import SimLocal.
-Require Import Compatibility.
-Require Import SimThread.
+Require Import opt.FulfillStep.
+Require Import opt.SimMemory.
+Require Import opt.SimPromises.
+Require Import opt.SimLocal.
+Require Import opt.Compatibility.
+Require Import opt.SimThread.
 
-Require Import Syntax.
-Require Import Semantics.
+Require Import while.Syntax.
+Require Import while.Semantics.
 
 Set Implicit Arguments.
 
@@ -129,8 +129,8 @@ Proof.
     eapply TimeFacts.le_lt_lt; eauto.
   - econs; eauto. s. unfold TView.write_tview, TView.read_fence_tview. ss.
     econs; ss; repeat (try condtac; aggrtac).
-    all: try by destruct ord_src, ord_tgt.
-    all: try by apply WF1_TGT.
+    all: try sfby destruct ord_src, ord_tgt.
+    all: try sfby apply WF1_TGT.
     + etrans; [apply LOCAL1|]. aggrtac.
     + etrans; [apply LOCAL1|]. aggrtac.
     + etrans; [apply WF1_SRC|]. etrans; [apply LOCAL1|]. aggrtac.
@@ -267,7 +267,7 @@ Proof.
     right.
     exploit Local.fence_step_future; eauto. i. des.
     inv STATE. inv INSTR. inv LOCAL1. ss.
-    esplits; (try by econs 1); eauto; ss.
+    esplits; (try sfby econs 1); eauto; ss.
     left. eapply paco9_mon; [apply sim_stmts_nil|]; ss. econs; ss.
     + rewrite TViewFacts.write_fence_tview_strong_relaxed; ss. apply LOCAL.
     + apply LOCAL.
@@ -315,8 +315,8 @@ Proof.
   - econs; eauto. s.
     unfold TView.read_tview, TView.read_fence_tview. ss.
     econs; repeat (condtac; aggrtac).
-    all: try by apply TVIEW.
-    all: try by apply WF1_TGT.
+    all: try sfby apply TVIEW.
+    all: try sfby apply WF1_TGT.
     + rewrite <- ? View.join_l. etrans; [apply TVIEW|]. apply WF1_TGT.
     + inv MEM1_TGT. exploit CLOSED; eauto. i. des.
       apply View.unwrap_opt_wf. inv MSG_WF. ss.

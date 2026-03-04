@@ -15,3 +15,7 @@ Makefile.coq.conf
 
 *~
 *.aux
+
+_build/
+_opam/
+.claude/

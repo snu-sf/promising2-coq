@@ -1,12 +1,12 @@
-Require Import RelationClasses.
-Require Import List.
+From Stdlib Require Import RelationClasses.
+From Stdlib Require Import List.
 
 From sflib Require Import sflib.
 
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Loc.
 
-Require Import Event.
+Require Import lang.Event.
 
 Set Implicit Arguments.
 

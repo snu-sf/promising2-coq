@@ -1,10 +1,10 @@
-Require Import RelationClasses.
+From Stdlib Require Import RelationClasses.
 
 From PromisingLib Require Import Basic.
 From PromisingLib Require Import Axioms.
-Require Import List.
-Require Import Event.
-Require Import Syntax.
+From Stdlib Require Import List.
+Require Import lang.Event.
+Require Import while.Syntax.
 From PromisingLib Require Import Language.
 
 From sflib Require Import sflib.
@@ -272,7 +272,7 @@ Module RegFile.
       <<EVAL: RegFile.eval_instr rf1 instr_src e_src rf2>> /\
       <<ORD: ProgramEvent.ord e_src e_tgt>>.
   Proof.
-    inv ORD; inv EVAL; esplits; try by repeat (econs; eauto).
+    inv ORD; inv EVAL; esplits; try sfby repeat (econs; eauto).
   Qed.
 End RegFile.
 
